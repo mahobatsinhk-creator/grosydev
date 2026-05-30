@@ -10,7 +10,15 @@ export async function processAllUnfulfilled({ limit = 50, notifyCustomer = true 
     const summary = summarizeOrder(order);
     try {
       const result = await processOrder(order.id, { notifyCustomer });
-      results.push({ ok: true, order: summary.name, awb: result.awb });
+      results.push({
+        ok: true,
+        order: summary.name,
+        orderId: order.id,
+        awb: result.awb,
+        packingSlipUrl: result.packingSlipUrl,
+        labelPrintUrl: result.labelPrintUrl,
+        trackingUrl: result.trackingUrl,
+      });
     } catch (err) {
       results.push({ ok: false, order: summary.name, error: err.message || String(err) });
     }

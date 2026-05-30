@@ -8,6 +8,7 @@ import { getOrder, fulfillOrderWithAwb } from './shopify.js';
 import { shopifyOrderToWaybill, summarizeOrder } from './map-order.js';
 import { savePackingSlip, saveLabelPrintPage } from './packing-slip.js';
 import { labelsDir } from './paths.js';
+import { recordGeneratedOrder } from './generated-orders.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 export { labelsDir };
@@ -37,6 +38,15 @@ export async function processOrder(orderIdOrName, { notifyCustomer = true, dryRu
   savePackingSlip(order, waybill.awb, waybill.raw);
 
   const fulfillment = await fulfillOrderWithAwb(order, waybill.awb, { notifyCustomer });
+
+  recordGeneratedOrder({
+    orderId: order.id,
+    orderName: order.name,
+    awb: waybill.awb,
+    customer: order.shipping_address?.name || order.email || '',
+    total: order.total_price,
+    labelSaved: Boolean(waybill.pdfBase64),
+  });
 
   return {
     order: summarizeOrder(order),

@@ -11,6 +11,7 @@ import { summarizeOrder } from './map-order.js';
 import { labelsDir } from './paths.js';
 import { processOrder } from './fulfill.js';
 import { processAllUnfulfilled } from './batch.js';
+import { listGeneratedOrders } from './generated-orders.js';
 import { verifyShopifyWebhook, parseWebhookOrder, shouldAutoFulfillOrder } from './webhook.js';
 import { buildLabelPrintHtml, buildPackingSlipHtml } from './packing-slip.js';
 
@@ -193,6 +194,15 @@ export function startServer() {
         assertShopifyConfig();
         const orders = await listUnfulfilledOrders(Number(url.searchParams.get('limit') || 25));
         json(res, 200, { orders: orders.map(summarizeOrder) });
+        return;
+      }
+
+      if (req.method === 'GET' && url.pathname === '/api/orders/generated') {
+        const data = listGeneratedOrders({
+          limit: Number(url.searchParams.get('limit') || 100),
+          search: url.searchParams.get('search') || '',
+        });
+        json(res, 200, data);
         return;
       }
 

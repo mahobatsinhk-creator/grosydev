@@ -23,9 +23,32 @@
     button:disabled { opacity: 0.5; cursor: not-allowed; }
     table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
     th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #eee; vertical-align: middle; }
-    th:last-child, td.actions { min-width: 220px; }
-    .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    th:last-child, td.actions { min-width: 280px; }
+    .actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
     .actions button { padding: 7px 10px; white-space: nowrap; }
+    .actions a { text-decoration: none; }
+    tr.fulfilled-row { background: #f3faf3; }
+    tr.fulfilled-row td { border-bottom-color: #c8e6c9; }
+    .print-links {
+      font-size: 0.78rem;
+      margin-top: 5px;
+      line-height: 1.45;
+    }
+    .print-links a {
+      color: #1565c0;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .print-links a:hover { text-decoration: underline; }
+    button.btn-print { background: #2e7d32; }
+    button.btn-label { background: #1565c0; }
+    .order-link {
+      color: #1a1a1a;
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .order-link:hover { color: #1565c0; text-decoration: underline; }
+    .generated-meta { font-size: 0.78rem; color: #666; margin-top: 2px; }
     .row-msg { font-size: 0.8rem; margin-top: 4px; padding: 6px 8px; border-radius: 6px; }
     .row-msg.ok { background: #e8f5e9; color: #1b5e20; }
     .row-msg.err { background: #ffebee; color: #b71c1c; }
@@ -54,6 +77,23 @@
     <div id="status"></div>
   </div>
 
+  <div class="card" id="generatedCard">
+    <div class="row" style="align-items:center;margin-bottom:12px">
+      <div style="flex:2">
+        <h2 style="margin:0;font-size:1.1rem">Generated labels — all orders</h2>
+        <p class="sub" style="margin:4px 0 0">Click order number to open packing slip · print label anytime</p>
+      </div>
+      <div style="flex:1;min-width:140px">
+        <label for="generatedSearch">Search order / AWB</label>
+        <input id="generatedSearch" placeholder="e.g. 1496" />
+      </div>
+      <div style="flex:0">
+        <button type="button" class="secondary" id="loadGeneratedBtn" style="margin-top:18px">Refresh list</button>
+      </div>
+    </div>
+    <div id="generatedList">Loading generated orders…</div>
+  </div>
+
   <div class="card">
     <h2 style="margin-top:0;font-size:1.1rem">Unfulfilled orders</h2>
     <div id="orders">Loading orders…</div>
@@ -79,6 +119,9 @@
     const statusEl = document.getElementById('status');
     const ordersEl = document.getElementById('orders');
     const manualResultEl = document.getElementById('manualResult');
+    const generatedListEl = document.getElementById('generatedList');
+    const generatedSearchEl = document.getElementById('generatedSearch');
+    let generatedSearchTimer = null;
 
     function headers() {
       const h = { 'Content-Type': 'application/json' };
@@ -91,10 +134,94 @@
     }
 
     function successHtml(data) {
-      return `AWB <code>${data.awb}</code> —
-        <a href="${data.trackingUrl}" target="_blank" rel="noopener">Track</a> ·
-        <a href="${data.packingSlipUrl || '/api/packing-slip/' + data.awb}" target="_blank" rel="noopener">Packing slip</a> ·
-        <a href="${data.labelPrintUrl || '/api/print-label/' + data.awb}" target="_blank" rel="noopener">Label</a>`;
+      const slip = data.packingSlipUrl || '/api/packing-slip/' + data.awb;
+      const label = data.labelPrintUrl || '/api/print-label/' + data.awb;
+      return `AWB <code>${data.awb}</code> created —
+        <a href="${slip}" target="_blank" rel="noopener"><strong>Print packing slip</strong></a> ·
+        <a href="${label}" target="_blank" rel="noopener"><strong>Print label</strong></a> ·
+        <a href="${data.trackingUrl}" target="_blank" rel="noopener">Track</a>`;
+    }
+
+    function printButtonsHtml(data, compact) {
+      const slip = data.packingSlipUrl || '/api/packing-slip/' + data.awb;
+      const label = data.labelPrintUrl || '/api/print-label/' + data.awb;
+      if (compact) {
+        return `<a href="${slip}" target="_blank" rel="noopener">Packing slip</a> · <a href="${label}" target="_blank" rel="noopener">Print label</a>`;
+      }
+      return `
+        <a href="${slip}" target="_blank" rel="noopener"><button type="button" class="btn-print">Packing slip</button></a>
+        <a href="${label}" target="_blank" rel="noopener"><button type="button" class="btn-label">Print label</button></a>
+        <a href="${data.trackingUrl}" target="_blank" rel="noopener"><button type="button" class="secondary">Track</button></a>`;
+    }
+
+    function bindGeneratedRows(data) {
+      if (!data.orders.length) {
+        generatedListEl.innerHTML = '<p>No generated labels yet. Create an AWB above — it will appear here.</p>';
+        return;
+      }
+      generatedListEl.innerHTML = `<div class="table-wrap"><table>
+        <thead><tr>
+          <th>Order</th><th>Customer</th><th>AWB</th><th>Created</th><th>Print</th>
+        </tr></thead>
+        <tbody>${data.orders.map((o) => {
+          const slip = o.packingSlipUrl || '/api/packing-slip/' + o.awb;
+          const created = o.createdAt ? new Date(o.createdAt).toLocaleString() : '—';
+          const name = o.orderName && o.orderName !== '—' ? o.orderName : o.awb;
+          return `
+          <tr>
+            <td>
+              <a class="order-link" href="${slip}" target="_blank" rel="noopener">${name}</a>
+              ${o.total ? `<div class="generated-meta">₹${o.total}</div>` : ''}
+            </td>
+            <td>${o.customer || '—'}</td>
+            <td><code>${o.awb}</code></td>
+            <td style="font-size:0.8rem">${created}</td>
+            <td class="actions">${printButtonsHtml(o)}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table></div>
+      <p style="margin-top:10px;font-size:0.85rem;color:#666">${data.orders.length} shown${data.total > data.orders.length ? ` of ${data.total}` : ''} · updated ${new Date().toLocaleTimeString()}</p>`;
+    }
+
+    async function loadGeneratedOrders() {
+      saveSecret();
+      try {
+        const q = generatedSearchEl.value.trim();
+        const path = '/api/orders/generated?limit=200' + (q ? '&search=' + encodeURIComponent(q) : '');
+        generatedListEl.innerHTML = '<p>Loading…</p>';
+        const data = await api(path);
+        bindGeneratedRows(data);
+      } catch (e) {
+        generatedListEl.innerHTML = `<p class="msg err">${e.message}</p>`;
+      }
+    }
+
+    function refreshAfterFulfill() {
+      loadGeneratedOrders();
+    }
+
+    function markRowFulfilled(tr, orderId, data) {
+      if (!tr) return;
+      const orderName = tr.querySelector('strong')?.textContent || data.order?.name || orderId;
+      const slip = data.packingSlipUrl || '/api/packing-slip/' + data.awb;
+
+      tr.querySelector('td:first-child').innerHTML = `
+        <a class="order-link" href="${slip}" target="_blank" rel="noopener">${orderName}</a>
+        <div class="print-links">
+          AWB <code>${data.awb}</code><br>
+          ${printButtonsHtml(data, true)}
+        </div>`;
+
+      tr.querySelector('.actions').innerHTML = printButtonsHtml(data);
+      tr.classList.add('fulfilled-row');
+      refreshAfterFulfill();
+    }
+
+    function manualSuccessHtml(data) {
+      return `<div class="msg ok" style="margin-top:12px">
+        ${successHtml(data)}
+        <div class="actions" style="margin-top:10px">${printButtonsHtml(data)}</div>
+      </div>`;
     }
 
     async function api(path, options = {}) {
@@ -109,6 +236,7 @@
         if (resultEl) show(resultEl, 'Missing order ID.', false);
         return;
       }
+      const row = resultEl?.closest('tr');
       buttons?.forEach((b) => (b.disabled = true));
       try {
         if (resultEl) {
@@ -123,10 +251,14 @@
             resultEl.innerHTML = `<div class="row-msg ok"><pre style="white-space:pre-wrap;margin:0;font-size:0.75rem">${JSON.stringify(data, null, 2)}</pre></div>`;
           }
         } else {
-          if (resultEl) {
+          if (row) {
+            markRowFulfilled(row, orderId, data);
+          } else if (resultEl === manualResultEl) {
+            manualResultEl.innerHTML = manualSuccessHtml(data);
+            refreshAfterFulfill();
+          } else if (resultEl) {
             resultEl.innerHTML = `<div class="row-msg ok">${successHtml(data)}</div>`;
           }
-          loadOrders();
         }
         return data;
       } catch (e) {
@@ -135,7 +267,9 @@
         }
         throw e;
       } finally {
-        buttons?.forEach((b) => (b.disabled = false));
+        if (!row || dryRun) {
+          buttons?.forEach((b) => (b.disabled = false));
+        }
       }
     }
 
@@ -214,7 +348,15 @@
       }
     }
 
-    document.getElementById('loadBtn').onclick = () => loadOrders();
+    document.getElementById('loadBtn').onclick = () => {
+      loadOrders();
+      loadGeneratedOrders();
+    };
+    document.getElementById('loadGeneratedBtn').onclick = () => loadGeneratedOrders();
+    generatedSearchEl.addEventListener('input', () => {
+      clearTimeout(generatedSearchTimer);
+      generatedSearchTimer = setTimeout(loadGeneratedOrders, 300);
+    });
 
     async function runFulfill(dryRun) {
       const orderId = document.getElementById('orderId').value.trim();
@@ -229,8 +371,14 @@
       try {
         show(statusEl, 'Processing all unfulfilled orders…', true);
         const data = await api('/api/fulfill/batch', { method: 'POST', body: '{}' });
-        show(statusEl, `Batch done: ${data.success} succeeded, ${data.failed} failed (of ${data.processed})`, data.failed === 0);
+        const okRows = (data.results || []).filter((r) => r.ok);
+        show(
+          statusEl,
+          `Batch done: ${data.success} succeeded, ${data.failed} failed (of ${data.processed})`,
+          data.failed === 0
+        );
         loadOrders();
+        loadGeneratedOrders();
       } catch (e) {
         show(statusEl, e.message, false);
       }
@@ -242,6 +390,7 @@
       secretEl.value = 'grosyhub-local-dev-secret';
       saveSecret();
     }
+    loadGeneratedOrders();
     loadOrders();
   </script>
 </body>
