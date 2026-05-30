@@ -105,6 +105,20 @@
 
   <div class="card">
     <h2 style="margin-top:0;font-size:1.1rem">Unfulfilled orders</h2>
+    <p class="sub" style="margin-top:0;margin-bottom:12px">
+      Only orders <strong>not yet fulfilled</strong> in Shopify (25 per page).
+      Already fulfilled orders (e.g. #1482) are hidden here — find them in <strong>Generated labels</strong> above or use Find order.
+    </p>
+    <div class="row" style="margin-bottom:12px;align-items:end">
+      <div style="flex:1;min-width:160px;max-width:280px">
+        <label for="findOrder">Find order #</label>
+        <input id="findOrder" placeholder="1482, 1496, 1497…" />
+      </div>
+      <div style="flex:0">
+        <button type="button" class="secondary" id="findOrderBtn">Find</button>
+      </div>
+    </div>
+    <div id="findOrderResult"></div>
     <div id="orders">Loading orders…</div>
   </div>
 
@@ -127,6 +141,8 @@
     const secretEl = document.getElementById('secret');
     const statusEl = document.getElementById('status');
     const ordersEl = document.getElementById('orders');
+    const findOrderEl = document.getElementById('findOrder');
+    const findOrderResultEl = document.getElementById('findOrderResult');
     const manualResultEl = document.getElementById('manualResult');
     const generatedListEl = document.getElementById('generatedList');
     const generatedSearchEl = document.getElementById('generatedSearch');
@@ -274,6 +290,34 @@
         ${successHtml(data)}
         <div class="actions" style="margin-top:10px">${printButtonsHtml(data)}</div>
       </div>`;
+    }
+
+    async function findOrderByNumber() {
+      const orderRef = findOrderEl.value.trim();
+      if (!orderRef) return;
+      findOrderResultEl.innerHTML = '<p style="color:#666">Looking up order…</p>';
+      try {
+        const data = await api('/api/orders/lookup?order=' + encodeURIComponent(orderRef));
+        const o = data.order;
+        let html = `<div class="msg ${data.inUnfulfilledList ? 'ok' : ''}" style="margin-bottom:12px">
+          <strong>${o.name}</strong> · ${o.customer || '—'} · ₹${o.total}<br>
+          <small>Fulfillment: <strong>${o.fulfillmentStatus || '—'}</strong> · Payment: ${o.financialStatus || '—'}</small><br>
+          ${data.reason}`;
+
+        if (data.awb) {
+          html += `<div class="actions" style="margin-top:10px">${printButtonsHtml(data)}</div>`;
+          html += `<div style="margin-top:6px;font-size:0.85rem">AWB <code>${data.awb}</code></div>`;
+          generatedSearchEl.value = String(o.name || orderRef).replace('#', '');
+          loadGeneratedOrders(1);
+        } else if (!data.inUnfulfilledList) {
+          html += `<div style="margin-top:8px;font-size:0.85rem">No Blue Dart AWB on this order yet.</div>`;
+        }
+
+        html += '</div>';
+        findOrderResultEl.innerHTML = html;
+      } catch (e) {
+        findOrderResultEl.innerHTML = `<div class="msg err">${e.message}</div>`;
+      }
     }
 
     async function api(path, options = {}) {
@@ -425,6 +469,11 @@
         ordersEl.innerHTML = '<p>Could not load orders. Check API secret and try Refresh.</p>';
       }
     }
+
+    document.getElementById('findOrderBtn').onclick = () => findOrderByNumber();
+    findOrderEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') findOrderByNumber();
+    });
 
     document.getElementById('loadBtn').onclick = () => {
       unfulfilledPage = 1;

@@ -12,6 +12,7 @@ import { labelsDir } from './paths.js';
 import { processOrder } from './fulfill.js';
 import { processAllUnfulfilled } from './batch.js';
 import { listGeneratedOrders } from './generated-orders.js';
+import { lookupOrder } from './order-lookup.js';
 import { verifyShopifyWebhook, parseWebhookOrder, shouldAutoFulfillOrder } from './webhook.js';
 import { buildLabelPrintHtml, buildPackingSlipHtml } from './packing-slip.js';
 
@@ -209,6 +210,18 @@ export function startServer() {
           search: url.searchParams.get('search') || '',
         });
         json(res, 200, data);
+        return;
+      }
+
+      if (req.method === 'GET' && url.pathname === '/api/orders/lookup') {
+        assertShopifyConfig();
+        const orderRef = url.searchParams.get('order') || url.searchParams.get('name');
+        if (!orderRef) {
+          json(res, 400, { error: 'order query param required (e.g. 1482 or #1482)' });
+          return;
+        }
+        const result = await lookupOrder(orderRef);
+        json(res, 200, result);
         return;
       }
 

@@ -124,9 +124,10 @@ export async function getOrder(orderIdOrName) {
   const data = await shopifyFetch(
     `/orders.json?name=${encodeURIComponent(orderName)}&status=any&limit=1`
   );
-  const order = data.orders?.[0];
-  if (!order) throw new Error(`Order not found: ${orderIdOrName}`);
-  return order;
+  const found = data.orders?.[0];
+  if (!found) throw new Error(`Order not found: ${orderIdOrName}`);
+  const full = await shopifyFetch(`/orders/${found.id}.json`);
+  return full.order;
 }
 
 export async function listUnfulfilledOrdersPage({ limit = 25, pageInfo = '' } = {}) {
