@@ -236,13 +236,14 @@ export function startServer() {
     }
   });
 
-  server.listen(config.port, () => {
-    console.log(`Grosyhub Blue Dart fulfillment: http://localhost:${config.port}`);
-    console.log('Shiprocket checkout is unchanged — this only runs after orders are placed.');
+  server.listen(config.port, '0.0.0.0', () => {
+    const local = `http://localhost:${config.port}`;
+    console.log(`Grosyhub Blue Dart fulfillment: ${local}`);
     if (config.publicUrl) {
-      console.log(`Public URL: ${config.publicUrl}`);
+      console.log(`Live dashboard: ${config.publicUrl}`);
       console.log(`Webhook: ${config.publicUrl}/webhooks/shopify/orders-paid`);
     }
+    console.log('Shiprocket checkout is unchanged — this only runs after orders are placed.');
     startAutoFulfillCron();
   });
 }

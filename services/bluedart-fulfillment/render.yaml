@@ -1,0 +1,18 @@
+# Render.com — Blue Dart fulfillment
+# Docs: https://render.com/docs/deploy-node-express-app
+
+services:
+  - type: web
+    name: grosyhub-bluedart
+    runtime: node
+    plan: starter
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 8787
+    # Add all secrets in Render Dashboard → Environment:
+    # API_SECRET, PUBLIC_URL, BLUEDART_*, SHOPIFY_*, AUTO_FULFILL_MODE

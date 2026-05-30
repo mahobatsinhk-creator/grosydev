@@ -68,7 +68,141 @@ Use `AUTO_FULFILL_MODE=all` for webhook + scheduled batch together.
 
 ---
 
-## Go live (deploy)
+## Go live with your domain
+
+Your **store** stays at `grosyhub.com`. This tool gets its **own URL**, for example:
+
+```text
+https://shipping.grosyhub.com
+```
+
+(or `https://grosyhub-bluedart.onrender.com` until you add a custom domain)
+
+---
+
+### Step 1 — Deploy to Render (recommended)
+
+1. Push `grosydev` repo to GitHub (if not already).
+2. Go to [render.com](https://render.com) → **New → Web Service** → connect repo.
+3. Settings:
+
+| Setting | Value |
+|---------|--------|
+| Root directory | `services/bluedart-fulfillment` |
+| Build command | `npm install` |
+| Start command | `npm start` |
+| Health check | `/health` |
+
+4. **Environment** — add all variables from your local `.env`:
+
+```env
+API_SECRET=use-a-long-random-production-secret
+PUBLIC_URL=https://YOUR-SERVICE.onrender.com
+BLUEDART_LOGIN_ID=PLN15697
+BLUEDART_PASSWORD=...
+BLUEDART_SHIPPING_LICENCE_KEY=...
+BLUEDART_TRACKING_LICENCE_KEY=...
+BLUEDART_CUSTOMER_CODE=PLN347970
+BLUEDART_SHIPPER_ADDRESS1=...
+BLUEDART_SHIPPER_MOBILE=...
+SHOPIFY_SHOP=igh9a1-1h.myshopify.com
+SHOPIFY_CLIENT_ID=8127b71d15f464a0ae898a6d00a6449b
+SHOPIFY_CLIENT_SECRET=...
+AUTO_FULFILL_MODE=manual
+```
+
+5. Click **Deploy** → copy your live URL (e.g. `https://grosyhub-bluedart.onrender.com`).
+
+**Alternative:** Railway.app — same steps, root `services/bluedart-fulfillment`.
+
+---
+
+### Step 2 — Custom domain (shipping.grosyhub.com)
+
+1. Render → your service → **Settings → Custom Domains** → add `shipping.grosyhub.com`.
+2. In your domain DNS panel add:
+
+| Type | Host | Points to |
+|------|------|-----------|
+| CNAME | shipping | `grosyhub-bluedart.onrender.com` |
+
+3. Wait for SSL (green check, ~5–30 min).
+4. Update env on Render:
+
+```env
+PUBLIC_URL=https://shipping.grosyhub.com
+```
+
+5. Redeploy / restart service.
+
+---
+
+### Step 3 — Use live dashboard daily
+
+Open:
+
+```text
+https://shipping.grosyhub.com
+```
+
+- Enter production `API_SECRET` once (browser saves it).
+- Orders auto-load.
+- **Create AWB & fulfill** on each row.
+
+**Print links on live server:**
+
+```text
+https://shipping.grosyhub.com/api/packing-slip/{AWB}
+https://shipping.grosyhub.com/api/print-label/{AWB}
+https://shipping.grosyhub.com/api/labels/{AWB}.pdf
+```
+
+---
+
+### Step 4 — Auto AWB on every paid order (optional)
+
+When ready for full automation:
+
+1. Env on Render:
+
+```env
+AUTO_FULFILL_MODE=webhook
+PUBLIC_URL=https://shipping.grosyhub.com
+```
+
+2. **Dev Dashboard** → Grosyhub Blue Dart Fulfillment → **Versions** → add webhook:
+
+| Topic | URL |
+|-------|-----|
+| `orders/paid` | `https://shipping.grosyhub.com/webhooks/shopify/orders-paid` |
+
+3. **Release** → reinstall on store if asked.
+
+---
+
+### What stays unchanged
+
+| System | Changes? |
+|--------|----------|
+| grosyhub.com storefront | No |
+| Shiprocket checkout | No |
+| Theme GitHub repo | No deploy needed for Blue Dart |
+| Blue Dart ops | New URL: shipping.grosyhub.com |
+
+---
+
+### Production checklist
+
+- [ ] Deployed on Render/Railway with HTTPS
+- [ ] Strong `API_SECRET` (not the local dev one)
+- [ ] `PUBLIC_URL` set to live HTTPS URL
+- [ ] Test: open live URL → fulfill one order
+- [ ] Custom domain CNAME (optional)
+- [ ] Webhook added (if auto mode)
+
+---
+
+## Go live (deploy) — quick reference
 
 ### Recommended: Railway or Render (free tier to start)
 

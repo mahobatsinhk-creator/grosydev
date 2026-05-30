@@ -11,6 +11,6 @@
     "test:auth": "node src/cli.js test-auth"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=18 <=24"
   }
 }
