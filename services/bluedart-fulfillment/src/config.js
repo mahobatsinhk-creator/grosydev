@@ -1,0 +1,100 @@
+import { readFileSync, existsSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const envPath = resolve(__dirname, '../.env');
+
+if (existsSync(envPath)) {
+  for (const line of readFileSync(envPath, 'utf8').split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eq = trimmed.indexOf('=');
+    if (eq === -1) continue;
+    const key = trimmed.slice(0, eq).trim();
+    const value = trimmed.slice(eq + 1).trim();
+    if (!process.env[key]) process.env[key] = value;
+  }
+}
+
+function required(name) {
+  const value = process.env[name]?.trim();
+  if (!value) throw new Error(`Missing required env: ${name}`);
+  return value;
+}
+
+function optional(name, fallback = '') {
+  return process.env[name]?.trim() || fallback;
+}
+
+/** Blue Dart portal may show "PLN347970" = area PLN + numeric customer code 347970 */
+export function normalizeBlueDartAccount(rawCode, rawArea = 'PLN') {
+  const input = String(rawCode || '').trim().toUpperCase();
+  let area = String(rawArea || 'PLN').trim().toUpperCase();
+  let customerCode = input;
+
+  const areaPrefixed = input.match(/^([A-Z]{3})(\d+)$/);
+  if (areaPrefixed) {
+    area = areaPrefixed[1];
+    customerCode = areaPrefixed[2];
+  } else if (/^\d+$/.test(input)) {
+    customerCode = input;
+  }
+
+  return { area, customerCode };
+}
+
+const bluedartAccount = normalizeBlueDartAccount(
+  optional('BLUEDART_CUSTOMER_CODE'),
+  optional('BLUEDART_ORIGIN_AREA', 'PLN')
+);
+
+export const config = {
+  port: Number(optional('PORT', '8787')),
+  apiSecret: optional('API_SECRET', ''),
+
+  bluedart: {
+    loginId: optional('BLUEDART_LOGIN_ID'),
+    password: optional('BLUEDART_PASSWORD'),
+    shippingLicenceKey: optional('BLUEDART_SHIPPING_LICENCE_KEY'),
+    trackingLicenceKey: optional('BLUEDART_TRACKING_LICENCE_KEY'),
+    version: optional('BLUEDART_API_VERSION', '1.3'),
+    customerCode: bluedartAccount.customerCode,
+    originArea: bluedartAccount.area,
+    productCode: optional('BLUEDART_PRODUCT_CODE', 'A'),
+    subProductCode: optional('BLUEDART_SUB_PRODUCT_CODE', 'P'),
+    shipper: {
+      name: optional('BLUEDART_SHIPPER_NAME', 'Grosyhub'),
+      address1: optional('BLUEDART_SHIPPER_ADDRESS1'),
+      address2: optional('BLUEDART_SHIPPER_ADDRESS2', 'Palanpur'),
+      address3: optional('BLUEDART_SHIPPER_ADDRESS3', 'Gujarat, India'),
+      pincode: optional('BLUEDART_SHIPPER_PINCODE', '385001'),
+      mobile: optional('BLUEDART_SHIPPER_MOBILE'),
+      email: optional('BLUEDART_SHIPPER_EMAIL', 'support@grosyhub.com'),
+    },
+    baseUrl: 'https://apigateway.bluedart.com/in/transportation',
+  },
+
+  shopify: {
+    shop: optional('SHOPIFY_SHOP', 'igh9a1-1h.myshopify.com'),
+    accessToken: optional('SHOPIFY_ACCESS_TOKEN'),
+    apiVersion: optional('SHOPIFY_API_VERSION', '2025-04'),
+  },
+};
+
+export function assertBlueDartAuthConfig() {
+  required('BLUEDART_LOGIN_ID');
+  required('BLUEDART_PASSWORD');
+  required('BLUEDART_SHIPPING_LICENCE_KEY');
+}
+
+export function assertBlueDartConfig() {
+  assertBlueDartAuthConfig();
+  required('BLUEDART_CUSTOMER_CODE');
+  required('BLUEDART_SHIPPER_ADDRESS1');
+  required('BLUEDART_SHIPPER_MOBILE');
+}
+
+export function assertShopifyConfig() {
+  required('SHOPIFY_ACCESS_TOKEN');
+}

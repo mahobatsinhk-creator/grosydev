@@ -1,0 +1,15 @@
+{
+  "name": "grosyhub-bluedart-fulfillment",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Post-checkout Blue Dart fulfillment for Grosyhub (Shiprocket checkout unchanged)",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "fulfill": "node src/cli.js fulfill",
+    "test:auth": "node src/cli.js test-auth"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

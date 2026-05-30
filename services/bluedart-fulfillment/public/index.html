@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grosyhub — Blue Dart Fulfillment</title>
+  <style>
+    :root {
+      font-family: system-ui, sans-serif;
+      color: #1a1a1a;
+      background: #f6f4f1;
+    }
+    body { max-width: 960px; margin: 0 auto; padding: 24px; }
+    h1 { font-size: 1.4rem; margin-bottom: 4px; }
+    .sub { color: #666; margin-bottom: 24px; font-size: 0.95rem; }
+    .card { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+    label { display: block; font-size: 0.85rem; margin-bottom: 6px; color: #444; }
+    input { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
+    .row > * { flex: 1; min-width: 180px; }
+    button { background: #b89774; color: #fff; border: 0; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+    button.secondary { background: #eee; color: #333; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #eee; }
+    .msg { padding: 12px; border-radius: 8px; margin-top: 12px; font-size: 0.9rem; }
+    .msg.ok { background: #e8f5e9; color: #1b5e20; }
+    .msg.err { background: #ffebee; color: #b71c1c; }
+    code { background: #f0ece6; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <h1>Blue Dart Fulfillment</h1>
+  <p class="sub">Post-checkout only — Shiprocket fast checkout stays untouched.</p>
+
+  <div class="card">
+    <div class="row">
+      <div>
+        <label for="secret">API secret (from .env API_SECRET)</label>
+        <input id="secret" type="password" placeholder="Required if API_SECRET is set" />
+      </div>
+      <div style="flex:0">
+        <button type="button" id="loadBtn">Load unfulfilled orders</button>
+      </div>
+    </div>
+    <div id="status"></div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0;font-size:1.1rem">Unfulfilled orders</h2>
+    <div id="orders">Click “Load unfulfilled orders”.</div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0;font-size:1.1rem">Manual fulfill</h2>
+    <div class="row">
+      <div>
+        <label for="orderId">Order name or ID (e.g. 1001)</label>
+        <input id="orderId" placeholder="1001" />
+      </div>
+      <div style="flex:0;display:flex;gap:8px">
+        <button type="button" class="secondary" id="dryRunBtn">Preview</button>
+        <button type="button" id="fulfillBtn">Create AWB &amp; fulfill</button>
+      </div>
+    </div>
+    <div id="manualResult"></div>
+  </div>
+
+  <script>
+    const secretEl = document.getElementById('secret');
+    const statusEl = document.getElementById('status');
+    const ordersEl = document.getElementById('orders');
+    const manualResultEl = document.getElementById('manualResult');
+
+    function headers() {
+      const h = { 'Content-Type': 'application/json' };
+      if (secretEl.value.trim()) h['X-Api-Secret'] = secretEl.value.trim();
+      return h;
+    }
+
+    function show(el, text, ok) {
+      el.innerHTML = `<div class="msg ${ok ? 'ok' : 'err'}">${text}</div>`;
+    }
+
+    async function api(path, options = {}) {
+      const res = await fetch(path, { ...options, headers: { ...headers(), ...options.headers } });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || res.statusText);
+      return data;
+    }
+
+    document.getElementById('loadBtn').onclick = async () => {
+      try {
+        statusEl.textContent = 'Loading…';
+        const data = await api('/api/orders/unfulfilled');
+        if (!data.orders.length) {
+          ordersEl.innerHTML = '<p>No unfulfilled orders.</p>';
+        } else {
+          ordersEl.innerHTML = `<table>
+            <thead><tr><th>Order</th><th>Customer</th><th>Pincode</th><th>Total</th><th></th></tr></thead>
+            <tbody>${data.orders.map(o => `
+              <tr>
+                <td><strong>${o.name}</strong></td>
+                <td>${o.customer || '—'}</td>
+                <td>${o.pincode || '—'}</td>
+                <td>₹${o.total}</td>
+                <td><button type="button" data-order="${o.name.replace('#','')}">Ship</button></td>
+              </tr>`).join('')}</tbody>
+          </table>`;
+          ordersEl.querySelectorAll('button[data-order]').forEach(btn => {
+            btn.onclick = () => {
+              document.getElementById('orderId').value = btn.dataset.order;
+              document.getElementById('fulfillBtn').click();
+            };
+          });
+        }
+        statusEl.textContent = '';
+      } catch (e) {
+        show(statusEl, e.message, false);
+      }
+    };
+
+    async function runFulfill(dryRun) {
+      const orderId = document.getElementById('orderId').value.trim();
+      if (!orderId) return show(manualResultEl, 'Enter an order name or ID.', false);
+      try {
+        show(manualResultEl, dryRun ? 'Building preview…' : 'Creating Blue Dart AWB…', true);
+        const data = await api('/api/fulfill', {
+          method: 'POST',
+          body: JSON.stringify({ orderId, dryRun }),
+        });
+        if (dryRun) {
+          show(manualResultEl, `<pre style="white-space:pre-wrap;margin:0">${JSON.stringify(data, null, 2)}</pre>`, true);
+        } else {
+          show(manualResultEl, `Done — AWB <code>${data.awb}</code>. <a href="${data.trackingUrl}" target="_blank" rel="noopener">Track</a>`, true);
+          document.getElementById('loadBtn').click();
+        }
+      } catch (e) {
+        show(manualResultEl, e.message, false);
+      }
+    }
+
+    document.getElementById('dryRunBtn').onclick = () => runFulfill(true);
+    document.getElementById('fulfillBtn').onclick = () => runFulfill(false);
+  </script>
+</body>
+</html>
