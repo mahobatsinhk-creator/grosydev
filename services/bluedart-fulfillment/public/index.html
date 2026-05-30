@@ -90,7 +90,7 @@
     <div class="row" style="align-items:center;margin-bottom:12px">
       <div style="flex:2">
         <h2 style="margin:0;font-size:1.1rem">Generated labels — all orders</h2>
-        <p class="sub" style="margin:4px 0 0">Click order number to open packing slip · print label anytime</p>
+        <p class="sub" style="margin:4px 0 0">4×6 packing slip only — click order # to open &amp; print (not the Blue Dart courier PDF)</p>
       </div>
       <div style="flex:1;min-width:140px">
         <label for="generatedSearch">Search order / AWB</label>
@@ -165,23 +165,24 @@
 
     function successHtml(data) {
       const slip = data.packingSlipUrl || '/api/packing-slip/' + data.awb;
-      const label = data.labelPrintUrl || '/api/print-label/' + data.awb;
       return `AWB <code>${data.awb}</code> created —
-        <a href="${slip}" target="_blank" rel="noopener"><strong>Print packing slip</strong></a> ·
-        <a href="${label}" target="_blank" rel="noopener"><strong>Print label</strong></a> ·
+        <a href="${slip}" target="_blank" rel="noopener"><strong>Print packing slip (4×6)</strong></a> ·
         <a href="${data.trackingUrl}" target="_blank" rel="noopener">Track</a>`;
     }
 
     function printButtonsHtml(data, compact) {
-      const slip = data.packingSlipUrl || '/api/packing-slip/' + data.awb;
-      const label = data.labelPrintUrl || '/api/print-label/' + data.awb;
+      const slip = data.packingSlipUrl || packingSlipUrl(data.awb, data.orderName);
       if (compact) {
-        return `<a href="${slip}" target="_blank" rel="noopener">Packing slip</a> · <a href="${label}" target="_blank" rel="noopener">Print label</a>`;
+        return `<a href="${slip}" target="_blank" rel="noopener">Packing slip (4×6)</a>`;
       }
       return `
-        <a href="${slip}" target="_blank" rel="noopener"><button type="button" class="btn-print">Packing slip</button></a>
-        <a href="${label}" target="_blank" rel="noopener"><button type="button" class="btn-label">Print label</button></a>
+        <a href="${slip}" target="_blank" rel="noopener"><button type="button" class="btn-print">Packing slip (4×6)</button></a>
         <a href="${data.trackingUrl}" target="_blank" rel="noopener"><button type="button" class="secondary">Track</button></a>`;
+    }
+
+    function packingSlipUrl(awb, orderName) {
+      const q = orderName ? `?order=${encodeURIComponent(orderName)}` : '';
+      return `/api/packing-slip/${awb}${q}`;
     }
 
     function pagerHtml(pagination, page, totalLabel) {
@@ -227,7 +228,7 @@
           <th>Order</th><th>Customer</th><th>AWB</th><th>Created</th><th>Print</th>
         </tr></thead>
         <tbody>${data.orders.map((o) => {
-          const slip = o.packingSlipUrl || '/api/packing-slip/' + o.awb;
+          const slip = o.packingSlipUrl || packingSlipUrl(o.awb, o.orderName);
           const created = o.createdAt ? new Date(o.createdAt).toLocaleString() : '—';
           const name = o.orderName && o.orderName !== '—' ? o.orderName : o.awb;
           return `

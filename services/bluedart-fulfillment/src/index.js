@@ -11,10 +11,10 @@ import { summarizeOrder } from './map-order.js';
 import { labelsDir } from './paths.js';
 import { processOrder } from './fulfill.js';
 import { processAllUnfulfilled } from './batch.js';
-import { listGeneratedOrders } from './generated-orders.js';
+import { listGeneratedOrders, findGeneratedByAwb } from './generated-orders.js';
 import { lookupOrder } from './order-lookup.js';
 import { verifyShopifyWebhook, parseWebhookOrder, shouldAutoFulfillOrder } from './webhook.js';
-import { buildLabelPrintHtml, buildPackingSlipHtml } from './packing-slip.js';
+import { buildLabelPrintHtml, buildPackingSlipHtml, savePackingSlip } from './packing-slip.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 mkdirSync(labelsDir, { recursive: true });
@@ -146,17 +146,31 @@ export function startServer() {
         return;
       }
 
-      if (req.method === 'GET' && url.pathname.startsWith('/api/packing-slip/')) {
-        const awb = url.pathname.replace('/api/packing-slip/', '').replace(/\.html$/i, '');
+      if (
+        req.method === 'GET' &&
+        (url.pathname.startsWith('/api/packing-slip/') || url.pathname.startsWith('/api/packing_slip/'))
+      ) {
+        const awb = url.pathname
+          .replace('/api/packing-slip/', '')
+          .replace('/api/packing_slip/', '')
+          .replace(/\.html$/i, '');
         if (!/^\d+$/.test(awb)) {
           json(res, 400, { error: 'Invalid AWB' });
           return;
         }
 
-        const orderRef = url.searchParams.get('order');
+        let orderRef = url.searchParams.get('order');
+        if (!orderRef) {
+          const entry = findGeneratedByAwb(awb);
+          if (entry?.orderName && entry.orderName !== '—') {
+            orderRef = entry.orderName;
+          }
+        }
+
         if (orderRef) {
           assertShopifyConfig();
           const order = await getOrder(orderRef);
+          savePackingSlip(order, awb);
           res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
           res.end(buildPackingSlipHtml(order, awb));
           return;

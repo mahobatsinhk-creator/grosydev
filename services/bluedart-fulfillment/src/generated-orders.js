@@ -42,6 +42,7 @@ function parseOrderNameFromSlip(awb) {
     const html = readFileSync(slipPath, 'utf8');
     const m =
       html.match(/Order #\s*(\d+)/i) ||
+      html.match(/Inv(?:oice No\.)?:\s*GH-(\d+)/i) ||
       html.match(/Invoice No\.:\s*GH-(\d+)/i) ||
       html.match(/<strong>#(\d+)<\/strong>/);
     return m ? `#${m[1]}` : '';
@@ -123,6 +124,10 @@ export function recordGeneratedOrder({
   );
   writeManifest(manifest);
   return entry;
+}
+
+export function findGeneratedByAwb(awb) {
+  return readManifest().orders.find((o) => String(o.awb) === String(awb)) || null;
 }
 
 export function listGeneratedOrders({ limit = 25, page = 1, search = '' } = {}) {
