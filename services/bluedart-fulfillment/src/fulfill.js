@@ -34,7 +34,7 @@ export async function processOrder(orderIdOrName, { notifyCustomer = true, dryRu
     saveLabelPrintPage(waybill.awb);
   }
 
-  savePackingSlip(order, waybill.awb);
+  savePackingSlip(order, waybill.awb, waybill.raw);
 
   const fulfillment = await fulfillOrderWithAwb(order, waybill.awb, { notifyCustomer });
 
@@ -44,7 +44,7 @@ export async function processOrder(orderIdOrName, { notifyCustomer = true, dryRu
     trackingUrl: trackingUrl(waybill.awb),
     fulfillmentId: fulfillment.id,
     labelSaved: Boolean(waybill.pdfBase64),
-    packingSlipUrl: `/api/packing-slip/${waybill.awb}`,
+    packingSlipUrl: `/api/packing-slip/${waybill.awb}?order=${encodeURIComponent(order.name)}`,
     labelPrintUrl: `/api/print-label/${waybill.awb}`,
   };
 }

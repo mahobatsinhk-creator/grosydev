@@ -6,13 +6,13 @@ import { readFileSync, existsSync } from 'node:fs';
 
 import { config, assertBlueDartConfig, assertBlueDartAuthConfig, assertShopifyConfig } from './config.js';
 import { getShippingJwt, checkPincodeServiceability } from './bluedart.js';
-import { listUnfulfilledOrders, testShopifyConnection } from './shopify.js';
+import { listUnfulfilledOrders, testShopifyConnection, getOrder } from './shopify.js';
 import { summarizeOrder } from './map-order.js';
 import { labelsDir } from './paths.js';
 import { processOrder } from './fulfill.js';
 import { processAllUnfulfilled } from './batch.js';
 import { verifyShopifyWebhook, parseWebhookOrder, shouldAutoFulfillOrder } from './webhook.js';
-import { buildLabelPrintHtml } from './packing-slip.js';
+import { buildLabelPrintHtml, buildPackingSlipHtml } from './packing-slip.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 mkdirSync(labelsDir, { recursive: true });
@@ -150,6 +150,16 @@ export function startServer() {
           json(res, 400, { error: 'Invalid AWB' });
           return;
         }
+
+        const orderRef = url.searchParams.get('order');
+        if (orderRef) {
+          assertShopifyConfig();
+          const order = await getOrder(orderRef);
+          res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+          res.end(buildPackingSlipHtml(order, awb));
+          return;
+        }
+
         const slipPath = resolve(labelsDir, `${awb}-packing-slip.html`);
         if (existsSync(slipPath)) {
           serveStatic(res, slipPath, 'text/html; charset=utf-8');

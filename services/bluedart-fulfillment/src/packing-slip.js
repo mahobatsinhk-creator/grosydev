@@ -12,12 +12,6 @@ function esc(s) {
     .replace(/"/g, '&quot;');
 }
 
-function maskPhone(phone) {
-  const d = String(phone || '').replace(/\D/g, '');
-  if (d.length < 4) return d || '—';
-  return `${'*'.repeat(Math.max(0, d.length - 4))}${d.slice(-4)}`;
-}
-
 function paymentLabel(order) {
   return isCodOrder(order) ? 'COD' : 'Prepaid';
 }
@@ -27,34 +21,104 @@ function codAmount(order) {
   return Number(order.total_price || 0).toFixed(2);
 }
 
-/** 4×8 inch portrait — matches common courier bag slip (reference layout) */
-export function buildPackingSlipHtml(order, awb) {
+function orderWeightKg(order) {
+  const grams = (order.line_items || []).reduce(
+    (sum, item) => sum + (item.grams || 200) * (item.quantity || 1),
+    0
+  );
+  return Math.max(0.2, grams / 1000).toFixed(2);
+}
+
+function invoiceNo(order) {
+  const num = String(order.name || order.id || '').replace('#', '');
+  return `${config.packingSlip.invoicePrefix}-${num}`;
+}
+
+function invoiceDate(order) {
+  const raw = order.created_at || order.processed_at || '';
+  return raw.slice(0, 10) || new Date().toISOString().slice(0, 10);
+}
+
+function lineIgst(item) {
+  const tax = (item.tax_lines || []).reduce((sum, t) => sum + Number(t.price || 0), 0);
+  return tax > 0 ? tax.toFixed(2) : '';
+}
+
+function routingCode(waybillMeta = {}) {
+  const loc = waybillMeta.DestinationLocation || waybillMeta.destinationLocation || '';
+  const area =
+    waybillMeta.DestinationArea ||
+    waybillMeta.DestinationAreaCode ||
+    waybillMeta.ClusterCode ||
+    '';
+  if (loc && area) return `${loc}/${area}`;
+  return loc || area || 'N/A';
+}
+
+function clusterCode(waybillMeta = {}) {
+  return (
+    waybillMeta.ClusterCode ||
+    waybillMeta.DestinationArea ||
+    waybillMeta.DestinationAreaCode ||
+    'N/A'
+  );
+}
+
+function kvRow(label, value, { boldValue = false } = {}) {
+  const valueHtml = boldValue ? `<strong>${value}</strong>` : value;
+  return `<tr><td class="kv-label">${label}</td><td class="kv-value">${valueHtml}</td></tr>`;
+}
+
+/** 4×8 inch portrait — Sunvibe / courier bag reference layout */
+export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
   const ship = order.shipping_address || {};
-  const bill = order.billing_address || ship;
-  const { bluedart } = config;
-  const weightKg = Math.max(
-    0.2,
-    (order.line_items || []).reduce((s, i) => s + (i.grams || 200) * (i.quantity || 1), 0) / 1000
-  ).toFixed(2);
+  const { bluedart, packingSlip } = config;
+  const weightKg = orderWeightKg(order);
+  const isCod = isCodOrder(order);
 
   const rows = (order.line_items || [])
-    .map(
-      (item) => `
+    .map((item) => {
+      const qty = item.quantity || 1;
+      const unit = Number(item.price || 0);
+      const taxable = unit * qty;
+      const sku = item.sku || 'N/A';
+      const hsn = item.harmonized_system_code || '—';
+      return `
       <tr>
-        <td>${esc(item.title)}<br><small>SKU: ${esc(item.sku || 'N/A')}</small></td>
-        <td>—</td>
-        <td>${item.quantity}</td>
-        <td>${Number(item.price).toFixed(2)}</td>
-        <td>${(Number(item.price) * item.quantity).toFixed(2)}</td>
-        <td>${(Number(item.price) * item.quantity).toFixed(2)}</td>
-      </tr>`
-    )
+        <td>${esc(item.title)} | SKU: ${esc(sku)}</td>
+        <td>${esc(hsn)}</td>
+        <td>${qty}</td>
+        <td>${unit.toFixed(2)}</td>
+        <td>${taxable.toFixed(2)}</td>
+        <td>${lineIgst(item)}</td>
+        <td>${taxable.toFixed(2)}</td>
+      </tr>`;
+    })
     .join('');
 
   const shipToName = ship.name || `${ship.first_name || ''} ${ship.last_name || ''}`.trim();
-  const shipToAddr = [ship.address1, ship.address2, ship.city, ship.province, ship.zip, ship.country]
+  const shipToAddr = [
+    ship.address1,
+    ship.address2,
+    ship.city,
+    ship.province,
+    ship.country || 'India',
+    ship.zip,
+  ]
     .filter(Boolean)
     .join(', ');
+
+  const returnAddr = [
+    bluedart.shipper.address1,
+    bluedart.shipper.address2,
+    bluedart.shipper.address3,
+    bluedart.shipper.pincode,
+  ]
+    .filter(Boolean)
+    .join(', ');
+
+  const orderNum = String(order.name || '').replace('#', '');
+  const serviceFooter = isCod ? `${packingSlip.serviceLabel} · COD` : packingSlip.serviceLabel;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -62,34 +126,97 @@ export function buildPackingSlipHtml(order, awb) {
   <meta charset="UTF-8" />
   <title>Packing slip ${esc(order.name)} — ${esc(awb)}</title>
   <style>
-    @page { size: 4in 8in; margin: 0.08in; }
+    @page { size: 4in 8in; margin: 0.06in; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      width: 3.84in;
+      width: 3.88in;
       font-family: Arial, Helvetica, sans-serif;
-      font-size: 7.5pt;
-      line-height: 1.25;
+      font-size: 7pt;
+      line-height: 1.22;
       color: #000;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
-    .block { border: 1px solid #000; padding: 4px 5px; }
-    .row { display: flex; border: 1px solid #000; border-top: none; }
-    .row:first-of-type { border-top: 1px solid #000; }
-    .col { flex: 1; padding: 4px 5px; border-right: 1px solid #000; }
-    .col:last-child { border-right: none; }
-    .head { font-weight: 700; font-size: 8pt; margin-bottom: 2px; }
-    .logo { font-size: 14pt; font-weight: 700; text-align: center; letter-spacing: 1px; }
-    .meta td, .meta th { border: 1px solid #000; padding: 2px 3px; font-size: 7pt; }
-    .meta { width: 100%; border-collapse: collapse; margin-top: 2px; }
-    .barcode-wrap { text-align: center; padding: 4px 0; }
-    .barcode-wrap svg { max-width: 100%; height: 36px; }
-    .service {
-      text-align: center; font-weight: 700; font-size: 9pt;
-      padding: 5px; border: 1px solid #000; border-top: none;
-      background: #e8f5e9;
+    .sheet { border: 1px solid #000; }
+    .row { display: flex; border-bottom: 1px solid #000; }
+    .row:last-child { border-bottom: none; }
+    .cell {
+      padding: 4px 5px;
+      border-right: 1px solid #000;
+      vertical-align: top;
     }
-    .legal { font-size: 6pt; padding: 4px 5px; border: 1px solid #000; border-top: none; }
+    .cell:last-child { border-right: none; }
+    .cell-half { width: 50%; }
+    .cell-wide { width: 58%; }
+    .cell-narrow { width: 42%; }
+    .section-title {
+      font-weight: 700;
+      font-size: 7.5pt;
+      margin-bottom: 2px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      min-height: 52px;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 18pt;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+    }
+    .kv { width: 100%; border-collapse: collapse; }
+    .kv td { padding: 1px 0; vertical-align: top; font-size: 7pt; }
+    .kv-label { width: 38%; padding-right: 4px; white-space: nowrap; }
+    .kv-value { width: 62%; }
+    .carrier-head {
+      text-align: center;
+      font-weight: 700;
+      font-size: 10pt;
+      letter-spacing: 0.5px;
+      margin-bottom: 2px;
+    }
+    .barcode-wrap { text-align: center; padding: 2px 0 1px; }
+    .barcode-wrap svg { max-width: 100%; height: 32px; }
+    .awb-no {
+      text-align: center;
+      font-weight: 700;
+      font-size: 9pt;
+      letter-spacing: 0.3px;
+    }
+    .routing {
+      text-align: center;
+      font-size: 7pt;
+      margin-top: 2px;
+    }
+    .items {
+      width: 100%;
+      border-collapse: collapse;
+      border-top: 1px solid #000;
+      font-size: 6.5pt;
+    }
+    .items th, .items td {
+      border: 1px solid #000;
+      padding: 2px 3px;
+      text-align: left;
+      vertical-align: top;
+    }
+    .items th { font-weight: 700; background: #fff; }
+    .legal {
+      border-top: 1px solid #000;
+      padding: 4px 5px;
+      font-size: 6pt;
+      line-height: 1.25;
+    }
+    .service-band {
+      border-top: 1px solid #000;
+      text-align: center;
+      font-weight: 700;
+      font-size: 9pt;
+      letter-spacing: 0.4px;
+      padding: 5px 4px;
+      background: #d9f0d9;
+    }
     @media screen {
       body { margin: 12px auto; box-shadow: 0 0 8px rgba(0,0,0,.15); }
       .no-print { display: block; text-align: center; margin: 12px; }
@@ -103,72 +230,81 @@ export function buildPackingSlipHtml(order, awb) {
 <body>
   <div class="no-print">
     <button onclick="window.print()" style="padding:8px 16px;font-size:14px;cursor:pointer">Print packing slip (4×8 inch)</button>
-    <p style="margin-top:8px;color:#666;font-size:12px">Printer: set scale <strong>100%</strong>, paper <strong>4×8 in</strong> or custom 101×203 mm</p>
+    <p style="margin-top:8px;color:#666;font-size:12px">Printer: scale <strong>100%</strong>, paper <strong>4×8 in</strong> (101×203 mm)</p>
   </div>
 
-  <div class="row">
-    <div class="col" style="flex:1.2">
-      <div class="head">Ship To</div>
-      <strong>${esc(shipToName)}</strong><br>
-      ${esc(shipToAddr)}<br>
-      Pincode: ${esc(ship.zip)}
+  <div class="sheet">
+    <div class="row">
+      <div class="cell cell-wide">
+        <div class="section-title">Ship To</div>
+        <strong>${esc(shipToName)}</strong><br>
+        ${esc(shipToAddr)}
+      </div>
+      <div class="cell cell-narrow">
+        <div class="brand">${esc(packingSlip.logoText)}</div>
+      </div>
     </div>
-    <div class="col" style="flex:0.5;display:flex;align-items:center;justify-content:center">
-      <div class="logo">GROSYHUB</div>
-    </div>
-  </div>
 
-  <div class="row">
-    <div class="col">
-      <table class="meta">
-        <tr><td><strong>Weight</strong></td><td>${weightKg} kg</td></tr>
-        <tr><td><strong>Payment</strong></td><td>${paymentLabel(order)}</td></tr>
-        <tr><td><strong>COD Amount</strong></td><td><strong>${codAmount(order)} INR</strong></td></tr>
-        <tr><td><strong>Order</strong></td><td>${esc(order.name)}</td></tr>
-      </table>
+    <div class="row">
+      <div class="cell cell-half">
+        <table class="kv">
+          ${kvRow('Dimensions', esc(packingSlip.dimensions))}
+          ${kvRow('Payment', paymentLabel(order))}
+          ${kvRow('COD Amount', `${codAmount(order)} INR`, { boldValue: isCod })}
+          ${kvRow('Weight', `${weightKg} kg`)}
+          ${kvRow('eWaybill No.', 'N/A')}
+          ${kvRow('Cluster Code', esc(clusterCode(waybillMeta)))}
+        </table>
+      </div>
+      <div class="cell cell-half">
+        <div class="carrier-head">BLUEDART</div>
+        <div class="barcode-wrap"><svg id="awb-barcode"></svg></div>
+        <div class="awb-no">${esc(awb)}</div>
+        <div class="routing">Routing Code: ${esc(routingCode(waybillMeta))}</div>
+      </div>
     </div>
-    <div class="col">
-      <div class="head" style="text-align:center">BLUEDART</div>
-      <div class="barcode-wrap"><svg id="awb-barcode"></svg></div>
-      <div style="text-align:center;font-weight:700;font-size:9pt">${esc(awb)}</div>
-      <div style="text-align:center;font-size:7pt;margin-top:2px">DART APEX · Prepaid</div>
-    </div>
-  </div>
 
-  <div class="row">
-    <div class="col">
-      <div class="head">Shipped By (If undelivered, return to)</div>
-      <strong>${esc(bluedart.shipper.name)}</strong><br>
-      ${esc(bluedart.shipper.address1)}, ${esc(bluedart.shipper.address2)}<br>
-      ${esc(bluedart.shipper.address3)} · ${esc(bluedart.shipper.pincode)}<br>
-      Tel: ${esc(bluedart.shipper.mobile)}
+    <div class="row">
+      <div class="cell cell-half">
+        <div class="section-title">Shipped By (If undelivered, return to)</div>
+        <strong>${esc(bluedart.shipper.name)}</strong><br>
+        ${esc(returnAddr)}<br>
+        ${bluedart.shipper.gstin ? `GSTIN: ${esc(bluedart.shipper.gstin)}<br>` : ''}
+        Phone No.: ${esc(bluedart.shipper.mobile)}
+      </div>
+      <div class="cell cell-half">
+        <div class="section-title">Order # ${esc(orderNum)}</div>
+        <div class="barcode-wrap"><svg id="order-barcode"></svg></div>
+        <div style="font-size:7pt;margin-top:2px">Invoice No.: ${esc(invoiceNo(order))}</div>
+        <div style="font-size:7pt">Invoice Date: ${esc(invoiceDate(order))}</div>
+      </div>
     </div>
-    <div class="col">
-      <div class="head">Order #</div>
-      <div class="barcode-wrap"><svg id="order-barcode"></svg></div>
-      <div style="text-align:center">${esc(order.name)}</div>
-      <div style="margin-top:4px;font-size:7pt">Date: ${esc((order.created_at || '').slice(0, 10))}</div>
+
+    <table class="items">
+      <thead>
+        <tr>
+          <th>Product Name &amp; SKU</th>
+          <th>HSN</th>
+          <th>Qty</th>
+          <th>Unit Price</th>
+          <th>Taxable Value</th>
+          <th>IGST</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>${rows || '<tr><td colspan="7">—</td></tr>'}</tbody>
+    </table>
+
+    <div class="legal">
+      All disputes are subject to Gujarat jurisdiction only. Goods once sold will only be taken back or exchanged as per the store's exchange/return policy.
     </div>
+    <div class="service-band">${esc(serviceFooter)}</div>
   </div>
-
-  <table class="meta" style="border-top:none">
-    <thead>
-      <tr>
-        <th>Product &amp; SKU</th><th>HSN</th><th>Qty</th><th>Unit</th><th>Taxable</th><th>Total</th>
-      </tr>
-    </thead>
-    <tbody>${rows || '<tr><td colspan="6">—</td></tr>'}</tbody>
-  </table>
-
-  <div class="legal">
-    All disputes subject to Gujarat jurisdiction. Goods once sold will only be taken back or exchanged as per store return policy.
-  </div>
-  <div class="service">DART APEX · Blue Dart Express</div>
 
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script>
   <script>
-    JsBarcode("#awb-barcode", ${JSON.stringify(String(awb))}, { format: "CODE128", width: 1.2, height: 34, displayValue: false, margin: 0 });
-    JsBarcode("#order-barcode", ${JSON.stringify(String(order.name || '').replace('#', ''))}, { format: "CODE128", width: 1.2, height: 28, displayValue: false, margin: 0 });
+    JsBarcode("#awb-barcode", ${JSON.stringify(String(awb))}, { format: "CODE128", width: 1.15, height: 30, displayValue: false, margin: 0 });
+    JsBarcode("#order-barcode", ${JSON.stringify(orderNum)}, { format: "CODE128", width: 1.15, height: 26, displayValue: false, margin: 0 });
   <\/script>
 </body>
 </html>`;
@@ -209,8 +345,8 @@ export function buildLabelPrintHtml(awb) {
 </html>`;
 }
 
-export function savePackingSlip(order, awb) {
-  const html = buildPackingSlipHtml(order, awb);
+export function savePackingSlip(order, awb, waybillMeta = {}) {
+  const html = buildPackingSlipHtml(order, awb, waybillMeta);
   const slipPath = resolve(labelsDir, `${awb}-packing-slip.html`);
   writeFileSync(slipPath, html, 'utf8');
   return slipPath;

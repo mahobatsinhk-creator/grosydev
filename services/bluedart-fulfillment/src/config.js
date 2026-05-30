@@ -101,8 +101,16 @@ export const config = {
       pincode: optional('BLUEDART_SHIPPER_PINCODE', '385001'),
       mobile: optional('BLUEDART_SHIPPER_MOBILE'),
       email: optional('BLUEDART_SHIPPER_EMAIL', 'support@grosyhub.com'),
+      gstin: optional('BLUEDART_SHIPPER_GSTIN', ''),
     },
     baseUrl: 'https://apigateway.bluedart.com/in/transportation',
+  },
+
+  packingSlip: {
+    logoText: optional('PACKING_SLIP_LOGO', optional('BLUEDART_SHIPPER_NAME', 'Grosyhub')),
+    serviceLabel: optional('PACKING_SLIP_SERVICE_LABEL', 'DART APEX'),
+    dimensions: optional('PACKING_SLIP_DIMENSIONS', '10.00 * 10.00 * 10.00(cm)'),
+    invoicePrefix: optional('PACKING_SLIP_INVOICE_PREFIX', 'GH'),
   },
 
   shopify: {
