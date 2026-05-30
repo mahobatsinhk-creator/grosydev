@@ -27,6 +27,19 @@ function optional(name, fallback = '') {
   return process.env[name]?.trim() || fallback;
 }
 
+function envFirst(...names) {
+  for (const name of names) {
+    const value = process.env[name]?.trim();
+    if (value) return value;
+  }
+  return '';
+}
+
+function optionalAny(names, fallback = '') {
+  const value = envFirst(...names);
+  return value || fallback;
+}
+
 /** Blue Dart portal may show "PLN347970" = area PLN + numeric customer code 347970 */
 export function normalizeBlueDartAccount(rawCode, rawArea = 'PLN') {
   const input = String(rawCode || '').trim().toUpperCase();
@@ -64,8 +77,14 @@ export const config = {
   bluedart: {
     loginId: optional('BLUEDART_LOGIN_ID'),
     password: optional('BLUEDART_PASSWORD'),
-    shippingLicenceKey: optional('BLUEDART_SHIPPING_LICENCE_KEY'),
-    trackingLicenceKey: optional('BLUEDART_TRACKING_LICENCE_KEY'),
+    shippingLicenceKey: optionalAny([
+      'BLUEDART_SHIPPING_LICENCE_KEY',
+      'BLUEDART_SHIPPING_LICENSE_KEY',
+    ]),
+    trackingLicenceKey: optionalAny([
+      'BLUEDART_TRACKING_LICENCE_KEY',
+      'BLUEDART_TRACKING_LICENSE_KEY',
+    ]),
     version: optional('BLUEDART_API_VERSION', '1.3'),
     customerCode: bluedartAccount.customerCode,
     originArea: bluedartAccount.area,
