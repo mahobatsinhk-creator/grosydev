@@ -85,14 +85,20 @@ async function shopifyFetch(path, options = {}) {
 }
 
 export async function getOrder(orderIdOrName) {
-  const id = String(orderIdOrName).replace(/^#/, '').trim();
+  const raw = String(orderIdOrName).trim();
+  const withoutHash = raw.replace(/^#/, '');
 
-  if (/^\d+$/.test(id)) {
-    const data = await shopifyFetch(`/orders/${id}.json`);
+  // Long numeric values are Shopify internal IDs (e.g. 5678901234567)
+  if (/^\d{10,}$/.test(withoutHash)) {
+    const data = await shopifyFetch(`/orders/${withoutHash}.json`);
     return data.order;
   }
 
-  const data = await shopifyFetch(`/orders.json?name=${encodeURIComponent(id)}&status=any&limit=1`);
+  // Short numbers like 1458 are order names (#1458), not internal IDs
+  const orderName = raw.startsWith('#') ? raw : `#${withoutHash}`;
+  const data = await shopifyFetch(
+    `/orders.json?name=${encodeURIComponent(orderName)}&status=any&limit=1`
+  );
   const order = data.orders?.[0];
   if (!order) throw new Error(`Order not found: ${orderIdOrName}`);
   return order;

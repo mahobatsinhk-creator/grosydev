@@ -55,8 +55,8 @@
     <h2 style="margin-top:0;font-size:1.1rem">Manual fulfill</h2>
     <div class="row">
       <div>
-        <label for="orderId">Order name or ID (e.g. 1001)</label>
-        <input id="orderId" placeholder="1001" />
+        <label for="orderId">Order name or ID (e.g. 1458 or #1458)</label>
+        <input id="orderId" placeholder="1458" />
       </div>
       <div style="flex:0;display:flex;gap:8px">
         <button type="button" class="secondary" id="dryRunBtn">Preview</button>
@@ -104,12 +104,12 @@
                 <td>${o.customer || '—'}</td>
                 <td>${o.pincode || '—'}</td>
                 <td>₹${o.total}</td>
-                <td><button type="button" data-order="${o.name.replace('#','')}">Ship</button></td>
+                <td><button type="button" data-order-id="${o.id}" data-order-name="${o.name}">Ship</button></td>
               </tr>`).join('')}</tbody>
           </table>`;
-          ordersEl.querySelectorAll('button[data-order]').forEach(btn => {
+          ordersEl.querySelectorAll('button[data-order-id]').forEach(btn => {
             btn.onclick = () => {
-              document.getElementById('orderId').value = btn.dataset.order;
+              document.getElementById('orderId').value = btn.dataset.orderId;
               document.getElementById('fulfillBtn').click();
             };
           });
