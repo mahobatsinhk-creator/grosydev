@@ -19,6 +19,36 @@ function splitAddress(address) {
   };
 }
 
+/** Prepaid Razorpay/Shiprocket orders must not send CollectableAmount (Blue Dart SubProduct P). */
+export function isCodOrder(order) {
+  const gateways = (order.payment_gateway_names || []).join(' ').toLowerCase();
+  const tags = (order.tags || '').toLowerCase();
+
+  if (
+    gateways.includes('cod') ||
+    gateways.includes('cash on delivery') ||
+    gateways.includes('cash_on_delivery')
+  ) {
+    return true;
+  }
+
+  if (tags.includes('cod') || tags.includes('cash on delivery')) {
+    return true;
+  }
+
+  // Only treat unpaid orders as COD when the gateway is clearly COD/manual cash.
+  if (
+    order.financial_status === 'pending' &&
+    (gateways.includes('manual') ||
+      gateways.includes('cash') ||
+      gateways.includes('cod'))
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 export function shopifyOrderToWaybill(order) {
   const shipping = order.shipping_address;
   if (!shipping) {
@@ -38,12 +68,7 @@ export function shopifyOrderToWaybill(order) {
   const weightKg = Math.max(0.2, totalWeightGrams / 1000);
   const declaredValue = Number(order.total_price || order.current_total_price || 0);
 
-  const paymentGateway = (order.payment_gateway_names || []).join(' ').toLowerCase();
-  const isCod =
-    order.financial_status === 'pending' ||
-    paymentGateway.includes('cod') ||
-    paymentGateway.includes('cash on delivery');
-
+  const isCod = isCodOrder(order);
   const codAmount = isCod ? declaredValue : 0;
 
   const lineItems = (order.line_items || []).map((item, index) => ({
@@ -70,6 +95,7 @@ export function shopifyOrderToWaybill(order) {
     },
     weightKg,
     declaredValue,
+    isCod,
     codAmount,
     lineItems,
   });

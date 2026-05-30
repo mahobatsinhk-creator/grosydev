@@ -2,6 +2,7 @@ import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { config } from './config.js';
 import { labelsDir } from './paths.js';
+import { isCodOrder } from './map-order.js';
 
 function esc(s) {
   return String(s ?? '')
@@ -18,13 +19,11 @@ function maskPhone(phone) {
 }
 
 function paymentLabel(order) {
-  const gateways = (order.payment_gateway_names || []).join(' ').toLowerCase();
-  if (order.financial_status === 'pending' || gateways.includes('cod')) return 'COD';
-  return 'Prepaid';
+  return isCodOrder(order) ? 'COD' : 'Prepaid';
 }
 
 function codAmount(order) {
-  if (paymentLabel(order) !== 'COD') return '0.00';
+  if (!isCodOrder(order)) return '0.00';
   return Number(order.total_price || 0).toFixed(2);
 }
 

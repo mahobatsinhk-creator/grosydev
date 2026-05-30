@@ -104,9 +104,18 @@ function blueDartItemId(value, index) {
   return `GH${String(index + 1).padStart(3, '0')}`.slice(0, 15);
 }
 
-export function buildWaybillPayload({ orderRef, consignee, weightKg, declaredValue, codAmount = 0, lineItems = [] }) {
+export function buildWaybillPayload({
+  orderRef,
+  consignee,
+  weightKg,
+  declaredValue,
+  isCod = false,
+  codAmount = 0,
+  lineItems = [],
+}) {
   const { bluedart } = config;
   const pickupDate = dotnetDate(new Date(Date.now() + 24 * 60 * 60 * 1000));
+  const subProductCode = isCod ? 'C' : bluedart.subProductCode;
 
   const itemdtl =
     lineItems.length > 0
@@ -127,6 +136,29 @@ export function buildWaybillPayload({ orderRef, consignee, weightKg, declaredVal
 
   const creditRef = String(orderRef).replace('#', '').slice(0, 20);
 
+  const services = {
+    ActualWeight: String(Math.max(0.1, weightKg).toFixed(2)),
+    CreditReferenceNo: creditRef,
+    DeclaredValue: declaredValue,
+    Dimensions: [{ Length: 10, Breadth: 10, Height: 10, Count: 1 }],
+    ItemCount: itemdtl.length,
+    PieceCount: '1',
+    PickupDate: pickupDate,
+    PickupTime: '1400',
+    PickupType: 'O',
+    ProductCode: bluedart.productCode,
+    SubProductCode: subProductCode,
+    ProductType: 2,
+    PDFOutputNotRequired: false,
+    RegisterPickup: false,
+    Commodity: { CommodityDetail1: 'Grosyhub parcel' },
+    itemdtl,
+  };
+
+  if (isCod && codAmount > 0) {
+    services.CollectableAmount = codAmount;
+  }
+
   return {
     Request: {
       Consignee: {
@@ -144,25 +176,7 @@ export function buildWaybillPayload({ orderRef, consignee, weightKg, declaredVal
         ReturnPincode: bluedart.shipper.pincode,
         ReturnMobile: bluedart.shipper.mobile,
       },
-      Services: {
-        ActualWeight: String(Math.max(0.1, weightKg).toFixed(2)),
-        CreditReferenceNo: creditRef,
-        DeclaredValue: declaredValue,
-        CollectableAmount: codAmount,
-        Dimensions: [{ Length: 10, Breadth: 10, Height: 10, Count: 1 }],
-        ItemCount: itemdtl.length,
-        PieceCount: '1',
-        PickupDate: pickupDate,
-        PickupTime: '1400',
-        PickupType: 'O',
-        ProductCode: bluedart.productCode,
-        SubProductCode: bluedart.subProductCode,
-        ProductType: 2,
-        PDFOutputNotRequired: false,
-        RegisterPickup: false,
-        Commodity: { CommodityDetail1: 'Grosyhub parcel' },
-        itemdtl,
-      },
+      Services: services,
       Shipper: {
         CustomerName: bluedart.shipper.name,
         CustomerAddress1: bluedart.shipper.address1,
