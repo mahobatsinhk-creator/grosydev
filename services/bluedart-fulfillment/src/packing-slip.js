@@ -69,12 +69,19 @@ function kvRow(label, value, { boldValue = false } = {}) {
   return `<tr><td class="kv-label">${label}</td><td class="kv-value">${valueHtml}</td></tr>`;
 }
 
-/** 4×8 inch portrait — Sunvibe / courier bag reference layout */
+function truncate(s, max = 42) {
+  const t = String(s || '');
+  return t.length <= max ? t : `${t.slice(0, max - 1)}…`;
+}
+
+/** 4×6 inch portrait — compact courier bag / thermal slip */
 export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
   const ship = order.shipping_address || {};
   const { bluedart, packingSlip } = config;
   const weightKg = orderWeightKg(order);
   const isCod = isCodOrder(order);
+  const pageW = packingSlip.pageWidth;
+  const pageH = packingSlip.pageHeight;
 
   const rows = (order.line_items || [])
     .map((item) => {
@@ -85,13 +92,13 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
       const hsn = item.harmonized_system_code || '—';
       return `
       <tr>
-        <td>${esc(item.title)} | SKU: ${esc(sku)}</td>
+        <td>${esc(truncate(`${item.title} | SKU: ${sku}`, 36))}</td>
         <td>${esc(hsn)}</td>
         <td>${qty}</td>
-        <td>${unit.toFixed(2)}</td>
-        <td>${taxable.toFixed(2)}</td>
-        <td>${lineIgst(item)}</td>
-        <td>${taxable.toFixed(2)}</td>
+        <td>${unit.toFixed(0)}</td>
+        <td>${taxable.toFixed(0)}</td>
+        <td>${lineIgst(item) || '—'}</td>
+        <td>${taxable.toFixed(0)}</td>
       </tr>`;
     })
     .join('');
@@ -126,13 +133,15 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
   <meta charset="UTF-8" />
   <title>Packing slip ${esc(order.name)} — ${esc(awb)}</title>
   <style>
-    @page { size: 4in 8in; margin: 0.06in; }
+    @page { size: ${pageW} ${pageH}; margin: 0.04in; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      width: 3.88in;
+      width: 3.92in;
+      max-height: 5.92in;
+      overflow: hidden;
       font-family: Arial, Helvetica, sans-serif;
-      font-size: 7pt;
-      line-height: 1.22;
+      font-size: 6pt;
+      line-height: 1.15;
       color: #000;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
@@ -141,7 +150,7 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
     .row { display: flex; border-bottom: 1px solid #000; }
     .row:last-child { border-bottom: none; }
     .cell {
-      padding: 4px 5px;
+      padding: 2px 3px;
       border-right: 1px solid #000;
       vertical-align: top;
     }
@@ -151,70 +160,77 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
     .cell-narrow { width: 42%; }
     .section-title {
       font-weight: 700;
-      font-size: 7.5pt;
-      margin-bottom: 2px;
+      font-size: 6pt;
+      margin-bottom: 1px;
     }
+    .addr { font-size: 5.5pt; line-height: 1.12; }
     .brand {
       display: flex;
       align-items: center;
       justify-content: center;
       height: 100%;
-      min-height: 52px;
+      min-height: 28px;
       font-family: Georgia, 'Times New Roman', serif;
-      font-size: 18pt;
+      font-size: 11pt;
       font-weight: 400;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.3px;
     }
     .kv { width: 100%; border-collapse: collapse; }
-    .kv td { padding: 1px 0; vertical-align: top; font-size: 7pt; }
-    .kv-label { width: 38%; padding-right: 4px; white-space: nowrap; }
-    .kv-value { width: 62%; }
+    .kv td { padding: 0; vertical-align: top; font-size: 5.5pt; line-height: 1.2; }
+    .kv-label { width: 42%; padding-right: 2px; white-space: nowrap; }
+    .kv-value { width: 58%; }
     .carrier-head {
       text-align: center;
       font-weight: 700;
-      font-size: 10pt;
-      letter-spacing: 0.5px;
-      margin-bottom: 2px;
+      font-size: 7.5pt;
+      letter-spacing: 0.3px;
+      margin-bottom: 1px;
     }
-    .barcode-wrap { text-align: center; padding: 2px 0 1px; }
-    .barcode-wrap svg { max-width: 100%; height: 32px; }
+    .barcode-wrap { text-align: center; padding: 1px 0 0; }
+    .barcode-wrap svg { max-width: 100%; height: 22px; }
+    .barcode-wrap.order svg { height: 18px; }
     .awb-no {
       text-align: center;
       font-weight: 700;
-      font-size: 9pt;
-      letter-spacing: 0.3px;
+      font-size: 7.5pt;
+      letter-spacing: 0.2px;
+      line-height: 1.1;
     }
     .routing {
       text-align: center;
-      font-size: 7pt;
-      margin-top: 2px;
+      font-size: 5.5pt;
+      line-height: 1.1;
     }
+    .meta-line { font-size: 5.5pt; line-height: 1.15; }
     .items {
       width: 100%;
       border-collapse: collapse;
       border-top: 1px solid #000;
-      font-size: 6.5pt;
+      font-size: 5pt;
+      table-layout: fixed;
     }
     .items th, .items td {
       border: 1px solid #000;
-      padding: 2px 3px;
+      padding: 1px 2px;
       text-align: left;
       vertical-align: top;
+      word-wrap: break-word;
     }
-    .items th { font-weight: 700; background: #fff; }
+    .items th { font-weight: 700; background: #fff; font-size: 4.5pt; }
+    .items td:first-child { width: 28%; }
     .legal {
       border-top: 1px solid #000;
-      padding: 4px 5px;
-      font-size: 6pt;
-      line-height: 1.25;
+      padding: 2px 3px;
+      font-size: 4.5pt;
+      line-height: 1.15;
     }
     .service-band {
       border-top: 1px solid #000;
       text-align: center;
       font-weight: 700;
-      font-size: 9pt;
-      letter-spacing: 0.4px;
-      padding: 5px 4px;
+      font-size: 7pt;
+      letter-spacing: 0.3px;
+      padding: 2px 3px;
       background: #d9f0d9;
     }
     @media screen {
@@ -229,8 +245,8 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
 </head>
 <body>
   <div class="no-print">
-    <button onclick="window.print()" style="padding:8px 16px;font-size:14px;cursor:pointer">Print packing slip (4×8 inch)</button>
-    <p style="margin-top:8px;color:#666;font-size:12px">Printer: scale <strong>100%</strong>, paper <strong>4×8 in</strong> (101×203 mm)</p>
+    <button onclick="window.print()" style="padding:8px 16px;font-size:14px;cursor:pointer">Print packing slip (4×6 inch)</button>
+    <p style="margin-top:8px;color:#666;font-size:12px">Printer: scale <strong>100%</strong>, paper <strong>4×6 in</strong> (101×152 mm) portrait</p>
   </div>
 
   <div class="sheet">
@@ -238,7 +254,7 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
       <div class="cell cell-wide">
         <div class="section-title">Ship To</div>
         <strong>${esc(shipToName)}</strong><br>
-        ${esc(shipToAddr)}
+        <span class="addr">${esc(truncate(shipToAddr, 120))}</span>
       </div>
       <div class="cell cell-narrow">
         <div class="brand">${esc(packingSlip.logoText)}</div>
@@ -266,17 +282,15 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
 
     <div class="row">
       <div class="cell cell-half">
-        <div class="section-title">Shipped By (If undelivered, return to)</div>
-        <strong>${esc(bluedart.shipper.name)}</strong><br>
-        ${esc(returnAddr)}<br>
-        ${bluedart.shipper.gstin ? `GSTIN: ${esc(bluedart.shipper.gstin)}<br>` : ''}
-        Phone No.: ${esc(bluedart.shipper.mobile)}
+        <div class="section-title">Shipped By (return if undelivered)</div>
+        <span class="addr"><strong>${esc(bluedart.shipper.name)}</strong><br>
+        ${esc(truncate(returnAddr, 80))}<br>
+        ${bluedart.shipper.gstin ? `GSTIN: ${esc(bluedart.shipper.gstin)} · ` : ''}Ph: ${esc(bluedart.shipper.mobile)}</span>
       </div>
       <div class="cell cell-half">
         <div class="section-title">Order # ${esc(orderNum)}</div>
-        <div class="barcode-wrap"><svg id="order-barcode"></svg></div>
-        <div style="font-size:7pt;margin-top:2px">Invoice No.: ${esc(invoiceNo(order))}</div>
-        <div style="font-size:7pt">Invoice Date: ${esc(invoiceDate(order))}</div>
+        <div class="barcode-wrap order"><svg id="order-barcode"></svg></div>
+        <div class="meta-line">Inv: ${esc(invoiceNo(order))} · ${esc(invoiceDate(order))}</div>
       </div>
     </div>
 
@@ -296,15 +310,15 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
     </table>
 
     <div class="legal">
-      All disputes are subject to Gujarat jurisdiction only. Goods once sold will only be taken back or exchanged as per the store's exchange/return policy.
+      Disputes: Gujarat jurisdiction. Returns per store policy.
     </div>
     <div class="service-band">${esc(serviceFooter)}</div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script>
   <script>
-    JsBarcode("#awb-barcode", ${JSON.stringify(String(awb))}, { format: "CODE128", width: 1.15, height: 30, displayValue: false, margin: 0 });
-    JsBarcode("#order-barcode", ${JSON.stringify(orderNum)}, { format: "CODE128", width: 1.15, height: 26, displayValue: false, margin: 0 });
+    JsBarcode("#awb-barcode", ${JSON.stringify(String(awb))}, { format: "CODE128", width: 1, height: 22, displayValue: false, margin: 0 });
+    JsBarcode("#order-barcode", ${JSON.stringify(orderNum)}, { format: "CODE128", width: 1, height: 18, displayValue: false, margin: 0 });
   <\/script>
 </body>
 </html>`;
