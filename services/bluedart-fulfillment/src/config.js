@@ -63,7 +63,10 @@ const bluedartAccount = normalizeBlueDartAccount(
 );
 
 export const config = {
-  port: Number(process.env.PORT || optional('PORT', '8787')),
+  port: Number(
+    process.env.PORT ||
+      optional('PORT', process.env.NODE_ENV === 'production' ? '3000' : '8787')
+  ),
   apiSecret: optional('API_SECRET', ''),
   publicUrl: optional('PUBLIC_URL', ''),
 

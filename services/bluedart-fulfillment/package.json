@@ -2,6 +2,7 @@
   "name": "grosyhub-bluedart-fulfillment",
   "version": "1.0.0",
   "private": true,
+  "main": "server.js",
   "description": "Post-checkout Blue Dart fulfillment for Grosyhub (Shiprocket checkout unchanged)",
   "type": "module",
   "scripts": {

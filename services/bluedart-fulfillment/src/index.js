@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createServer } from 'node:http';
 import { readFileSync, existsSync } from 'node:fs';
 
@@ -248,4 +248,18 @@ export function startServer() {
   });
 }
 
-export { processOrder, startServer };
+export { processOrder };
+
+function isDirectEntry() {
+  if (!process.argv[1]) return false;
+  const entryPaths = [
+    resolve(process.argv[1]),
+    resolve(process.cwd(), process.argv[1]),
+  ];
+  return entryPaths.some((p) => import.meta.url === pathToFileURL(p).href);
+}
+
+// Hostinger / npm start / node src/index.js / node server.js
+if (isDirectEntry()) {
+  startServer();
+}
