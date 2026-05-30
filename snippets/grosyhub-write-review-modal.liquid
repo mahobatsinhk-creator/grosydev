@@ -1,0 +1,108 @@
+{%- liquid
+  assign modal_title = modal_title | default: 'Write a review'
+  assign product_title = product.title
+  assign product_image = product.featured_media | image_url: width: 120
+  assign max_photos = max_photos | default: 5
+  assign legal_text = legal_text | default: 'By submitting this review, you agree to our Privacy Policy and Terms regarding the processing of your personal data.'
+-%}
+
+<div class="gh-review-modal" data-gh-review-modal hidden>
+  <div class="gh-review-modal__backdrop" data-gh-review-modal-close tabindex="-1" aria-hidden="true"></div>
+  <div
+    class="gh-review-modal__dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="gh-review-modal-title-{{ section_id }}"
+  >
+    <button type="button" class="gh-review-modal__close" data-gh-review-modal-close aria-label="Close">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    </button>
+
+    <h2 id="gh-review-modal-title-{{ section_id }}" class="gh-review-modal__title">{{ modal_title }}</h2>
+
+    <div class="gh-review-modal__product">
+      {%- if product.featured_media != blank -%}
+        <img src="{{ product_image }}" alt="" width="48" height="48" loading="lazy" class="gh-review-modal__thumb">
+      {%- endif -%}
+      <p class="gh-review-modal__product-name">{{ product_title }}</p>
+    </div>
+
+    <form class="gh-review-modal__form" data-gh-review-form novalidate>
+      <div class="gh-review-modal__field">
+        <span class="gh-review-modal__label">Rating</span>
+        <div class="gh-review-modal__stars-input" data-gh-review-stars-input role="radiogroup" aria-label="Rating">
+          {%- for i in (1..5) -%}
+            <button type="button" class="gh-review-modal__star-btn" data-star-value="{{ i }}" aria-label="{{ i }} stars">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+                <path d="M12 2l2.9 6.1 6.8.6-5.1 4.4 1.6 6.6L12 16.9l-6.2 3.8 1.6-6.6-5.1-4.4 6.8-.6L12 2z"/>
+              </svg>
+            </button>
+          {%- endfor -%}
+        </div>
+        <input type="hidden" name="rating" value="" data-gh-review-rating-input required>
+        <p class="gh-review-modal__error" data-gh-review-error="rating" hidden>Please select a rating.</p>
+      </div>
+
+      <div class="gh-review-modal__field">
+        <label class="gh-review-modal__label" for="gh-review-body-{{ section_id }}">Review</label>
+        <textarea
+          id="gh-review-body-{{ section_id }}"
+          name="body"
+          class="gh-review-modal__textarea"
+          rows="5"
+          placeholder="Share your feedback with us now"
+          required
+          data-gh-review-body
+        ></textarea>
+        <p class="gh-review-modal__error" data-gh-review-error="body" hidden>Please fill in this field.</p>
+      </div>
+
+      <div class="gh-review-modal__field">
+        <span class="gh-review-modal__label">Add photo</span>
+        <div class="gh-review-modal__photos">
+          <label class="gh-review-modal__photo-add">
+            <input type="file" accept="image/*" multiple hidden data-gh-review-photo-input>
+            <span class="gh-review-modal__photo-plus" aria-hidden="true">+</span>
+            <span class="gh-review-modal__photo-text">Add photo <span data-gh-review-photo-count>0</span>/{{ max_photos }}</span>
+          </label>
+          <div class="gh-review-modal__photo-previews" data-gh-review-photo-previews></div>
+        </div>
+      </div>
+
+      <div class="gh-review-modal__field">
+        <label class="gh-review-modal__label" for="gh-review-name-{{ section_id }}">Your name</label>
+        <input
+          type="text"
+          id="gh-review-name-{{ section_id }}"
+          name="name"
+          class="gh-review-modal__input"
+          required
+          data-gh-review-name
+        >
+        <p class="gh-review-modal__error" data-gh-review-error="name" hidden>Please fill in this field.</p>
+      </div>
+
+      <div class="gh-review-modal__field">
+        <label class="gh-review-modal__label" for="gh-review-email-{{ section_id }}">Your email</label>
+        <input
+          type="email"
+          id="gh-review-email-{{ section_id }}"
+          name="email"
+          class="gh-review-modal__input"
+          required
+          data-gh-review-email
+        >
+        <p class="gh-review-modal__error" data-gh-review-error="email" hidden>Please enter a valid email.</p>
+      </div>
+
+      {%- if legal_text != blank -%}
+        <p class="gh-review-modal__legal">{{ legal_text }}</p>
+      {%- endif -%}
+
+      <button type="submit" class="gh-review-modal__submit" data-gh-review-submit>Submit review</button>
+      <p class="gh-review-modal__success" data-gh-review-success hidden>Thank you! Your review has been submitted.</p>
+    </form>
+  </div>
+</div>

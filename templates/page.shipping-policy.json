@@ -1,0 +1,14 @@
+{
+  "sections": {
+    "main": {
+      "type": "grosyhub-policy-page",
+      "settings": {
+        "brand_color": "#b89774",
+        "policy_type": "shipping",
+        "show_updated": true,
+        "last_updated": "May 2026"
+      }
+    }
+  },
+  "order": ["main"]
+}

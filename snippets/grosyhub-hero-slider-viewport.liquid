@@ -1,0 +1,96 @@
+{%- comment -%}
+  Hero slider viewport — desktop or mobile slide set.
+  @param slide_blocks {array} block list (desktop_slide or mobile_slide)
+  @param viewport_modifier {string} desktop | mobile
+  @param height_setting {number} section height in px
+  @param autoplay {boolean}
+  @param interval_ms {number}
+  @param aria_label {string}
+  @param section_index {number}
+  @param eager_first {boolean} LCP for first homepage slide
+{%- endcomment -%}
+
+{%- liquid
+  assign slide_count = 0
+  for block in slide_blocks
+    if block.settings.image != blank
+      assign slide_count = slide_count | plus: 1
+    endif
+  endfor
+
+  if viewport_modifier == 'mobile'
+    assign widths = '400, 600, 800, 1000, 1200, 1600'
+    assign max_width = 1600
+  else
+    assign widths = '832, 1200, 1600, 1920, 2560, 3840'
+    assign max_width = 3840
+  endif
+-%}
+
+{%- if slide_count > 0 -%}
+  <div
+    class="gh-hero-slider__viewport gh-hero-slider__viewport--{{ viewport_modifier }}"
+    data-gh-hero-slider
+    data-gh-hero-breakpoint="{{ viewport_modifier }}"
+    data-autoplay="{{ autoplay }}"
+    data-interval="{{ interval_ms }}"
+    aria-roledescription="carousel"
+    aria-label="{{ aria_label | escape }}"
+    style="min-height: {{ height_setting }}px;"
+  >
+    <div class="gh-hero-slider__track" data-gh-hero-track>
+      {%- assign slide_index = 0 -%}
+      {%- for block in slide_blocks -%}
+        {%- if block.settings.image != blank -%}
+          <div
+            class="gh-hero-slider__slide{% if slide_index == 0 %} is-active{% endif %}"
+            data-gh-hero-slide
+            {{ block.shopify_attributes }}
+          >
+            {%- if block.settings.link != blank -%}
+              <a href="{{ block.settings.link }}" class="gh-hero-slider__link"{% if block.settings.open_in_new_tab %} target="_blank" rel="noopener noreferrer"{% endif %}>
+            {%- endif -%}
+            {%- if eager_first and slide_index == 0 and section_index == 1 -%}
+              {{
+                block.settings.image
+                | image_url: width: max_width
+                | image_tag:
+                  class: 'gh-hero-slider__img',
+                  loading: 'eager',
+                  fetchpriority: 'high',
+                  widths: widths,
+                  sizes: '100vw',
+                  alt: block.settings.alt | default: block.settings.image.alt | escape
+              }}
+            {%- else -%}
+              {{
+                block.settings.image
+                | image_url: width: max_width
+                | image_tag:
+                  class: 'gh-hero-slider__img',
+                  loading: 'lazy',
+                  widths: widths,
+                  sizes: '100vw',
+                  alt: block.settings.alt | default: block.settings.image.alt | escape
+              }}
+            {%- endif -%}
+            {%- if block.settings.link != blank -%}
+              </a>
+            {%- endif -%}
+          </div>
+          {%- assign slide_index = slide_index | plus: 1 -%}
+        {%- endif -%}
+      {%- endfor -%}
+    </div>
+
+    {%- if slide_count > 1 -%}
+      <button type="button" class="gh-hero-slider__arrow gh-hero-slider__arrow--prev" data-gh-hero-prev aria-label="Previous slide">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <button type="button" class="gh-hero-slider__arrow gh-hero-slider__arrow--next" data-gh-hero-next aria-label="Next slide">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <div class="gh-hero-slider__dots" data-gh-hero-dots role="tablist" aria-label="{{ viewport_modifier | capitalize }} slides"></div>
+    {%- endif -%}
+  </div>
+{%- endif -%}

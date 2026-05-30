@@ -1,0 +1,251 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "type": "footer",
+  "name": "Footer",
+  "sections": {
+    "grosyhub_footer": {
+      "type": "grosyhub-footer",
+      "blocks": {
+        "cat_1": {
+          "type": "category",
+          "settings": {
+            "label": "Kitchen & Dining",
+            "url": "",
+            "icon": "kitchen"
+          }
+        },
+        "cat_2": {
+          "type": "category",
+          "settings": {
+            "label": "Home & Living",
+            "url": "",
+            "icon": "home"
+          }
+        },
+        "cat_3": {
+          "type": "category",
+          "settings": {
+            "label": "Beauty & Personal Care",
+            "url": "",
+            "icon": "beauty"
+          }
+        },
+        "cat_4": {
+          "type": "category",
+          "settings": {
+            "label": "Garden & Outdoor",
+            "url": "",
+            "icon": "garden"
+          }
+        },
+        "cat_5": {
+          "type": "category",
+          "settings": {
+            "label": "Bathroom Essentials",
+            "url": "",
+            "icon": "bathroom"
+          }
+        },
+        "cat_6": {
+          "type": "category",
+          "settings": {
+            "label": "Racks & Organizers",
+            "url": "",
+            "icon": "racks"
+          }
+        },
+        "cat_7": {
+          "type": "category",
+          "settings": {
+            "label": "Ice Face Bowl",
+            "url": "shopify://collections/ice-face-bowl",
+            "icon": "beauty"
+          }
+        },
+        "cat_8": {
+          "type": "category",
+          "settings": {
+            "label": "Instant Glow Brush",
+            "url": "shopify://collections/instant-glow-blush",
+            "icon": "beauty"
+          }
+        },
+        "cat_9": {
+          "type": "category",
+          "settings": {
+            "label": "Curtain Rod",
+            "url": "shopify://collections/curtain-rod",
+            "icon": "home"
+          }
+        },
+        "cat_10": {
+          "type": "category",
+          "settings": {
+            "label": "Waterproof Sealant",
+            "url": "shopify://collections/waterproof-sealant",
+            "icon": "home"
+          }
+        },
+        "cat_11": {
+          "type": "category",
+          "settings": {
+            "label": "Garden Equipment",
+            "url": "shopify://collections/garden-equipment",
+            "icon": "garden"
+          }
+        },
+        "cat_12": {
+          "type": "category",
+          "settings": {
+            "label": "Yogurt Strainer",
+            "url": "shopify://collections/yogurt-strainer",
+            "icon": "kitchen"
+          }
+        },
+        "cat_13": {
+          "type": "category",
+          "settings": {
+            "label": "Door Mats",
+            "url": "shopify://collections/door-mats",
+            "icon": "home"
+          }
+        },
+        "ql_1": {
+          "type": "quick_link",
+          "settings": {
+            "label": "Shop All",
+            "policy_link": "none",
+            "url": "shopify://collections/all"
+          }
+        },
+        "ql_2": {
+          "type": "quick_link",
+          "settings": {
+            "label": "Contact Us",
+            "policy_link": "none",
+            "url": "shopify://pages/contact"
+          }
+        },
+        "ql_4": {
+          "type": "quick_link",
+          "settings": {
+            "label": "Track Order",
+            "policy_link": "none",
+            "url": "/account"
+          }
+        },
+        "ql_5": {
+          "type": "quick_link",
+          "settings": {
+            "label": "Privacy Policy",
+            "policy_link": "privacy",
+            "url": "shopify://pages/privacy-policy"
+          }
+        },
+        "ql_6": {
+          "type": "quick_link",
+          "settings": {
+            "label": "Refund Policy",
+            "policy_link": "refund",
+            "url": "shopify://pages/refund-policy"
+          }
+        },
+        "ql_7": {
+          "type": "quick_link",
+          "settings": {
+            "label": "Shipping Policy",
+            "policy_link": "shipping",
+            "url": "shopify://pages/shipping-policy"
+          }
+        },
+        "ql_8": {
+          "type": "quick_link",
+          "settings": {
+            "label": "Terms of Service",
+            "policy_link": "terms",
+            "url": "shopify://pages/terms-of-service"
+          }
+        }
+      },
+      "block_order": [
+        "cat_1",
+        "cat_2",
+        "cat_3",
+        "cat_4",
+        "cat_5",
+        "cat_6",
+        "cat_7",
+        "cat_8",
+        "cat_9",
+        "cat_10",
+        "cat_11",
+        "cat_12",
+        "cat_13",
+        "ql_1",
+        "ql_2",
+        "ql_4",
+        "ql_5",
+        "ql_6",
+        "ql_7",
+        "ql_8"
+      ],
+      "settings": {
+        "brand_color": "#b89774",
+        "show_newsletter": true,
+        "newsletter_heading": "Join the Grosyhub Family",
+        "newsletter_text": "Get exclusive deals, early access to new products & special offers.",
+        "newsletter_placeholder": "Enter your email address",
+        "newsletter_button": "Subscribe Now",
+        "newsletter_success": "Thanks for subscribing!",
+        "perk_1": "No spam, unsubscribe anytime",
+        "perk_2": "Exclusive offers for subscribers",
+        "perk_3": "Be the first to know about new arrivals",
+        "brand_description": "Premium home essentials designed to make everyday living easier, organized, and more beautiful.",
+        "brand_trust_1": "Secure Payments",
+        "brand_trust_2": "7 Days Easy Returns",
+        "brand_trust_3": "Premium Quality",
+        "brand_trust_4": "Trusted by 10,000+ Customers",
+        "show_social": true,
+        "social_heading": "Follow Us",
+        "facebook_url": "",
+        "instagram_url": "",
+        "pinterest_url": "",
+        "youtube_url": "",
+        "categories_heading": "Shop Categories",
+        "categories_menu": "",
+        "quick_heading": "Quick Links",
+        "quick_links_menu": "footer",
+        "support_heading": "Customer Support",
+        "support_intro": "We are here to help you",
+        "support_hours": "Mon – Sat: 9:00 AM – 7:00 PM (IST)",
+        "phone": "+91 88665 59670",
+        "email": "info@grosyhub.com",
+        "chat_label": "Live Chat Available",
+        "secure_label": "Safe & Secure Shopping",
+        "show_trust_bar": true,
+        "bar_title_1": "Free Shipping",
+        "bar_sub_1": "On any orders",
+        "bar_title_2": "Easy Returns",
+        "bar_sub_2": "Within 7 days",
+        "bar_title_3": "Secure Payments",
+        "bar_sub_3": "100% protected",
+        "bar_title_4": "Premium Quality",
+        "bar_sub_4": "Top-rated products",
+        "copyright": "© [year] Grosyhub. All Rights Reserved.",
+        "show_payments": true,
+        "payments_label": "We Accept"
+      }
+    }
+  },
+  "order": [
+    "grosyhub_footer"
+  ]
+}

@@ -1,0 +1,229 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "type": "header",
+  "name": "Header",
+  "sections": {
+    "grosyhub_header": {
+      "type": "grosyhub-header",
+      "blocks": {
+        "mega_promo": {
+          "type": "mega_promo",
+          "settings": {
+            "title": "Upgrade Your Kitchen Space",
+            "subtitle": "Smart, practical & stylish essentials for every home",
+            "badge": "UP TO 40% OFF",
+            "button_label": "Shop Now",
+            "button_link": ""
+          }
+        },
+        "mega_col_1": {
+          "type": "mega_column",
+          "settings": {
+            "title": "Bathroom Essentials",
+            "icon": "bathroom",
+            "badge": "",
+            "menu": "",
+            "link_1_label": "Shower Curtains",
+            "link_1_url": "",
+            "link_2_label": "Bathroom Accessories",
+            "link_2_url": "",
+            "link_3_label": "Towel Sets",
+            "link_3_url": "",
+            "link_4_label": "",
+            "link_4_url": "",
+            "link_5_label": "",
+            "link_5_url": "",
+            "view_all_label": "View All",
+            "view_all_url": ""
+          }
+        },
+        "mega_col_2": {
+          "type": "mega_column",
+          "settings": {
+            "title": "Beauty & Personal Care",
+            "icon": "beauty",
+            "badge": "",
+            "menu": "",
+            "link_1_label": "Skincare Tools",
+            "link_1_url": "",
+            "link_2_label": "Hair Care",
+            "link_2_url": "",
+            "link_3_label": "",
+            "link_3_url": "",
+            "link_4_label": "",
+            "link_4_url": "",
+            "link_5_label": "",
+            "link_5_url": "",
+            "view_all_label": "View All",
+            "view_all_url": ""
+          }
+        },
+        "mega_col_3": {
+          "type": "mega_column",
+          "settings": {
+            "title": "Home Upgrades",
+            "icon": "home",
+            "badge": "",
+            "menu": "",
+            "link_1_label": "Home Decor",
+            "link_1_url": "",
+            "link_2_label": "Cleaning Supplies",
+            "link_2_url": "",
+            "link_3_label": "",
+            "link_3_url": "",
+            "link_4_label": "",
+            "link_4_url": "",
+            "link_5_label": "",
+            "link_5_url": "",
+            "view_all_label": "View All",
+            "view_all_url": ""
+          }
+        },
+        "mega_col_4": {
+          "type": "mega_column",
+          "settings": {
+            "title": "Kitchen & Dining",
+            "icon": "kitchen",
+            "badge": "",
+            "menu": "",
+            "link_1_label": "Cookware",
+            "link_1_url": "",
+            "link_2_label": "Kitchen Tools",
+            "link_2_url": "",
+            "link_3_label": "",
+            "link_3_url": "",
+            "link_4_label": "",
+            "link_4_url": "",
+            "link_5_label": "",
+            "link_5_url": "",
+            "view_all_label": "View All",
+            "view_all_url": ""
+          }
+        },
+        "mega_col_5": {
+          "type": "mega_column",
+          "settings": {
+            "title": "Racks & Organizers",
+            "icon": "racks",
+            "badge": "",
+            "menu": "",
+            "link_1_label": "Kitchen Racks",
+            "link_1_url": "",
+            "link_2_label": "Wardrobe Organizers",
+            "link_2_url": "",
+            "link_3_label": "",
+            "link_3_url": "",
+            "link_4_label": "",
+            "link_4_url": "",
+            "link_5_label": "",
+            "link_5_url": "",
+            "view_all_label": "View All",
+            "view_all_url": ""
+          }
+        },
+        "mega_col_6": {
+          "type": "mega_column",
+          "settings": {
+            "title": "Wholesale Products",
+            "icon": "wholesale",
+            "badge": "Bulk",
+            "menu": "",
+            "link_1_label": "Bulk Order",
+            "link_1_url": "",
+            "link_2_label": "Dealer Program",
+            "link_2_url": "",
+            "link_3_label": "",
+            "link_3_url": "",
+            "link_4_label": "",
+            "link_4_url": "",
+            "link_5_label": "",
+            "link_5_url": "",
+            "view_all_label": "View All",
+            "view_all_url": ""
+          }
+        }
+      },
+      "block_order": [
+        "mega_promo",
+        "mega_col_1",
+        "mega_col_2",
+        "mega_col_3",
+        "mega_col_4",
+        "mega_col_5",
+        "mega_col_6"
+      ],
+      "settings": {
+        "brand_color": "#b89774",
+        "show_announcement_bar": true,
+        "announcement_1": "Free Shipping",
+        "announcement_2": "7 Days Easy Returns",
+        "announcement_3": "Secure Payments",
+        "announcement_4": "Premium Home Essentials",
+        "announcement_5": "10% off on Prepaid Orders",
+        "show_announcement_mobile": true,
+        "show_phone": true,
+        "phone_label": "24/7 Delivery",
+        "phone_number": "+91 97245 91484",
+        "search_placeholder": "Search for products...",
+        "popular_searches": "Shower Curtain, Kitchen Rack, Storage Box, Bathroom Accessories",
+        "menu": "main-menu",
+        "show_contact_nav": false,
+        "mega_exclude_links": "home,new-arrivals,new arrivals",
+        "contact_nav_label": "Contact Us",
+        "contact_nav_url": "",
+        "show_all_categories_button": false,
+        "all_categories_label": "All Categories",
+        "mega_categories_menu": "",
+        "mega_view_all_label": "View All →",
+        "show_mega_top_picks": true,
+        "mega_top_picks_heading": "Top Picks",
+        "mega_top_picks_collection": "",
+        "mega_top_picks_button": "Shop Now",
+        "show_mobile_bottom_nav": false,
+        "show_mega_trust": true,
+        "mega_trust_1_title": "Free Shipping",
+        "mega_trust_1_text": "",
+        "mega_trust_2_title": "Easy Returns",
+        "mega_trust_2_text": "7-day hassle-free returns",
+        "mega_trust_3_title": "Secure Payments",
+        "mega_trust_3_text": "100% protected checkout",
+        "mega_trust_4_title": "Fast Delivery",
+        "mega_trust_4_text": "Quick dispatch nationwide",
+        "show_mega_combo": true,
+        "mega_combo_title": "Combo Offers",
+        "mega_combo_text": "Save more on bundles",
+        "mega_combo_link_label": "Shop Now",
+        "mega_combo_link": "",
+        "wishlist_label": "Wishlist",
+        "cart_label": "Cart",
+        "account_greeting": "Hello,",
+        "account_label": "My Account",
+        "wishlist_drawer_heading": "My Wishlist",
+        "wishlist_promo_text": "Your favorites, all in one place! Move items to cart and shop what you love.",
+        "wishlist_empty_text": "Your wishlist is empty.",
+        "wishlist_move_all_label": "Move All To Cart",
+        "wishlist_view_page_label": "View Wishlist",
+        "wishlist_page_url": "",
+        "cart_drawer_heading": "Your Cart",
+        "free_shipping_threshold": 0,
+        "cart_empty_text": "Your cart is empty.",
+        "cart_checkout_label": "Checkout Securely",
+        "cart_view_label": "View Cart",
+        "cart_trust_1": "7 Days Easy Returns",
+        "cart_trust_2": "Secure Payments",
+        "cart_trust_3": "Premium Quality"
+      }
+    }
+  },
+  "order": [
+    "grosyhub_header"
+  ]
+}

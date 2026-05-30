@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 40" fill="none" role="img" aria-label="Grosyhub">
+  <g fill="#B89774">
+    <path d="M6 30V16.8L17.5 9 29 16.8V30H6zm3.5-3.5h9.5v-8.4L17.5 13l4.5 5.1V26.5H9.5z"/>
+    <path d="M12.2 7.8a1.8 1.8 0 0 1 1.8-1.8h7c1 0 1.8.8 1.8 1.8V9H12.2V7.8z"/>
+    <path d="M10.5 24.5 13 20l2.2 2.8L17.5 19 21 26h-10.5z"/>
+  </g>
+  <text x="40" y="28" fill="#B89774" font-family="system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif" font-size="20" font-weight="700" letter-spacing="0.06em">GROSYHUB</text>
+</svg>

@@ -1,0 +1,175 @@
+{{ 'grosyhub-section-header.css' | asset_url | stylesheet_tag }}
+{{ 'grosyhub-home-products.css' | asset_url | stylesheet_tag }}
+{{ 'grosyhub-home-trending.css' | asset_url | stylesheet_tag }}
+{%- liquid
+  assign brand_color = section.settings.brand_color | default: '#b89774'
+  assign max_products = 8
+  assign collection = section.settings.collection
+  if collection != blank
+    assign products = collection.products
+  else
+    assign products = collections.all.products
+  endif
+
+  if section.settings.view_all_url != blank
+    assign view_all_url = section.settings.view_all_url
+  elsif collection != blank
+    assign view_all_url = collection.url
+  else
+    assign view_all_url = routes.all_products_collection_url
+  endif
+-%}
+
+<section
+  class="gh-tn section-{{ section.id }}"
+  style="--gh-sec-brand: {{ brand_color }}; --gh-rec-brand: {{ brand_color }}; --gh-rec-brand-dark: color-mix(in srgb, {{ brand_color }} 75%, #000000);"
+  {{ section.shopify_attributes }}
+>
+  <div class="gh-tn__decor" aria-hidden="true">
+    <svg class="gh-tn__decor-leaf" viewBox="0 0 120 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M60 8C42 48 18 72 12 108c-6 40 18 78 48 84 8-32 4-68-8-100 12-18 28-32 8-84z" fill="currentColor" opacity="0.35"/>
+      <path d="M72 24c14 28 10 58-4 86 16-8 28-24 32-44 6-22-4-42-28-42z" fill="currentColor" opacity="0.2"/>
+    </svg>
+  </div>
+
+  <div class="gh-tn__container">
+    {% render 'grosyhub-section-header',
+      eyebrow: section.settings.eyebrow,
+      subheading: section.settings.subheading,
+      view_all_url: view_all_url,
+      view_all_label: section.settings.view_all_label,
+      icon: 'trending'
+    %}
+
+    <div class="gh-tn__body">
+      {%- if products.size > 0 -%}
+        {% render 'grosyhub-trending-carousel',
+          products: products,
+          max_products: max_products,
+          brand_color: brand_color,
+          show_features: section.settings.show_feature_tags,
+          rating_fallback: section.settings.rating_fallback,
+          reviews_count_fallback: section.settings.reviews_count_fallback,
+          default_feature_1: section.settings.default_feature_1,
+          default_feature_2: section.settings.default_feature_2,
+          default_feature_3: section.settings.default_feature_3,
+          default_feature_1_alt: section.settings.default_feature_1_alt,
+          default_feature_2_alt: section.settings.default_feature_2_alt,
+          default_feature_3_alt: section.settings.default_feature_3_alt
+        %}
+      {%- else -%}
+        <p class="gh-tn__empty">{{ section.settings.empty_text | default: 'No products found.' }}</p>
+      {%- endif -%}
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Grosyhub trending now",
+  "tag": "section",
+  "class": "grosyhub-trending-section",
+  "settings": [
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "Collection",
+      "info": "Optional. Tag products as trending or use a dedicated collection."
+    },
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Top badge",
+      "default": "Hot Picks"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Products everyone is talking about right now!"
+    },
+    {
+      "type": "text",
+      "id": "view_all_label",
+      "label": "View all button",
+      "default": "View all products"
+    },
+    {
+      "type": "url",
+      "id": "view_all_url",
+      "label": "View all URL"
+    },
+    {
+      "type": "color",
+      "id": "brand_color",
+      "label": "Brand color",
+      "default": "#b89774"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_feature_tags",
+      "label": "Show feature tags on cards",
+      "default": false
+    },
+    {
+      "type": "text",
+      "id": "rating_fallback",
+      "label": "Rating fallback",
+      "default": "4.8"
+    },
+    {
+      "type": "text",
+      "id": "reviews_count_fallback",
+      "label": "Reviews count fallback",
+      "default": "216"
+    },
+    {
+      "type": "text",
+      "id": "default_feature_1",
+      "label": "Default feature 1",
+      "default": "Ice Therapy"
+    },
+    {
+      "type": "text",
+      "id": "default_feature_2",
+      "label": "Default feature 2",
+      "default": "Skin Care"
+    },
+    {
+      "type": "text",
+      "id": "default_feature_3",
+      "label": "Default feature 3",
+      "default": "Reusable"
+    },
+    {
+      "type": "text",
+      "id": "default_feature_1_alt",
+      "label": "Alt feature 1",
+      "default": "Foldable"
+    },
+    {
+      "type": "text",
+      "id": "default_feature_2_alt",
+      "label": "Alt feature 2",
+      "default": "Space Saving"
+    },
+    {
+      "type": "text",
+      "id": "default_feature_3_alt",
+      "label": "Alt feature 3",
+      "default": "Multi-Purpose"
+    },
+    {
+      "type": "text",
+      "id": "empty_text",
+      "label": "Empty message",
+      "default": "No products found."
+    }
+  ],
+  "presets": [
+    {
+      "name": "Grosyhub trending now"
+    }
+  ]
+}
+{% endschema %}

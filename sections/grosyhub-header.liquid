@@ -1,0 +1,292 @@
+{{ 'grosyhub-header.css' | asset_url | stylesheet_tag }}
+{{ 'grosyhub-wishlist-drawer.css' | asset_url | stylesheet_tag }}
+{{ 'grosyhub-cart-drawer.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'grosyhub-wishlist.js' | asset_url }}" defer></script>
+<script src="{{ 'grosyhub-cart-drawer.js' | asset_url }}" defer></script>
+<script src="{{ 'grosyhub-header.js' | asset_url }}" defer></script>
+
+{%- liquid
+  assign menu = section.settings.menu
+  assign search_placeholder = section.settings.search_placeholder | default: 'Search for products...'
+  assign show_announcement = section.settings.show_announcement_bar
+  assign brand_color = section.settings.brand_color | default: '#b89774'
+  assign mega_menu_label = section.settings.mega_menu_label | default: 'Shop by Category'
+  assign all_categories_label = section.settings.all_categories_label | default: 'All Categories'
+  assign show_categories_btn = section.settings.show_all_categories_button | default: true, allow_false: true
+  if section.settings.mega_categories_menu != blank
+    assign mega_menu_ref = linklists[section.settings.mega_categories_menu]
+  elsif menu != blank
+    assign mega_menu_ref = menu
+  else
+    assign mega_menu_ref = nil
+  endif
+
+  assign has_mega = false
+  assign has_mega_menu = false
+  assign mega_nav_count = 0
+
+  if menu != blank and menu.links.size > 0
+    for link in menu.links
+      capture hide_nav_check
+        render 'grosyhub-nav-hide-link', link: link
+      endcapture
+      assign hide_nav_check = hide_nav_check | strip
+      if hide_nav_check != 'true' and link.links.size > 0
+        capture skip_mega_check
+          render 'grosyhub-mega-skip-link', link: link, section: section
+        endcapture
+        assign skip_mega_check = skip_mega_check | strip
+        unless skip_mega_check == 'true'
+          assign has_mega_menu = true
+          assign mega_nav_count = mega_nav_count | plus: 1
+        endunless
+      endif
+    endfor
+  endif
+
+  if mega_menu_ref != blank and mega_menu_ref.links.size > 0
+    assign has_mega = true
+  endif
+
+  if has_mega_menu
+    assign has_mega = true
+  endif
+
+  assign show_contact_nav = section.settings.show_contact_nav
+  assign contact_nav_label = section.settings.contact_nav_label | default: 'Contact Us'
+  if section.settings.contact_nav_url != blank
+    assign contact_nav_url = section.settings.contact_nav_url
+  else
+    assign contact_nav_url = '/pages/contact'
+  endif
+  assign contact_nav_active = false
+  if request.page_type == 'page' and page.handle == 'contact'
+    assign contact_nav_active = true
+  endif
+-%}
+
+<div
+  class="gh-header{% if section.settings.show_mobile_bottom_nav %} gh-header--bottom-nav{% endif %}"
+  data-grosyhub-header
+  role="banner"
+  style="--gh-brand: {{ brand_color }};"
+>
+  <div class="gh-header__desktop">
+    {% render 'grosyhub-header-desktop',
+      section: section,
+      menu: menu,
+      search_placeholder: search_placeholder,
+      show_announcement: show_announcement,
+      mega_menu_label: mega_menu_label,
+      all_categories_label: all_categories_label,
+      show_categories_btn: show_categories_btn,
+      has_mega: has_mega,
+      has_mega_menu: has_mega_menu,
+      mega_menu_ref: mega_menu_ref,
+      show_contact_nav: show_contact_nav,
+      contact_nav_label: contact_nav_label,
+      contact_nav_url: contact_nav_url,
+      contact_nav_active: contact_nav_active
+    %}
+  </div>
+
+  <div class="gh-header__mobile">
+    {% render 'grosyhub-header-mobile', section: section %}
+  </div>
+
+</div>
+
+{% render 'grosyhub-header-overlays',
+  section: section,
+  menu: menu,
+  search_placeholder: search_placeholder,
+  all_categories_label: all_categories_label,
+  has_mega: has_mega,
+  mega_menu_ref: mega_menu_ref,
+  show_contact_nav: show_contact_nav,
+  contact_nav_label: contact_nav_label,
+  contact_nav_url: contact_nav_url,
+  contact_nav_active: contact_nav_active
+%}
+
+{% render 'grosyhub-wishlist-drawer',
+  empty_text: section.settings.wishlist_empty_text,
+  wishlist_heading: section.settings.wishlist_drawer_heading,
+  promo_text: section.settings.wishlist_promo_text,
+  move_all_label: section.settings.wishlist_move_all_label,
+  view_wishlist_label: section.settings.wishlist_view_page_label,
+  wishlist_page_url: section.settings.wishlist_page_url
+%}
+{% render 'grosyhub-cart-drawer' %}
+
+{% schema %}
+{
+  "name": "Grosyhub Header",
+  "tag": "header",
+  "class": "header-section grosyhub-header-section",
+  "enabled_on": { "groups": ["header"] },
+  "settings": [
+    { "type": "color", "id": "brand_color", "label": "Brand color", "default": "#b89774" },
+    { "type": "header", "content": "Desktop announcement" },
+    { "type": "checkbox", "id": "show_announcement_bar", "label": "Show desktop announcement", "default": true },
+    { "type": "text", "id": "announcement_1", "label": "Line 1", "default": "Free Shipping Over ₹499" },
+    { "type": "text", "id": "announcement_2", "label": "Line 2", "default": "7 Days Easy Returns" },
+    { "type": "text", "id": "announcement_3", "label": "Line 3", "default": "Secure Payments" },
+    { "type": "text", "id": "announcement_4", "label": "Line 4", "default": "Premium Home Essentials" },
+    { "type": "text", "id": "announcement_5", "label": "Line 5", "default": "10% off on Prepaid Orders" },
+    { "type": "header", "content": "Mobile announcement" },
+    { "type": "checkbox", "id": "show_announcement_mobile", "label": "Show mobile announcement bar", "default": true, "info": "Uses announcement lines 1–5 in the scrolling marquee." },
+    { "type": "header", "content": "Contact & search" },
+    { "type": "checkbox", "id": "show_phone", "label": "Show phone on desktop", "default": true },
+    { "type": "text", "id": "phone_label", "label": "Phone label", "default": "24/7 Delivery" },
+    { "type": "text", "id": "phone_number", "label": "Phone number", "default": "+91 97245 91484" },
+    { "type": "text", "id": "search_placeholder", "label": "Search placeholder", "default": "Search for products..." },
+    { "type": "textarea", "id": "popular_searches", "label": "Popular searches (comma separated)", "default": "Shower Curtain, Kitchen Rack, Storage Box, Bathroom Accessories" },
+    { "type": "link_list", "id": "menu", "label": "Main menu", "default": "main-menu" },
+    { "type": "checkbox", "id": "show_contact_nav", "label": "Show extra Contact Us link in navigation", "default": false, "info": "Contact links in your main menu are hidden automatically. Use footer Quick Links for Contact." },
+    { "type": "text", "id": "mega_exclude_links", "label": "Exclude from mega menu (comma-separated)", "default": "home,new-arrivals,new arrivals", "info": "Match menu title or handle. These stay in the nav bar as normal links." },
+    { "type": "text", "id": "contact_nav_label", "label": "Contact link label", "default": "Contact Us" },
+    { "type": "url", "id": "contact_nav_url", "label": "Contact page URL", "info": "Defaults to /pages/contact if empty." },
+    { "type": "checkbox", "id": "show_all_categories_button", "label": "Show All Categories button (desktop bar)", "default": false },
+    { "type": "text", "id": "all_categories_label", "label": "All Categories label", "default": "All Categories" },
+    { "type": "header", "content": "Mega menu (Navigation)" },
+    {
+      "type": "paragraph",
+      "content": "Create a menu in Online Store → Navigation with 3 levels: Category → Column → Links. Assign it below, or leave empty to use the main menu structure."
+    },
+    { "type": "link_list", "id": "mega_categories_menu", "label": "Mega menu navigation", "info": "Optional. Uses main menu if empty." },
+    { "type": "text", "id": "mega_view_all_label", "label": "View all link text", "default": "View All →" },
+    { "type": "checkbox", "id": "show_mega_top_picks", "label": "Show top picks in mega menu", "default": true },
+    { "type": "text", "id": "mega_top_picks_heading", "label": "Top picks heading", "default": "Top Picks" },
+    { "type": "collection", "id": "mega_top_picks_collection", "label": "Top picks collection", "info": "Shows up to 2 products in the mega menu sidebar." },
+    { "type": "text", "id": "mega_top_picks_button", "label": "Top picks button", "default": "Shop Now" },
+    { "type": "header", "content": "Mobile menu drawer" },
+    { "type": "checkbox", "id": "drawer_show_ctas", "label": "Show free shipping & login cards in menu", "default": true },
+    { "type": "text", "id": "drawer_login_title", "label": "Login card title", "default": "Login / Sign Up" },
+    { "type": "text", "id": "drawer_login_subtitle", "label": "Login card subtitle", "default": "Access your orders, wishlist & more" },
+    { "type": "checkbox", "id": "drawer_show_trust_footer", "label": "Show trust icons in menu footer", "default": true },
+    { "type": "checkbox", "id": "show_mobile_bottom_nav", "label": "Show mobile bottom navigation bar", "default": false },
+    { "type": "checkbox", "id": "show_mega_trust", "label": "Show trust bar in mega menu", "default": true },
+    { "type": "text", "id": "mega_trust_1_title", "label": "Trust 1 title", "default": "Free Shipping" },
+    { "type": "text", "id": "mega_trust_1_text", "label": "Trust 1 text", "default": "On orders over ₹499" },
+    { "type": "text", "id": "mega_trust_2_title", "label": "Trust 2 title", "default": "Easy Returns" },
+    { "type": "text", "id": "mega_trust_2_text", "label": "Trust 2 text", "default": "7-day hassle-free returns" },
+    { "type": "text", "id": "mega_trust_3_title", "label": "Trust 3 title", "default": "Secure Payments" },
+    { "type": "text", "id": "mega_trust_3_text", "label": "Trust 3 text", "default": "100% protected checkout" },
+    { "type": "text", "id": "mega_trust_4_title", "label": "Trust 4 title", "default": "Fast Delivery" },
+    { "type": "text", "id": "mega_trust_4_text", "label": "Trust 4 text", "default": "Quick dispatch nationwide" },
+    { "type": "checkbox", "id": "show_mega_combo", "label": "Show combo offers in sidebar", "default": true },
+    { "type": "text", "id": "mega_combo_title", "label": "Combo title", "default": "Combo Offers" },
+    { "type": "text", "id": "mega_combo_text", "label": "Combo text", "default": "Save more on bundles" },
+    { "type": "text", "id": "mega_combo_link_label", "label": "Combo link", "default": "Shop Now" },
+    { "type": "url", "id": "mega_combo_link", "label": "Combo URL" },
+    { "type": "text", "id": "wishlist_label", "label": "Wishlist label", "default": "Wishlist" },
+    { "type": "text", "id": "cart_label", "label": "Cart label", "default": "Cart" },
+    { "type": "text", "id": "account_greeting", "label": "Account greeting", "default": "Hello," },
+    { "type": "text", "id": "account_label", "label": "Account label", "default": "My Account" },
+    { "type": "header", "content": "Wishlist drawer" },
+    { "type": "text", "id": "wishlist_drawer_heading", "label": "Wishlist drawer heading", "default": "My Wishlist" },
+    { "type": "textarea", "id": "wishlist_promo_text", "label": "Wishlist promo text", "default": "Your favorites, all in one place! Move items to cart and shop what you love." },
+    { "type": "text", "id": "wishlist_empty_text", "label": "Wishlist empty text", "default": "Your wishlist is empty." },
+    { "type": "text", "id": "wishlist_move_all_label", "label": "Move all to cart label", "default": "Move All To Cart" },
+    { "type": "text", "id": "wishlist_view_page_label", "label": "View wishlist label", "default": "View Wishlist" },
+    { "type": "url", "id": "wishlist_page_url", "label": "Wishlist page URL" },
+    { "type": "header", "content": "Cart drawer" },
+    { "type": "text", "id": "cart_drawer_heading", "label": "Cart drawer heading", "default": "Your Cart" },
+    { "type": "number", "id": "free_shipping_threshold", "label": "Free shipping threshold (₹)", "default": 499 },
+    { "type": "text", "id": "cart_empty_text", "label": "Cart empty text", "default": "Your cart is empty." },
+    { "type": "text", "id": "cart_checkout_label", "label": "Checkout button", "default": "Checkout Securely" },
+    { "type": "text", "id": "cart_view_label", "label": "View cart button", "default": "View Cart" },
+    { "type": "text", "id": "cart_trust_1", "label": "Trust badge 1", "default": "7 Days Easy Returns" },
+    { "type": "text", "id": "cart_trust_2", "label": "Trust badge 2", "default": "Secure Payments" },
+    { "type": "text", "id": "cart_trust_3", "label": "Trust badge 3", "default": "Premium Quality" },
+  ],
+  "blocks": [
+    {
+      "type": "mega_promo",
+      "name": "Mega promo",
+      "limit": 1,
+      "settings": [
+        { "type": "image_picker", "id": "image", "label": "Image" },
+        { "type": "text", "id": "title", "label": "Title", "default": "Upgrade Your Kitchen Space" },
+        { "type": "text", "id": "subtitle", "label": "Subtitle", "default": "Smart, practical & stylish essentials for every home" },
+        { "type": "text", "id": "badge", "label": "Badge", "default": "UP TO 40% OFF" },
+        { "type": "text", "id": "button_label", "label": "Button", "default": "Shop Now" },
+        { "type": "url", "id": "button_link", "label": "Button link" }
+      ]
+    },
+    {
+      "type": "menu_icon",
+      "name": "Category icon",
+      "settings": [
+        { "type": "text", "id": "match_title", "label": "Match menu item title", "info": "Must match exactly (e.g. Kitchen & Dining)" },
+        {
+          "type": "select",
+          "id": "icon",
+          "label": "Icon",
+          "options": [
+            { "value": "bathroom", "label": "Bathroom" },
+            { "value": "beauty", "label": "Beauty" },
+            { "value": "home", "label": "Home" },
+            { "value": "kitchen", "label": "Kitchen" },
+            { "value": "racks", "label": "Racks" },
+            { "value": "garden", "label": "Garden" },
+            { "value": "wholesale", "label": "Wholesale" }
+          ],
+          "default": "kitchen"
+        }
+      ]
+    },
+    {
+      "type": "mega_column",
+      "name": "Mega column",
+      "settings": [
+        { "type": "text", "id": "title", "label": "Title", "default": "Category" },
+        {
+          "type": "select",
+          "id": "icon",
+          "label": "Icon",
+          "options": [
+            { "value": "bathroom", "label": "Bathroom" },
+            { "value": "beauty", "label": "Beauty" },
+            { "value": "home", "label": "Home" },
+            { "value": "kitchen", "label": "Kitchen" },
+            { "value": "racks", "label": "Racks" },
+            { "value": "wholesale", "label": "Wholesale" },
+            { "value": "garden", "label": "Garden" }
+          ],
+          "default": "kitchen"
+        },
+        { "type": "text", "id": "badge", "label": "Badge (optional)", "info": "e.g. Bulk" },
+        { "type": "link_list", "id": "menu", "label": "Links menu" },
+        { "type": "text", "id": "link_1_label", "label": "Link 1" },
+        { "type": "url", "id": "link_1_url", "label": "URL 1" },
+        { "type": "text", "id": "link_2_label", "label": "Link 2" },
+        { "type": "url", "id": "link_2_url", "label": "URL 2" },
+        { "type": "text", "id": "link_3_label", "label": "Link 3" },
+        { "type": "url", "id": "link_3_url", "label": "URL 3" },
+        { "type": "text", "id": "link_4_label", "label": "Link 4" },
+        { "type": "url", "id": "link_4_url", "label": "URL 4" },
+        { "type": "text", "id": "link_5_label", "label": "Link 5" },
+        { "type": "url", "id": "link_5_url", "label": "URL 5" },
+        { "type": "text", "id": "view_all_label", "label": "View all label", "default": "View All" },
+        { "type": "url", "id": "view_all_url", "label": "View all URL" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Grosyhub Header",
+      "blocks": [
+        { "type": "mega_promo" },
+        { "type": "mega_column", "settings": { "title": "Bathroom Essentials", "icon": "bathroom", "link_1_label": "Shower Curtains", "link_2_label": "Bathroom Accessories", "link_3_label": "Towel Sets", "view_all_label": "View All" } },
+        { "type": "mega_column", "settings": { "title": "Beauty & Personal Care", "icon": "beauty", "link_1_label": "Skincare Tools", "link_2_label": "Hair Care", "view_all_label": "View All" } },
+        { "type": "mega_column", "settings": { "title": "Home Upgrades", "icon": "home", "link_1_label": "Home Decor", "link_2_label": "Cleaning Supplies", "view_all_label": "View All" } },
+        { "type": "mega_column", "settings": { "title": "Kitchen & Dining", "icon": "kitchen", "link_1_label": "Cookware", "link_2_label": "Kitchen Tools", "view_all_label": "View All" } },
+        { "type": "mega_column", "settings": { "title": "Racks & Organizers", "icon": "racks", "link_1_label": "Kitchen Racks", "link_2_label": "Wardrobe Organizers", "view_all_label": "View All" } },
+        { "type": "mega_column", "settings": { "title": "Wholesale Products", "icon": "wholesale", "badge": "Bulk", "link_1_label": "Bulk Order", "link_2_label": "Dealer Program", "view_all_label": "View All" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

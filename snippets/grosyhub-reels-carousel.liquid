@@ -1,0 +1,68 @@
+{%- comment -%}
+  Shop by Reels — horizontal carousel of reel cards.
+{%- endcomment -%}
+
+<div class="gh-reels__carousel" data-gh-reels-carousel>
+  <button type="button" class="gh-reels__arrow gh-reels__arrow--prev" data-gh-reels-prev aria-label="Previous reels">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  </button>
+  <div class="gh-reels__track-wrap">
+    <div class="gh-reels__track" data-gh-reels-track>
+      {%- if section.blocks.size > 0 -%}
+        {%- assign coll_fill_index = 0 -%}
+        {%- for block in section.blocks -%}
+          {%- if block.type == 'reel' -%}
+            {%- liquid
+              assign reel_product = block.settings.product
+              if reel_product == blank and block.settings.link_override != blank
+                assign link_handle = block.settings.link_override | split: '/products/' | last | split: '?' | first | split: '#' | first
+                if link_handle != blank
+                  assign reel_product = all_products[link_handle]
+                endif
+              endif
+              if reel_product == blank and products.size > coll_fill_index
+                assign reel_product = products[coll_fill_index]
+                assign coll_fill_index = coll_fill_index | plus: 1
+              endif
+            -%}
+            <div class="gh-reels__slide" data-gh-reels-slide>
+              {% render 'grosyhub-reel-card',
+                block: block,
+                product: reel_product,
+                brand_color: brand_color,
+                rating_fallback: rating_fallback,
+                reviews_count_fallback: reviews_count_fallback,
+                tag_layout: true
+              %}
+            </div>
+          {%- endif -%}
+        {%- endfor -%}
+      {%- elsif products.size > 0 -%}
+        {%- assign shown = 0 -%}
+        {%- for product in products -%}
+          {%- if shown >= max_reels -%}
+            {%- break -%}
+          {%- endif -%}
+          <div class="gh-reels__slide" data-gh-reels-slide>
+            {% render 'grosyhub-reel-card',
+              product: product,
+              brand_color: brand_color,
+              rating_fallback: rating_fallback,
+              reviews_count_fallback: reviews_count_fallback,
+              tag_layout: true
+            %}
+          </div>
+          {%- assign shown = shown | plus: 1 -%}
+        {%- endfor -%}
+      {%- endif -%}
+    </div>
+  </div>
+  <button type="button" class="gh-reels__arrow gh-reels__arrow--next" data-gh-reels-next aria-label="Next reels">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  </button>
+</div>
+<div class="gh-reels__dots" data-gh-reels-dots role="tablist" aria-label="Reels carousel pagination"></div>

@@ -1,0 +1,89 @@
+{%- comment -%}
+  Navigation list for mobile menu drawer (reference style).
+  @param {object} menu - linklist
+  @param {object} section - header section
+{%- endcomment -%}
+{%- if menu != blank and menu.links.size > 0 -%}
+  <ul class="gh-nav-drawer__list" role="list">
+    {%- for link in menu.links -%}
+      {%- capture hide_nav -%}{% render 'grosyhub-nav-hide-link', link: link %}{%- endcapture -%}
+      {%- assign hide_nav = hide_nav | strip -%}
+      {%- unless hide_nav == 'true' -%}
+        <li class="gh-nav-drawer__item">
+          {%- if link.links != blank -%}
+            <button
+              type="button"
+              class="gh-nav-drawer__row gh-nav-drawer__row--toggle{% if link.active or link.current %} is-active{% endif %}"
+              data-gh-drawer-toggle
+              aria-expanded="false"
+            >
+              <span class="gh-nav-drawer__icon">
+                {% render 'grosyhub-mega-resolve-icon', title: link.title, section: section %}
+              </span>
+              <span class="gh-nav-drawer__label">{{ link.title }}</span>
+              <svg class="gh-nav-drawer__chevron" width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                <path d="M4 3l4 4-4 4" stroke="currentColor" stroke-width="1.5"/>
+              </svg>
+            </button>
+            <div class="gh-nav-drawer__sub" hidden>
+              <ul class="gh-nav-drawer__sub-list" role="list">
+                {%- for child in link.links -%}
+                  <li class="gh-nav-drawer__sub-item">
+                    {%- if child.links != blank -%}
+                      <button
+                        type="button"
+                        class="gh-nav-drawer__sub-toggle"
+                        data-gh-drawer-toggle
+                        aria-expanded="false"
+                      >
+                        <span class="gh-nav-drawer__sub-title">{{ child.title }}</span>
+                        <svg class="gh-nav-drawer__chevron" width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                          <path d="M4 3l4 4-4 4" stroke="currentColor" stroke-width="1.5"/>
+                        </svg>
+                      </button>
+                      <ul class="gh-nav-drawer__sub-nested" hidden>
+                        {%- for grand in child.links -%}
+                          <li>
+                            <a href="{{ grand.url }}" class="gh-nav-drawer__sub-link">{{ grand.title }}</a>
+                          </li>
+                        {%- endfor -%}
+                        <li>
+                          <a href="{{ child.url }}" class="gh-nav-drawer__sub-link gh-nav-drawer__sub-link--all">
+                            {{ section.settings.mega_view_all_label | default: 'View All →' }}
+                          </a>
+                        </li>
+                      </ul>
+                    {%- else -%}
+                      <a href="{{ child.url }}" class="gh-nav-drawer__sub-link gh-nav-drawer__sub-link--standalone">{{ child.title }}</a>
+                    {%- endif -%}
+                  </li>
+                {%- endfor -%}
+                <li>
+                  <a href="{{ link.url }}" class="gh-nav-drawer__sub-link gh-nav-drawer__sub-link--all">
+                    {{ section.settings.mega_view_all_label | default: 'View All →' }}
+                  </a>
+                </li>
+              </ul>
+            </div>
+          {%- else -%}
+            <a
+              href="{{ link.url }}"
+              class="gh-nav-drawer__row gh-nav-drawer__row--link{% if link.active or link.current %} is-active{% endif %}"
+              {% if link.current %}aria-current="page"{% endif %}
+            >
+              <span class="gh-nav-drawer__icon">
+                {% render 'grosyhub-mega-resolve-icon', title: link.title, section: section %}
+              </span>
+              <span class="gh-nav-drawer__label">{{ link.title }}</span>
+              <svg class="gh-nav-drawer__chevron" width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                <path d="M4 3l4 4-4 4" stroke="currentColor" stroke-width="1.5"/>
+              </svg>
+            </a>
+          {%- endif -%}
+        </li>
+      {%- endunless -%}
+    {%- endfor -%}
+  </ul>
+{%- else -%}
+  <p class="gh-nav-drawer__empty">No menu links configured. Assign a menu in the header section settings.</p>
+{%- endif -%}

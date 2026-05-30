@@ -1,0 +1,271 @@
+{%- comment -%}
+  Renders policy body HTML. Pass policy_type: privacy | refund | shipping | terms
+{%- endcomment -%}
+
+{%- liquid
+  assign policy_type = policy_type | default: 'privacy'
+  assign shop_email = contact_email | default: shop.email | default: 'info@grosyhub.com'
+  assign support_phone = contact_phone | default: '+91 88665 59670'
+  assign support_phone_tel = support_phone | replace: ' ', '' | replace: '-', ''
+-%}
+
+{%- case policy_type -%}
+  {%- when 'privacy' -%}
+    <p>
+      Grosyhub ("we", "us", "our") operates {{ shop.url }} and sells premium home essentials online in India. This Privacy Policy explains how we collect, use, store, and protect your personal information when you visit our website, create an account, or place an order.
+    </p>
+
+    <h2>Information we collect</h2>
+    <p>We may collect the following types of information:</p>
+    <ul>
+      <li><strong>Account &amp; contact details:</strong> name, email address, phone number, and password (stored securely).</li>
+      <li><strong>Order &amp; delivery details:</strong> shipping and billing address, order history, and payment status (we do not store full card or UPI credentials on our servers).</li>
+      <li><strong>Communications:</strong> messages you send via contact forms, email, WhatsApp, or customer support.</li>
+      <li><strong>Technical data:</strong> IP address, browser type, device information, and cookies used to run the store and improve your experience.</li>
+      <li><strong>Marketing preferences:</strong> if you subscribe to our newsletter or opt in to promotional messages.</li>
+    </ul>
+
+    <h2>How we use your information</h2>
+    <p>We use your data to:</p>
+    <ul>
+      <li>Process and deliver orders, including sharing necessary details with courier and payment partners.</li>
+      <li>Provide customer support and respond to enquiries.</li>
+      <li>Send order updates, invoices, and service-related notifications.</li>
+      <li>Improve our website, products, and shopping experience.</li>
+      <li>Send marketing communications only when you have agreed to receive them (you may unsubscribe anytime).</li>
+      <li>Comply with applicable laws, tax, and fraud-prevention requirements.</li>
+    </ul>
+
+    <h2>Sharing of information</h2>
+    <p>We do not sell your personal information. We may share data with:</p>
+    <ul>
+      <li>Payment gateways and banks to process transactions securely.</li>
+      <li>Shipping and logistics partners to deliver your order.</li>
+      <li>Technology providers (hosting, email, analytics) who process data on our behalf under confidentiality obligations.</li>
+      <li>Authorities when required by law or to protect our legal rights.</li>
+    </ul>
+
+    <h2>Cookies</h2>
+    <p>
+      We use cookies and similar technologies for essential site functions (cart, login), analytics, and preferences. You can control cookies through your browser settings; disabling some cookies may affect how the site works.
+    </p>
+
+    <h2>Data retention &amp; security</h2>
+    <p>
+      We retain personal data only as long as needed for the purposes above or as required by law. We use reasonable technical and organisational measures to protect your information. No online transmission is 100% secure; please use strong passwords and keep your account details confidential.
+    </p>
+
+    <h2>Your rights</h2>
+    <p>Depending on applicable law, you may request access, correction, or deletion of your personal data, or withdraw marketing consent. Contact us using the details below and we will respond within a reasonable time.</p>
+
+    <h2>Children</h2>
+    <p>Our services are not directed at children under 18. We do not knowingly collect personal data from minors.</p>
+
+    <h2>Changes to this policy</h2>
+    <p>We may update this Privacy Policy from time to time. The revised version will be posted on this page with an updated date. Continued use of the site after changes constitutes acceptance of the updated policy.</p>
+
+  {%- when 'refund' -%}
+    <div class="gh-policy__callout">
+      <p><strong>Summary:</strong> We offer hassle-free returns within <strong>7 days</strong> of delivery on most products, subject to the conditions below.</p>
+    </div>
+
+    <p>
+      At Grosyhub, we want you to be satisfied with every purchase. If something is not right, please read this Refund &amp; Return Policy carefully before requesting a return or refund.
+    </p>
+
+    <h2>Return window</h2>
+    <p>
+      You may request a return within <strong>7 calendar days</strong> from the date of delivery. Requests received after this period cannot be accepted unless required by applicable consumer law.
+    </p>
+
+    <h2>Eligible items</h2>
+    <p>Returns are accepted when:</p>
+    <ul>
+      <li>The product is unused, unwashed, and in the same condition you received it.</li>
+      <li>Original packaging, tags, labels, and accessories are intact.</li>
+      <li>You provide valid proof of purchase (order number or invoice).</li>
+    </ul>
+
+    <h2>Non-returnable items</h2>
+    <p>The following are generally not eligible for return (unless defective or wrong item sent):</p>
+    <ul>
+      <li>Items marked as final sale or non-returnable on the product page.</li>
+      <li>Personal care, beauty, or hygiene products once opened or used.</li>
+      <li>Customised or made-to-order products.</li>
+      <li>Products damaged due to misuse, improper storage, or normal wear after use.</li>
+    </ul>
+
+    <h2>Defective or wrong items</h2>
+    <p>
+      If you receive a damaged, defective, or incorrect product, contact us within 48 hours of delivery with photos or video. We will arrange a replacement or full refund including return shipping where applicable.
+    </p>
+
+    <h2>How to request a return</h2>
+    <ol>
+      <li>Email <a href="mailto:{{ shop_email }}">{{ shop_email }}</a> or call {{ support_phone }} with your order number and reason for return.</li>
+      <li>Our team will confirm eligibility and share return instructions.</li>
+      <li>Pack the item securely in original packaging and ship to the address we provide.</li>
+      <li>Once we receive and inspect the item, we will process your refund or exchange.</li>
+    </ol>
+
+    <h2>Refunds</h2>
+    <ul>
+      <li>Approved refunds are credited to the original payment method (UPI, card, wallet, etc.) or as store credit where agreed.</li>
+      <li>Processing typically takes <strong>5–10 business days</strong> after we receive the returned product; bank timelines may vary.</li>
+      <li>Original shipping charges are non-refundable unless the return is due to our error (wrong/defective item).</li>
+      <li>Cash on Delivery orders may be refunded via bank transfer or store credit after verification.</li>
+    </ul>
+
+    <h2>Exchanges</h2>
+    <p>
+      Exchanges for size or variant are subject to stock availability. Contact support before returning an item for exchange. Price differences, if any, may apply.
+    </p>
+
+    <h2>Cancellations</h2>
+    <p>
+      Orders can be cancelled before dispatch. Once shipped, cancellation is not possible; you may return the item under this policy after delivery.
+    </p>
+
+  {%- when 'shipping' -%}
+    <div class="gh-policy__callout">
+      <p><strong>Summary:</strong> We ship across India. Delivery times and charges are shown at checkout before you pay.</p>
+    </div>
+
+    <p>
+      This Shipping Policy explains how Grosyhub processes, ships, and delivers orders placed on {{ shop.url }}.
+    </p>
+
+    <h2>Shipping areas</h2>
+    <p>
+      We currently deliver to serviceable pin codes across India. If your location is not serviceable at checkout, please contact us — we will try to assist where possible.
+    </p>
+
+    <h2>Order processing</h2>
+    <ul>
+      <li>Orders are processed on business days (Monday–Saturday, excluding public holidays).</li>
+      <li>Most orders are packed within <strong>1–2 business days</strong> after payment confirmation.</li>
+      <li>You will receive email/SMS updates when your order is confirmed, shipped, and out for delivery.</li>
+    </ul>
+
+    <h2>Delivery timelines</h2>
+    <p>Estimated delivery times after dispatch (may vary by location and courier partner):</p>
+    <ul>
+      <li><strong>Metro cities:</strong> 2–5 business days</li>
+      <li><strong>Other locations:</strong> 4–8 business days</li>
+      <li><strong>Remote areas:</strong> up to 10–12 business days</li>
+    </ul>
+    <p>
+      Delays may occur due to weather, festivals, strikes, or courier constraints. We are not responsible for delays beyond our reasonable control but will help track your shipment.
+    </p>
+
+    <h2>Shipping charges</h2>
+    <p>
+      Shipping fees (if any) are calculated at checkout based on order value, weight, and delivery pin code. Promotional free shipping offers, when active, apply only to qualifying orders as stated on the website.
+    </p>
+
+    <h2>Order tracking</h2>
+    <p>
+      Once shipped, you will receive a tracking link by email/SMS. You can also track orders from your account or contact support with your order number.
+    </p>
+
+    <h2>Delivery attempts &amp; address</h2>
+    <ul>
+      <li>Please provide a complete, correct address and active phone number.</li>
+      <li>Courier partners usually make 2–3 delivery attempts. If delivery fails, the package may be returned to us; re-shipping charges may apply.</li>
+      <li>We are not responsible for delays or failed delivery due to incorrect address or unavailability at delivery time.</li>
+    </ul>
+
+    <h2>Partial shipments</h2>
+    <p>
+      Large or multi-item orders may ship in separate packages at no extra cost where possible. You will be notified if items ship separately.
+    </p>
+
+    <h2>International shipping</h2>
+    <p>
+      We do not currently ship outside India unless explicitly stated on the product or checkout page.
+    </p>
+
+  {%- when 'terms' -%}
+    <p>
+      Welcome to Grosyhub. By accessing {{ shop.url }} or placing an order, you agree to these Terms of Service. Please read them carefully. If you do not agree, please do not use our website.
+    </p>
+
+    <h2>About us</h2>
+    <p>
+      Grosyhub sells premium home essentials and related products online. These terms govern your use of our website and your purchase of products from us.
+    </p>
+
+    <h2>Eligibility</h2>
+    <p>
+      You must be at least 18 years old and capable of entering a binding contract under Indian law to use this site and place orders.
+    </p>
+
+    <h2>Products &amp; pricing</h2>
+    <ul>
+      <li>We strive to display accurate descriptions, images, and prices. Minor variations in colour or size may occur due to screens or manufacturing batches.</li>
+      <li>Prices are in Indian Rupees (INR) and include applicable taxes unless stated otherwise.</li>
+      <li>We may change prices, offers, and product availability at any time without prior notice.</li>
+      <li>We reserve the right to limit quantities, refuse orders, or cancel orders in case of pricing errors, suspected fraud, or stock issues. If payment was taken, a full refund will be issued.</li>
+    </ul>
+
+    <h2>Orders &amp; payment</h2>
+    <ul>
+      <li>Placing an order constitutes an offer to purchase. Order confirmation (email/SMS) means we have accepted your order.</li>
+      <li>We accept payment methods shown at checkout (including UPI, cards, wallets, and Cash on Delivery where available).</li>
+      <li>COD orders may require phone verification before dispatch.</li>
+      <li>You are responsible for providing accurate billing and delivery information.</li>
+    </ul>
+
+    <h2>Shipping &amp; returns</h2>
+    <p>
+      Delivery and shipping terms are described in our
+      <a href="/pages/shipping-policy">Shipping Policy</a>.
+      Returns and refunds are governed by our
+      <a href="/pages/refund-policy">Refund Policy</a>.
+    </p>
+
+    <h2>Intellectual property</h2>
+    <p>
+      All content on this website (text, images, logos, design) is owned by Grosyhub or its licensors and protected by copyright and trademark laws. You may not copy, reproduce, or use our content without written permission.
+    </p>
+
+    <h2>User conduct</h2>
+    <p>You agree not to:</p>
+    <ul>
+      <li>Use the site for unlawful purposes or to harm others.</li>
+      <li>Attempt unauthorised access to our systems or accounts.</li>
+      <li>Post false reviews or engage in fraudulent chargebacks or abuse of return policies.</li>
+    </ul>
+
+    <h2>Limitation of liability</h2>
+    <p>
+      To the fullest extent permitted by law, Grosyhub is not liable for indirect, incidental, or consequential damages arising from use of the site or products. Our total liability for any claim related to an order is limited to the amount you paid for that order, except where law requires otherwise.
+    </p>
+
+    <h2>Indemnity</h2>
+    <p>
+      You agree to indemnify Grosyhub against claims arising from your misuse of the website or violation of these terms.
+    </p>
+
+    <h2>Governing law</h2>
+    <p>
+      These terms are governed by the laws of India. Courts in India shall have exclusive jurisdiction over disputes, subject to applicable consumer protection laws that may give you rights in your state of residence.
+    </p>
+
+    <h2>Changes</h2>
+    <p>
+      We may update these Terms of Service at any time. The current version is always on this page. Continued use after changes means you accept the updated terms.
+    </p>
+
+  {%- else -%}
+    <p>Policy content is not available. Please contact support.</p>
+{%- endcase -%}
+
+<div class="gh-policy__contact">
+  <p><strong>Questions?</strong> Contact Grosyhub customer support:</p>
+  <p>
+    Email: <a href="mailto:{{ shop_email }}">{{ shop_email }}</a><br>
+    Phone: <a href="tel:{{ support_phone_tel }}">{{ support_phone }}</a><br>
+    Hours: Mon – Sat, 9:00 AM – 7:00 PM (IST)
+  </p>
+</div>

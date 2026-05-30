@@ -1,0 +1,48 @@
+{%- comment -%}
+  Full carousel markup (arrows + track + dots container).
+  Required vars: brand_color, max_products, parent_product, show_features, rating_fallback
+  rec_products: product list to render
+{%- endcomment -%}
+
+<div class="gh-rec__carousel" data-gh-rec-carousel>
+  <button type="button" class="gh-rec__arrow gh-rec__arrow--prev" data-gh-rec-prev aria-label="Previous products">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  </button>
+  <div class="gh-rec__track-wrap">
+    <div class="gh-rec__track" data-gh-rec-track>
+      {%- assign rec_count = 0 -%}
+      {%- for rec_product in rec_products -%}
+        {%- if rec_count >= max_products -%}
+          {%- break -%}
+        {%- endif -%}
+        {%- if parent_product != blank and rec_product.id == parent_product.id -%}
+          {%- continue -%}
+        {%- endif -%}
+        <div class="gh-rec__slide" data-gh-rec-slide>
+          {% render 'grosyhub-recommendation-card',
+            product: rec_product,
+            brand_color: brand_color,
+            show_features: show_features,
+            rating_fallback: rating_fallback,
+            reviews_count_fallback: reviews_count_fallback,
+            default_feature_1: default_feature_1,
+            default_feature_2: default_feature_2,
+            default_feature_3: default_feature_3,
+            default_feature_1_alt: default_feature_1_alt,
+            default_feature_2_alt: default_feature_2_alt,
+            default_feature_3_alt: default_feature_3_alt
+          %}
+        </div>
+        {%- assign rec_count = rec_count | plus: 1 -%}
+      {%- endfor -%}
+    </div>
+  </div>
+  <button type="button" class="gh-rec__arrow gh-rec__arrow--next" data-gh-rec-next aria-label="Next products">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  </button>
+</div>
+<div class="gh-rec__dots" data-gh-rec-dots role="tablist" aria-label="Carousel pagination"></div>

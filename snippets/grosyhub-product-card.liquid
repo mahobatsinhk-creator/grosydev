@@ -1,0 +1,118 @@
+{%- liquid
+  assign product = product
+  assign variant = product.selected_or_first_available_variant
+  assign brand_color = brand_color | default: '#b89774'
+  assign compare_at = variant.compare_at_price
+  assign price = variant.price
+  assign on_sale = false
+  assign discount_pct = 0
+  if compare_at > price
+    assign on_sale = true
+    assign discount_pct = compare_at | minus: price | times: 100.0 | divided_by: compare_at | round
+  endif
+
+  assign rating = product.metafields.reviews.rating.value.rating
+  assign rating_count = product.metafields.reviews.rating_count
+
+  assign can_quick_add = false
+  if product.variants_count == 1 and variant.available
+    assign can_quick_add = true
+  endif
+-%}
+
+<article class="gh-plp-card" style="--gh-plp-brand: {{ brand_color }};">
+  <div class="gh-plp-card__media-wrap">
+    <a href="{{ product.url }}" class="gh-plp-card__media-link" aria-label="{{ product.title }}">
+      {%- if product.featured_media != blank -%}
+        {{
+          product.featured_media
+          | image_url: width: 600
+          | image_tag:
+            class: 'gh-plp-card__image',
+            loading: 'lazy',
+            widths: '200, 300, 400, 600',
+            sizes: '(min-width: 990px) 25vw, (min-width: 750px) 33vw, 50vw',
+            alt: product.featured_media.alt | default: product.title
+        }}
+      {%- else -%}
+        <div class="gh-plp-card__placeholder">{{ 'product-1' | placeholder_svg_tag }}</div>
+      {%- endif -%}
+    </a>
+    {%- if on_sale -%}
+      <span class="gh-plp-card__sale">SALE</span>
+    {%- endif -%}
+    <button
+      type="button"
+      class="gh-plp-card__wishlist"
+      data-gh-wishlist-toggle
+      data-wishlist-variant-id="{{ variant.id }}"
+      data-wishlist-product-id="{{ product.id }}"
+      data-wishlist-title="{{ product.title | escape }}"
+      data-wishlist-url="{{ product.url }}"
+      data-wishlist-image="{% if product.featured_media %}{{ product.featured_media | image_url: width: 200 }}{% endif %}"
+      data-wishlist-price="{{ price }}"
+      data-wishlist-compare-at="{{ compare_at }}"
+      aria-label="Add to wishlist"
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 21s-7.5-4.7-9.8-9.4C.4 8.2 2.6 4 6.4 4c2 0 3.2 1.2 3.6 1.8C10.4 5.2 11.6 4 13.6 4c3.8 0 6 4.2 4.2 7.6C19.5 16.3 12 21 12 21z" stroke="currentColor" stroke-width="1.6"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="gh-plp-card__body">
+    <h3 class="gh-plp-card__title">
+      <a href="{{ product.url }}">{{ product.title }}</a>
+    </h3>
+
+    {%- if rating != blank -%}
+      <p class="gh-plp-card__rating">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 2l2.9 6.1 6.8.6-5.1 4.4 1.6 6.6L12 16.9l-6.2 3.8 1.6-6.6-5.1-4.4 6.8-.6L12 2z"/>
+        </svg>
+        {{ rating }} ({{ rating_count }})
+      </p>
+    {%- endif -%}
+
+    {%- if product.tags.size > 0 -%}
+      <p class="gh-plp-card__tag">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 3l7 3v5c0 4.5-3.2 8.4-7 9-3.8-.6-7-4.5-7-9V6l7-3z" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+        {{ product.tags.first }}
+      </p>
+    {%- endif -%}
+
+    <div class="gh-plp-card__price-row">
+      <span class="gh-plp-card__price">{{ price | money }}</span>
+      {%- if on_sale -%}
+        <span class="gh-plp-card__compare">{{ compare_at | money }}</span>
+        <span class="gh-plp-card__off">{{ discount_pct }}% OFF</span>
+      {%- endif -%}
+    </div>
+
+    <div class="gh-plp-card__actions">
+      {%- if can_quick_add -%}
+        <form method="post" action="{{ routes.cart_add_url }}" class="gh-plp-card__form">
+          <input type="hidden" name="id" value="{{ variant.id }}">
+          <button type="submit" class="gh-plp-card__btn gh-plp-card__btn--cart">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M6 7h15l-1.5 9H8L6 7zm3-3h9l1 3H8l1-3z" stroke="currentColor" stroke-width="1.6"/>
+            </svg>
+            Add to Cart
+          </button>
+        </form>
+      {%- else -%}
+        <a href="{{ product.url }}" class="gh-plp-card__btn gh-plp-card__btn--cart">Add to Cart</a>
+      {%- endif -%}
+      <a href="{{ product.url }}" class="gh-plp-card__btn gh-plp-card__btn--view" aria-label="View {{ product.title | escape }}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" stroke="currentColor" stroke-width="1.6"/>
+          <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/>
+        </svg>
+        <span class="gh-plp-card__btn-text gh-plp-card__btn-text--full">Quick View</span>
+        <span class="gh-plp-card__btn-text gh-plp-card__btn-text--short" aria-hidden="true">View</span>
+      </a>
+    </div>
+  </div>
+</article>

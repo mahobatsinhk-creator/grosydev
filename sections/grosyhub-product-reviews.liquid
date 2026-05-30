@@ -1,0 +1,1022 @@
+<script src="{{ 'grosyhub-product-reviews.js' | asset_url }}" defer></script>
+
+{%- liquid
+  assign star_color = section.settings.star_color | default: '#ffb400'
+  assign average_rating = section.settings.average_rating | default: '4.8'
+  assign reviews_count = section.settings.reviews_count | default: '108'
+  assign reviews_per_page = section.settings.reviews_per_page | default: 5
+
+  assign rating = product.metafields.reviews.rating.value.rating
+  assign rating_count = product.metafields.reviews.rating_count
+  if rating != blank
+    assign average_rating = rating
+  endif
+  if rating_count != blank
+    assign reviews_count = rating_count
+  endif
+
+  assign count_5 = section.settings.count_5_star | default: 72
+  assign count_4 = section.settings.count_4_star | default: 21
+  assign count_3 = section.settings.count_3_star | default: 8
+  assign count_2 = section.settings.count_2_star | default: 4
+  assign count_1 = section.settings.count_1_star | default: 3
+  assign dist_max = count_5
+  if count_4 > dist_max
+    assign dist_max = count_4
+  endif
+  if count_3 > dist_max
+    assign dist_max = count_3
+  endif
+  if count_2 > dist_max
+    assign dist_max = count_2
+  endif
+  if count_1 > dist_max
+    assign dist_max = count_1
+  endif
+  if dist_max == 0
+    assign dist_max = 1
+  endif
+
+  assign page_width_class = 'page-width-narrow'
+  case settings.page_width
+    when 'wide'
+      assign page_width_class = 'page-width-wide'
+    when 'normal'
+      assign page_width_class = 'page-width-normal'
+    when 'narrow'
+      assign page_width_class = 'page-width-narrow'
+  endcase
+
+  assign reviews_base = reviews_count | plus: 0
+  if reviews_base == 0
+    assign reviews_base = 108
+  endif
+
+  assign legal_text = section.settings.legal_text
+  assign max_photos = section.settings.max_photos | default: 5
+-%}
+
+<section
+  class="gh-reviews {{ page_width_class }} section-{{ section.id }}"
+  data-gh-reviews
+  data-product-id="{{ product.id }}"
+  data-per-page="{{ reviews_per_page }}"
+  data-reviews-base="{{ reviews_base }}"
+  data-max-photos="{{ max_photos }}"
+  style="--gh-reviews-star: {{ star_color }};"
+  {{ section.shopify_attributes }}
+>
+  <div class="gh-reviews__container">
+    <h2 class="gh-reviews__heading">{{ section.settings.heading }}</h2>
+
+    <div class="gh-reviews__summary">
+      <div class="gh-reviews__avg">
+        <p class="gh-reviews__score">{{ average_rating }}</p>
+        {% render 'grosyhub-stars', rating: average_rating, size: 22, class: 'gh-reviews__summary-stars' %}
+        <p class="gh-reviews__count" data-gh-reviews-count>{{ reviews_count }} reviews</p>
+      </div>
+
+      <div class="gh-reviews__distribution" aria-label="Rating breakdown">
+        {%- assign dist_rows = '5,4,3,2,1' | split: ',' -%}
+        {%- for star_label in dist_rows -%}
+          {%- assign star_num = star_label | plus: 0 -%}
+          {%- case star_num -%}
+            {%- when 5 -%}
+              {%- assign star_count = count_5 -%}
+            {%- when 4 -%}
+              {%- assign star_count = count_4 -%}
+            {%- when 3 -%}
+              {%- assign star_count = count_3 -%}
+            {%- when 2 -%}
+              {%- assign star_count = count_2 -%}
+            {%- else -%}
+              {%- assign star_count = count_1 -%}
+          {%- endcase -%}
+          {%- assign bar_pct = star_count | times: 100 | divided_by: dist_max -%}
+          <div class="gh-reviews__dist-row">
+            <span class="gh-reviews__dist-label">{{ star_num }} Star</span>
+            <span class="gh-reviews__dist-bar" role="presentation">
+              <span class="gh-reviews__dist-fill" style="width: {{ bar_pct }}%;"></span>
+            </span>
+            <span class="gh-reviews__dist-count">{{ star_count }}</span>
+          </div>
+        {%- endfor -%}
+      </div>
+
+      <div class="gh-reviews__actions">
+        <button type="button" class="gh-reviews__write-btn" data-gh-review-write>
+          {{ section.settings.write_review_label }}
+        </button>
+        <div class="gh-reviews__filter-wrap">
+          <button
+            type="button"
+            class="gh-reviews__filter-btn"
+            data-gh-reviews-filter
+            aria-expanded="false"
+            aria-controls="gh-reviews-filter-{{ section.id }}"
+            aria-label="Filter reviews"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <div
+            id="gh-reviews-filter-{{ section.id }}"
+            class="gh-reviews__filter-menu"
+            data-gh-reviews-filter-menu
+            hidden
+          >
+            <button type="button" data-filter="all">All ratings</button>
+            <button type="button" data-filter="5">5 stars</button>
+            <button type="button" data-filter="4">4 stars</button>
+            <button type="button" data-filter="3">3 stars</button>
+            <button type="button" data-filter="2">2 stars</button>
+            <button type="button" data-filter="1">1 star</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="gh-reviews__list" data-gh-reviews-list>
+      {%- for block in section.blocks -%}
+        {%- if block.type == 'review' -%}
+          {% render 'grosyhub-review-item', block: block %}
+        {%- endif -%}
+      {%- endfor -%}
+    </div>
+
+    <p class="gh-reviews__empty" data-gh-reviews-empty {% if section.blocks.size > 0 %}hidden{% endif %}>
+      {{ section.settings.empty_text }}
+    </p>
+
+    <nav class="gh-reviews__pagination" data-gh-reviews-pagination aria-label="Reviews pagination"></nav>
+  </div>
+
+  {% render 'grosyhub-write-review-modal',
+    product: product,
+    section_id: section.id,
+    modal_title: section.settings.modal_title,
+    legal_text: legal_text,
+    max_photos: max_photos
+  %}
+</section>
+
+{% stylesheet %}
+  .gh-reviews {
+    padding-block: 40px 56px;
+    background: #fff;
+    color: #1a1a1a;
+    border-top: 1px solid #e8e8e8;
+  }
+
+  .gh-reviews__container {
+    width: 100%;
+    max-width: var(--page-width, 100%);
+    margin-inline: auto;
+    padding-inline: var(--page-margin, 16px);
+    box-sizing: border-box;
+  }
+
+  .gh-reviews__heading {
+    margin: 0 0 28px;
+    font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .gh-reviews__summary {
+    display: grid;
+    grid-template-columns: minmax(120px, 160px) minmax(0, 1fr) auto;
+    gap: 24px 32px;
+    align-items: start;
+    padding-bottom: 28px;
+    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 8px;
+  }
+
+  .gh-reviews__avg {
+    text-align: left;
+  }
+
+  .gh-reviews__score {
+    margin: 0 0 6px;
+    font-size: 2.75rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  .gh-reviews__summary-stars,
+  .gh-reviews__item-stars {
+    display: inline-flex;
+    gap: 2px;
+    color: var(--gh-reviews-star, #ffb400);
+  }
+
+  .gh-reviews__count {
+    margin: 8px 0 0;
+    font-size: 0.875rem;
+    color: #757575;
+  }
+
+  .gh-reviews__distribution {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .gh-reviews__dist-row {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr) 28px;
+    gap: 10px;
+    align-items: center;
+    font-size: 0.8125rem;
+    color: #424242;
+  }
+
+  .gh-reviews__dist-label {
+    white-space: nowrap;
+  }
+
+  .gh-reviews__dist-bar {
+    display: block;
+    height: 8px;
+    border-radius: 999px;
+    background: #ececec;
+    overflow: hidden;
+  }
+
+  .gh-reviews__dist-fill {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--gh-reviews-star, #ffb400);
+  }
+
+  .gh-reviews__dist-count {
+    text-align: right;
+    color: #757575;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .gh-reviews__actions {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    justify-self: end;
+  }
+
+  .gh-reviews__write-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 10px 18px;
+    border: 1px solid #1a1a1a;
+    border-radius: 4px;
+    background: #fff;
+    color: #1a1a1a;
+    font-size: 0.875rem;
+    font-weight: 600;
+    font-family: inherit;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+
+  .gh-reviews__write-btn:hover {
+    background: #f5f5f5;
+  }
+
+  .gh-reviews__filter-wrap {
+    position: relative;
+  }
+
+  .gh-reviews__filter-btn {
+    width: 42px;
+    height: 42px;
+    border: 1px solid #1a1a1a;
+    border-radius: 4px;
+    background: #fff;
+    color: #1a1a1a;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .gh-reviews__filter-btn:hover {
+    background: #f5f5f5;
+  }
+
+  .gh-reviews__filter-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 3;
+    min-width: 140px;
+    padding: 6px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    background: #fff;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .gh-reviews__filter-menu[hidden] {
+    display: none;
+  }
+
+  .gh-reviews__filter-menu button {
+    border: none;
+    background: transparent;
+    text-align: left;
+    padding: 8px 10px;
+    font-size: 0.8125rem;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .gh-reviews__filter-menu button:hover {
+    background: #f5f5f5;
+  }
+
+  .gh-reviews__list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .gh-reviews__item {
+    display: grid;
+    grid-template-columns: minmax(140px, 200px) minmax(0, 1fr);
+    gap: 20px 32px;
+    padding: 24px 0;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .gh-reviews__item[hidden] {
+    display: none;
+  }
+
+  .gh-reviews__item-meta {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .gh-reviews__avatar {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e8e8e8;
+    color: #616161;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: 0.02em;
+  }
+
+  .gh-reviews__name {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 700;
+  }
+
+  .gh-reviews__verified {
+    margin: 4px 0 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    color: #757575;
+  }
+
+  .gh-reviews__verified svg {
+    color: #9e9e9e;
+  }
+
+  .gh-reviews__date {
+    margin: 4px 0 0;
+    font-size: 0.75rem;
+    color: #9e9e9e;
+  }
+
+  .gh-reviews__item-content {
+    min-width: 0;
+  }
+
+  .gh-reviews__item-title {
+    margin: 8px 0 6px;
+    font-size: 0.9375rem;
+    font-weight: 700;
+  }
+
+  .gh-reviews__item-body {
+    margin: 0;
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    color: #333;
+  }
+
+  .gh-reviews__pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 20px;
+    padding-top: 8px;
+  }
+
+  .gh-reviews__page {
+    border: none;
+    background: transparent;
+    color: #9e9e9e;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    min-width: 28px;
+    height: 28px;
+    cursor: pointer;
+    padding: 0 4px;
+  }
+
+  .gh-reviews__page.is-active {
+    color: #1a1a1a;
+    font-weight: 700;
+  }
+
+  .gh-reviews__page--next {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .gh-reviews__empty {
+    margin: 16px 0 0;
+    color: #757575;
+    font-size: 0.9375rem;
+  }
+
+  .gh-reviews__empty[hidden] {
+    display: none;
+  }
+
+  .gh-reviews__item-photos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .gh-reviews__item-photos img {
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+  }
+
+  .gh-reviews__item--submitted {
+    background: #fafafa;
+  }
+
+  .gh-review-modal[hidden] {
+    display: none;
+  }
+
+  .gh-review-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .gh-review-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+  }
+
+  .gh-review-modal__dialog {
+    position: relative;
+    z-index: 1;
+    width: min(100%, 520px);
+    max-height: min(92vh, 720px);
+    overflow-y: auto;
+    background: #fff;
+    border-radius: 8px;
+    padding: 28px 24px 24px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+  }
+
+  .gh-review-modal__close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    border: none;
+    background: transparent;
+    color: #666;
+    cursor: pointer;
+    padding: 4px;
+  }
+
+  .gh-review-modal__title {
+    margin: 0 0 20px;
+    text-align: center;
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+
+  .gh-review-modal__product {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 22px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #eee;
+  }
+
+  .gh-review-modal__thumb {
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #e8e8e8;
+  }
+
+  .gh-review-modal__product-name {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  .gh-review-modal__field {
+    margin-bottom: 18px;
+  }
+
+  .gh-review-modal__label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .gh-review-modal__stars-input {
+    display: flex;
+    gap: 4px;
+  }
+
+  .gh-review-modal__star-btn {
+    border: none;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    color: #d0d0d0;
+  }
+
+  .gh-review-modal__star-btn.is-active {
+    color: var(--gh-reviews-star, #ffb400);
+  }
+
+  .gh-review-modal__textarea,
+  .gh-review-modal__input {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    padding: 12px 14px;
+    font-size: 0.9375rem;
+    font-family: inherit;
+    color: #1a1a1a;
+  }
+
+  .gh-review-modal__textarea:focus,
+  .gh-review-modal__input:focus {
+    outline: none;
+    border-color: #1a1a1a;
+  }
+
+  .gh-review-modal__textarea {
+    resize: vertical;
+    min-height: 120px;
+  }
+
+  .gh-review-modal__error {
+    margin: 6px 0 0;
+    font-size: 0.8125rem;
+    color: #d32f2f;
+  }
+
+  .gh-review-modal__error[hidden] {
+    display: none;
+  }
+
+  .gh-review-modal__photos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .gh-review-modal__photo-add {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100px;
+    height: 100px;
+    border: 1px dashed #bdbdbd;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #757575;
+    font-size: 0.75rem;
+    text-align: center;
+    gap: 4px;
+  }
+
+  .gh-review-modal__photo-plus {
+    font-size: 1.5rem;
+    line-height: 1;
+  }
+
+  .gh-review-modal__photo-previews {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .gh-review-modal__photo-thumb {
+    position: relative;
+    width: 72px;
+    height: 72px;
+  }
+
+  .gh-review-modal__photo-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+  }
+
+  .gh-review-modal__photo-thumb button {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 20px;
+    height: 20px;
+    border: none;
+    border-radius: 50%;
+    background: #1a1a1a;
+    color: #fff;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .gh-review-modal__legal {
+    margin: 0 0 16px;
+    font-size: 0.6875rem;
+    line-height: 1.45;
+    color: #757575;
+  }
+
+  .gh-review-modal__submit {
+    width: 100%;
+    min-height: 46px;
+    border: none;
+    border-radius: 4px;
+    background: #9e9e9e;
+    color: #fff;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  .gh-review-modal__submit:not(:disabled):hover {
+    background: #757575;
+  }
+
+  .gh-review-modal__submit:disabled {
+    opacity: 0.7;
+    cursor: default;
+  }
+
+  .gh-review-modal__success {
+    margin: 12px 0 0;
+    text-align: center;
+    font-size: 0.875rem;
+    color: #2e7d32;
+    font-weight: 600;
+  }
+
+  .gh-review-modal__success[hidden] {
+    display: none;
+  }
+
+  body.gh-review-modal-open {
+    overflow: hidden;
+  }
+
+  @media (max-width: 989px) {
+    .gh-reviews__summary {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .gh-reviews__actions {
+      grid-column: 1 / -1;
+      justify-self: start;
+    }
+  }
+
+  @media (max-width: 749px) {
+    .gh-reviews__summary {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    .gh-reviews__item {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .gh-reviews__actions {
+      width: 100%;
+    }
+
+    .gh-reviews__write-btn {
+      flex: 1;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Grosyhub customer reviews",
+  "tag": "section",
+  "class": "grosyhub-product-reviews",
+  "enabled_on": {
+    "templates": ["product"]
+  },
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Customer Reviews"
+    },
+    {
+      "type": "text",
+      "id": "average_rating",
+      "label": "Average rating (fallback)",
+      "default": "4.8"
+    },
+    {
+      "type": "text",
+      "id": "reviews_count",
+      "label": "Total reviews label (fallback)",
+      "default": "108"
+    },
+    {
+      "type": "color",
+      "id": "star_color",
+      "label": "Star color",
+      "default": "#ffb400"
+    },
+    {
+      "type": "header",
+      "content": "Star distribution"
+    },
+    {
+      "type": "number",
+      "id": "count_5_star",
+      "label": "5 star count",
+      "default": 72
+    },
+    {
+      "type": "number",
+      "id": "count_4_star",
+      "label": "4 star count",
+      "default": 21
+    },
+    {
+      "type": "number",
+      "id": "count_3_star",
+      "label": "3 star count",
+      "default": 8
+    },
+    {
+      "type": "number",
+      "id": "count_2_star",
+      "label": "2 star count",
+      "default": 4
+    },
+    {
+      "type": "number",
+      "id": "count_1_star",
+      "label": "1 star count",
+      "default": 3
+    },
+    {
+      "type": "range",
+      "id": "reviews_per_page",
+      "label": "Reviews per page",
+      "min": 3,
+      "max": 10,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "text",
+      "id": "write_review_label",
+      "label": "Write review button label",
+      "default": "Write a review"
+    },
+    {
+      "type": "text",
+      "id": "modal_title",
+      "label": "Popup title",
+      "default": "Write a review"
+    },
+    {
+      "type": "range",
+      "id": "max_photos",
+      "label": "Max photos per review",
+      "min": 1,
+      "max": 5,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "textarea",
+      "id": "legal_text",
+      "label": "Legal disclaimer (popup footer)",
+      "default": "By submitting this review, you agree to our Privacy Policy and Terms regarding the processing of your personal data."
+    },
+    {
+      "type": "text",
+      "id": "empty_text",
+      "label": "Empty state",
+      "default": "No reviews yet. Be the first to write one."
+    }
+  ],
+  "blocks": [
+    {
+      "type": "review",
+      "name": "Review",
+      "settings": [
+        {
+          "type": "text",
+          "id": "author",
+          "label": "Reviewer name",
+          "default": "Aryan K."
+        },
+        {
+          "type": "text",
+          "id": "initials",
+          "label": "Avatar initials",
+          "info": "Leave blank to auto-generate from name."
+        },
+        {
+          "type": "range",
+          "id": "rating",
+          "label": "Star rating",
+          "min": 1,
+          "max": 5,
+          "step": 1,
+          "default": 5
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Review title",
+          "default": "Absolute Life Saver"
+        },
+        {
+          "type": "textarea",
+          "id": "body",
+          "label": "Review text",
+          "default": "This product exceeded my expectations. Great quality and fast delivery."
+        },
+        {
+          "type": "text",
+          "id": "date_label",
+          "label": "Date label",
+          "default": "11 months ago"
+        },
+        {
+          "type": "checkbox",
+          "id": "verified",
+          "label": "Verified purchase",
+          "default": true
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Grosyhub customer reviews",
+      "blocks": [
+        {
+          "type": "review",
+          "settings": {
+            "author": "Aryan K.",
+            "rating": 5,
+            "title": "Absolute Life Saver",
+            "body": "This product exceeded my expectations. Great quality and fast delivery. Would definitely recommend to anyone looking for a reliable solution.",
+            "date_label": "11 months ago",
+            "verified": true
+          }
+        },
+        {
+          "type": "review",
+          "settings": {
+            "author": "Priya M.",
+            "rating": 5,
+            "title": "Worth every rupee",
+            "body": "Sturdy build and easy to assemble. Using it daily in the kitchen and it still looks brand new.",
+            "date_label": "9 months ago",
+            "verified": true
+          }
+        },
+        {
+          "type": "review",
+          "settings": {
+            "author": "Rahul S.",
+            "rating": 5,
+            "title": "Perfect for small spaces",
+            "body": "Fits perfectly in our bathroom. The anti-skid feature works really well.",
+            "date_label": "8 months ago",
+            "verified": true
+          }
+        },
+        {
+          "type": "review",
+          "settings": {
+            "author": "Neha T.",
+            "rating": 4,
+            "title": "Good quality",
+            "body": "Happy with the purchase. Delivery was quick. Only wish it came in more color options.",
+            "date_label": "6 months ago",
+            "verified": true
+          }
+        },
+        {
+          "type": "review",
+          "settings": {
+            "author": "Vikram D.",
+            "rating": 5,
+            "title": "Highly recommend",
+            "body": "Bought two for my parents. They love how easy it is to move around when folded.",
+            "date_label": "5 months ago",
+            "verified": true
+          }
+        },
+        {
+          "type": "review",
+          "settings": {
+            "author": "Ananya R.",
+            "rating": 5,
+            "title": "Great purchase",
+            "body": "Exactly as shown in the pictures. Customer support was helpful when I had a sizing question.",
+            "date_label": "3 months ago",
+            "verified": true
+          }
+        },
+        {
+          "type": "review",
+          "settings": {
+            "author": "Karan J.",
+            "rating": 4,
+            "title": "Solid product",
+            "body": "Does the job well. Assembly took about 10 minutes with the included instructions.",
+            "date_label": "2 months ago",
+            "verified": true
+          }
+        },
+        {
+          "type": "review",
+          "settings": {
+            "author": "Sneha P.",
+            "rating": 5,
+            "title": "Love it!",
+            "body": "Using it as extra storage in the bedroom. Looks neat and premium.",
+            "date_label": "1 month ago",
+            "verified": true
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

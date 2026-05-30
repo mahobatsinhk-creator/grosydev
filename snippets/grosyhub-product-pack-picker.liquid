@@ -1,0 +1,89 @@
+{%- liquid
+  assign product = product
+  assign show_pack = show_pack_selector | default: true
+  unless show_pack
+    assign show_pack = false
+  endunless
+
+  assign pack_discount_inr = pack_discount_inr | default: 100
+  assign pack_discount_cents = pack_discount_inr | times: 100
+
+  if show_pack
+    assign base_variant = product.selected_or_first_available_variant
+    assign unit_cents = base_variant.price
+
+    assign price_1_display = unit_cents | money
+    assign total_2_cents = unit_cents | times: 2 | minus: pack_discount_cents
+    if total_2_cents < 0
+      assign total_2_cents = 0
+    endif
+    assign price_2_display = total_2_cents | money
+
+    assign label_1 = 'Buy 1 at ' | append: price_1_display
+    assign label_2 = 'Buy 2 at ' | append: price_2_display | append: ' (₹' | append: pack_discount_inr | append: ' Off)'
+
+    assign pack_input_prefix = 'gh-pack-' | append: product.id
+  endif
+-%}
+
+{%- if show_pack and base_variant != blank -%}
+  <div
+    class="pack-selector"
+    data-gh-pack-picker
+    data-gh-pack-discount-cents="{{ pack_discount_cents }}"
+  >
+    <span class="pack-label" id="{{ pack_input_prefix }}-label">Pack</span>
+
+    <div
+      class="pack-options"
+      role="radiogroup"
+      aria-labelledby="{{ pack_input_prefix }}-label"
+    >
+      <div class="pack-option-wrap">
+        <input
+          type="radio"
+          class="pack-options__input"
+          id="{{ pack_input_prefix }}-1"
+          name="gh-pack-choice"
+          value="{{ base_variant.id }}"
+          data-gh-pack-input
+          data-variant-id="{{ base_variant.id }}"
+          data-quantity="1"
+          checked
+          {% unless base_variant.available %}disabled{% endunless %}
+        >
+        <label
+          class="pack-option{% unless base_variant.available %} pack-option--disabled{% endunless %}"
+          for="{{ pack_input_prefix }}-1"
+          data-gh-pack-label="1"
+          data-gh-pack-add
+        >
+          {{ label_1 }}
+        </label>
+      </div>
+
+      <div class="pack-option-wrap pack-option-wrap--2">
+        <input
+          type="radio"
+          class="pack-options__input"
+          id="{{ pack_input_prefix }}-2"
+          name="gh-pack-choice"
+          value="{{ base_variant.id }}"
+          data-gh-pack-input
+          data-variant-id="{{ base_variant.id }}"
+          data-quantity="2"
+          {% unless base_variant.available %}disabled{% endunless %}
+        >
+        <label
+          class="pack-option{% unless base_variant.available %} pack-option--disabled{% endunless %}"
+          for="{{ pack_input_prefix }}-2"
+          data-gh-pack-label="2"
+          data-gh-pack-add
+        >
+          {{ label_2 }}
+        </label>
+      </div>
+    </div>
+  </div>
+  <script type="application/json" data-gh-product-variants>{{ product.variants | json }}</script>
+{%- endif -%}

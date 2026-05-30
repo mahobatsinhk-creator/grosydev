@@ -1,0 +1,931 @@
+{%- liquid
+  assign brand_color = section.settings.brand_color | default: '#b89774'
+  assign category_collections = section.settings.collection_list
+  assign products_per_page = section.settings.products_per_page | default: 24
+  assign sort_by = collection.sort_by | default: collection.default_sort_by
+  assign product_count = collection.products_count
+
+  assign active_filter_count = 0
+  for filter in collection.filters
+    if filter.type == 'price_range'
+      if filter.min_value.value != blank or filter.max_value.value != blank
+        assign active_filter_count = active_filter_count | plus: 1
+      endif
+    elsif filter.type == 'list'
+      assign active_filter_count = active_filter_count | plus: filter.active_values.size
+    endif
+  endfor
+
+  assign page_width_class = 'page-width-narrow'
+  case settings.page_width
+    when 'wide'
+      assign page_width_class = 'page-width-wide'
+    when 'normal'
+      assign page_width_class = 'page-width-normal'
+    when 'narrow'
+      assign page_width_class = 'page-width-narrow'
+  endcase
+-%}
+
+<script
+  src="{{ 'facets.js' | asset_url }}"
+  type="module"
+  fetchpriority="low"
+></script>
+
+<div
+  class="gh-plp {{ page_width_class }} section-{{ section.id }}"
+  style="--gh-plp-brand: {{ brand_color }}; --gh-plp-brand-dark: color-mix(in srgb, {{ brand_color }} 78%, #000000);"
+>
+  <div class="gh-plp__container">
+    <div class="gh-plp__layout">
+      <div
+        class="gh-plp-filter-backdrop"
+        data-gh-plp-filters-close
+        aria-hidden="true"
+      ></div>
+
+      {% render 'grosyhub-collection-sidebar',
+        collection: collection,
+        section_id: section.id,
+        category_collections: category_collections,
+        brand_color: brand_color
+      %}
+
+      <div class="gh-plp__main">
+        <div class="gh-plp__toolbar">
+          <nav class="gh-plp__breadcrumbs" aria-label="Breadcrumb">
+            <a href="{{ routes.root_url }}">Home</a>
+            <span aria-hidden="true">&gt;</span>
+            <span>{{ collection.title }}</span>
+          </nav>
+
+          <div class="gh-plp__toolbar-right">
+            <button
+              type="button"
+              class="gh-plp__filter-btn"
+              data-gh-plp-filters-open
+              aria-expanded="false"
+              aria-controls="GrosyhubFacetForm-{{ section.id }}"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 6h16M6 12h12M8 18h8" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+              </svg>
+              <span>Filter</span>
+              {%- if active_filter_count > 0 -%}
+                <span class="gh-plp__filter-badge">{{ active_filter_count }}</span>
+              {%- endif -%}
+            </button>
+            <form method="get" action="{{ collection.url }}" class="gh-plp__sort-form" id="GrosyhubSortForm-{{ section.id }}">
+              {%- for filter in collection.filters -%}
+                {%- case filter.type -%}
+                  {%- when 'price_range' -%}
+                    {%- if filter.min_value.value -%}
+                      <input type="hidden" name="{{ filter.min_value.param_name }}" value="{{ filter.min_value.value }}">
+                    {%- endif -%}
+                    {%- if filter.max_value.value -%}
+                      <input type="hidden" name="{{ filter.max_value.param_name }}" value="{{ filter.max_value.value }}">
+                    {%- endif -%}
+                  {%- when 'list' -%}
+                    {%- for value in filter.active_values -%}
+                      <input type="hidden" name="{{ value.param_name }}" value="{{ value.value }}">
+                    {%- endfor -%}
+                {%- endcase -%}
+              {%- endfor -%}
+
+              <label class="gh-plp__sort-label" for="SortBy-{{ section.id }}">Sort</label>
+              <div class="gh-plp__sort-wrap">
+                <select
+                  id="SortBy-{{ section.id }}"
+                  name="sort_by"
+                  class="gh-plp__sort-select"
+                  onchange="this.form.submit()"
+                >
+                  {%- for option in collection.sort_options -%}
+                    <option value="{{ option.value }}" {% if option.value == sort_by %}selected{% endif %}>
+                      {{ option.name }}
+                    </option>
+                  {%- endfor -%}
+                </select>
+                <svg class="gh-plp__sort-caret" width="10" height="6" viewBox="0 0 10 6" aria-hidden="true">
+                  <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                </svg>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <h1 class="gh-plp__title">
+          {{ collection.title }}
+          <span class="gh-plp__count">({{ product_count }} Products)</span>
+        </h1>
+
+        {%- paginate collection.products by products_per_page -%}
+          {%- if collection.products.size == 0 -%}
+            <p class="gh-plp__empty">{{ 'content.no_products_found' | t }}</p>
+          {%- else -%}
+            <ul class="gh-plp__grid" role="list">
+              {%- for product in collection.products -%}
+                <li class="gh-plp__grid-item">
+                  {% render 'grosyhub-product-card', product: product, brand_color: brand_color %}
+                </li>
+              {%- endfor -%}
+            </ul>
+          {%- endif -%}
+
+          {%- if paginate.pages > 1 -%}
+            <nav class="gh-plp__pagination" aria-label="Pagination">
+              {%- if paginate.previous -%}
+                <a href="{{ paginate.previous.url }}" class="gh-plp__page-btn">Previous</a>
+              {%- endif -%}
+              <span class="gh-plp__page-info">Page {{ paginate.current_page }} of {{ paginate.pages }}</span>
+              {%- if paginate.next -%}
+                <a href="{{ paginate.next.url }}" class="gh-plp__page-btn">Next</a>
+              {%- endif -%}
+            </nav>
+          {%- endif -%}
+        {%- endpaginate -%}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .gh-plp {
+    padding-block: 24px 48px;
+    background: #fff;
+    color: #1a1a1a;
+  }
+
+  .gh-plp__container {
+    width: 100%;
+    max-width: var(--page-width, 100%);
+    margin-inline: auto;
+    padding-inline: var(--page-margin, 16px);
+    box-sizing: border-box;
+  }
+
+  .gh-plp__layout {
+    display: grid;
+    grid-template-columns: min(220px, 26%) minmax(0, 1fr);
+    gap: 24px 28px;
+    align-items: start;
+  }
+
+  @media (max-width: 989px) {
+    .gh-plp__layout {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .gh-plp-sidebar {
+    position: sticky;
+    top: 120px;
+  }
+
+  .gh-plp__filter-btn {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #fff;
+    color: #1a1a1a;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  .gh-plp__filter-btn:hover {
+    border-color: var(--gh-plp-brand);
+    color: var(--gh-plp-brand);
+  }
+
+  .gh-plp__filter-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: var(--gh-plp-brand);
+    color: #fff;
+    font-size: 0.6875rem;
+    font-weight: 700;
+  }
+
+  .gh-plp-filter-backdrop {
+    display: none;
+  }
+
+  .gh-plp-sidebar__drawer-head {
+    display: none;
+  }
+
+  @media screen and (max-width: 989px) {
+    .gh-plp__filter-btn {
+      display: inline-flex;
+    }
+
+    .gh-plp-filter-backdrop {
+      display: block;
+      position: fixed;
+      top: var(--gh-plp-filter-drawer-top, 140px);
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 750;
+      background: rgb(0 0 0 / 0.45);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    html.gh-plp-filters-open .gh-plp-filter-backdrop {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .gh-plp-sidebar {
+      position: fixed;
+      top: var(--gh-plp-filter-drawer-top, 140px);
+      left: 0;
+      bottom: 0;
+      width: min(340px, 92vw);
+      max-width: 100%;
+      z-index: 751;
+      margin: 0;
+      padding: 0;
+      background: #fff;
+      transform: translateX(-100%);
+      transition: transform 0.28s ease;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      box-shadow: 4px 0 24px rgb(0 0 0 / 0.12);
+      border-top: 1px solid #e8e8e8;
+    }
+
+    html.gh-plp-filters-open .gh-plp-sidebar {
+      transform: translateX(0);
+    }
+
+    .gh-plp-sidebar__drawer-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid #e8e8e8;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: #fff;
+      flex-shrink: 0;
+    }
+
+    .gh-plp-sidebar__drawer-title {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .gh-plp-sidebar__drawer-close {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-width: 44px;
+      min-height: 44px;
+      padding: 0 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: #fff;
+      color: #1a1a1a;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      cursor: pointer;
+      flex-shrink: 0;
+      box-shadow: 0 1px 3px rgb(0 0 0 / 0.08);
+    }
+
+    .gh-plp-sidebar__drawer-close:hover {
+      border-color: var(--gh-plp-brand);
+      color: var(--gh-plp-brand);
+    }
+
+    .gh-plp-sidebar__drawer-close-icon {
+      font-size: 1.375rem;
+      line-height: 1;
+      font-weight: 400;
+    }
+
+    .gh-plp-sidebar__drawer-close-label {
+      line-height: 1;
+    }
+
+    .gh-plp-sidebar__form-wrap,
+    .gh-plp-sidebar__form {
+      padding: 1rem 1.125rem 1.5rem;
+    }
+
+    .gh-plp__toolbar-right {
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+  }
+
+  html.gh-plp-filters-open {
+    overflow: hidden;
+  }
+
+  .gh-plp-filter {
+    border-bottom: 1px solid #e8e8e8;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+  }
+
+  .gh-plp-filter__title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 0 12px;
+  }
+
+  .gh-plp-filter__title--static {
+    cursor: default;
+  }
+
+  .gh-plp-filter__title::-webkit-details-marker {
+    display: none;
+  }
+
+  .gh-plp-price-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .gh-plp-price-field span {
+    display: block;
+    font-size: 0.75rem;
+    color: #666;
+    margin-bottom: 4px;
+  }
+
+  .gh-plp-price-input {
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 0.875rem;
+  }
+
+  .gh-plp-price-hint {
+    font-size: 0.8rem;
+    color: #666;
+    margin: 10px 0 12px;
+  }
+
+  .gh-plp-filter__apply {
+    width: 100%;
+    max-width: 100%;
+    padding: 9px 14px;
+    border: none;
+    border-radius: 6px;
+    background: var(--gh-plp-brand);
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .gh-plp-filter__apply:hover {
+    background: var(--gh-plp-brand-dark);
+  }
+
+  .gh-plp-categories {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .gh-plp-categories__link {
+    display: block;
+    padding: 6px 0;
+    color: #333;
+    text-decoration: none;
+    font-size: 0.9rem;
+  }
+
+  .gh-plp-categories__link:hover,
+  .gh-plp-categories__link.is-active {
+    color: var(--gh-plp-brand);
+    font-weight: 600;
+  }
+
+  .gh-plp-facet-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 220px;
+    overflow-y: auto;
+  }
+
+  .gh-plp-facet-list__item {
+    margin-bottom: 6px;
+  }
+
+  .gh-plp-facet-list__label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.875rem;
+    color: #333;
+    cursor: pointer;
+  }
+
+  .gh-plp-facet-list__label input {
+    accent-color: var(--gh-plp-brand);
+  }
+
+  .gh-plp-facet-list__count {
+    color: #888;
+    font-size: 0.8rem;
+  }
+
+  .gh-plp__toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+    color: #666;
+  }
+
+  .gh-plp__breadcrumbs a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .gh-plp__breadcrumbs a:hover {
+    color: var(--gh-plp-brand);
+  }
+
+  .gh-plp__toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .gh-plp__sort-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .gh-plp__sort-label {
+    font-size: 0.85rem;
+    color: #666;
+  }
+
+  .gh-plp__sort-wrap {
+    position: relative;
+  }
+
+  .gh-plp__sort-select {
+    appearance: none;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 8px 32px 8px 12px;
+    font-size: 0.875rem;
+    background: #fff;
+    min-width: 200px;
+  }
+
+  .gh-plp__sort-caret {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #666;
+  }
+
+  .gh-plp__title {
+    font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+    font-weight: 700;
+    margin: 0 0 24px;
+    line-height: 1.2;
+  }
+
+  .gh-plp__count {
+    font-weight: 500;
+    color: #444;
+  }
+
+  .gh-plp__grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  @media (max-width: 1199px) {
+    .gh-plp__grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 989px) {
+    .gh-plp__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+  }
+
+  @media (max-width: 749px) {
+    .gh-plp__container {
+      padding-inline: max(16px, var(--page-margin, 16px));
+    }
+  }
+
+  .gh-plp__empty {
+    text-align: center;
+    padding: 48px 16px;
+    color: #666;
+  }
+
+  .gh-plp__pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 32px;
+  }
+
+  .gh-plp__page-btn {
+    padding: 10px 18px;
+    border: 1px solid var(--gh-plp-brand);
+    border-radius: 6px;
+    color: var(--gh-plp-brand);
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .gh-plp__page-btn:hover {
+    background: var(--gh-plp-brand);
+    color: #fff;
+  }
+
+  .gh-plp-card {
+    border: 1px solid #ebebeb;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #fff;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .gh-plp-card__media-wrap {
+    position: relative;
+    aspect-ratio: 1;
+    background: #f8f8f8;
+  }
+
+  .gh-plp-card__media-link {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .gh-plp-card__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .gh-plp-card__placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .gh-plp-card__sale {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: var(--gh-plp-brand);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.02em;
+  }
+
+  .gh-plp-card__wishlist.is-active svg {
+    fill: var(--gh-plp-brand);
+  }
+
+  .gh-plp-card__wishlist {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: #fff;
+    display: flex;
+    cursor: pointer;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+  }
+
+  .gh-plp-card__wishlist:hover {
+    color: var(--gh-plp-brand);
+  }
+
+  .gh-plp-card__body {
+    padding: 12px 14px 14px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .gh-plp-card__title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.35;
+  }
+
+  .gh-plp-card__title a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .gh-plp-card__title a:hover {
+    color: var(--gh-plp-brand);
+  }
+
+  .gh-plp-card__rating,
+  .gh-plp-card__tag {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.78rem;
+    color: #555;
+    margin: 0;
+  }
+
+  .gh-plp-card__rating svg {
+    color: #f5a623;
+  }
+
+  .gh-plp-card__price-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px 8px;
+    margin-top: auto;
+    padding-top: 4px;
+  }
+
+  .gh-plp-card__price {
+    font-weight: 700;
+    font-size: 1rem;
+  }
+
+  .gh-plp-card__compare {
+    text-decoration: line-through;
+    color: #999;
+    font-size: 0.85rem;
+  }
+
+  .gh-plp-card__off {
+    color: var(--gh-plp-brand);
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  .gh-plp-card__actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    gap: 8px;
+    margin-top: 10px;
+    width: 100%;
+  }
+
+  .gh-plp-card__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    min-width: 0;
+    width: 100%;
+    padding: 10px 8px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.2;
+    text-decoration: none;
+    border: 1px solid var(--gh-plp-brand);
+    cursor: pointer;
+    box-sizing: border-box;
+  }
+
+  .gh-plp-card__btn svg {
+    flex-shrink: 0;
+  }
+
+  .gh-plp-card__btn-text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .gh-plp-card__btn-text--short {
+    display: none;
+  }
+
+  .gh-plp-card__btn--cart {
+    background: var(--gh-plp-brand);
+    color: #fff;
+    border-color: var(--gh-plp-brand);
+  }
+
+  .gh-plp-card__btn--cart:hover {
+    background: var(--gh-plp-brand-dark);
+    border-color: var(--gh-plp-brand-dark);
+  }
+
+  .gh-plp-card__btn--view {
+    background: #fff;
+    color: var(--gh-plp-brand);
+  }
+
+  .gh-plp-card__btn--view:hover {
+    background: color-mix(in srgb, var(--gh-plp-brand) 8%, #ffffff);
+  }
+
+  .gh-plp-card__form {
+    margin: 0;
+    min-width: 0;
+    width: 100%;
+  }
+
+  @media screen and (max-width: 989px) {
+    .gh-plp-card__actions {
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+
+    .gh-plp-card__btn {
+      padding: 10px 12px;
+      font-size: 0.8125rem;
+    }
+
+    .gh-plp-card__btn-text--full {
+      display: inline;
+    }
+
+    .gh-plp-card__btn-text--short {
+      display: none;
+    }
+  }
+
+  @media screen and (min-width: 990px) and (max-width: 1199px) {
+    .gh-plp-card__btn-text--full {
+      display: none;
+    }
+
+    .gh-plp-card__btn-text--short {
+      display: inline;
+    }
+  }
+{% endstylesheet %}
+
+<script>
+  (function () {
+    const plp = document.querySelector('.gh-plp');
+    if (!plp) return;
+
+    const mqMobile = window.matchMedia('(max-width: 989px)');
+    const openBtn = plp.querySelector('[data-gh-plp-filters-open]');
+    const facetForm = plp.querySelector('.gh-plp-sidebar__form');
+
+    const toolbar = plp.querySelector('.gh-plp__toolbar');
+
+    const updateDrawerPosition = () => {
+      const anchor = openBtn || toolbar;
+      if (!anchor) return;
+      const rect = anchor.getBoundingClientRect();
+      const top = Math.max(0, Math.ceil(rect.bottom));
+      document.documentElement.style.setProperty('--gh-plp-filter-drawer-top', `${top}px`);
+    };
+
+    const closeFilters = () => {
+      document.documentElement.classList.remove('gh-plp-filters-open');
+      openBtn?.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
+    };
+
+    const openFilters = () => {
+      if (!mqMobile.matches) return;
+      updateDrawerPosition();
+      document.documentElement.classList.add('gh-plp-filters-open');
+      openBtn?.setAttribute('aria-expanded', 'true');
+      document.body.style.overflow = 'hidden';
+      plp.querySelector('.gh-plp-sidebar__drawer-close')?.focus();
+    };
+
+    openBtn?.addEventListener('click', openFilters);
+
+    plp.querySelectorAll('[data-gh-plp-filters-close]').forEach((el) => {
+      el.addEventListener('click', closeFilters);
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && document.documentElement.classList.contains('gh-plp-filters-open')) {
+        closeFilters();
+        openBtn?.focus();
+      }
+    });
+
+    facetForm?.addEventListener('submit', () => {
+      if (mqMobile.matches) closeFilters();
+    });
+
+    mqMobile.addEventListener('change', () => {
+      if (!mqMobile.matches) closeFilters();
+    });
+
+    window.addEventListener(
+      'resize',
+      () => {
+        if (document.documentElement.classList.contains('gh-plp-filters-open')) {
+          updateDrawerPosition();
+        }
+      },
+      { passive: true }
+    );
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Grosyhub collection",
+  "tag": "section",
+  "class": "section-grosyhub-collection",
+  "settings": [
+    {
+      "type": "color",
+      "id": "brand_color",
+      "label": "Brand color",
+      "default": "#b89774"
+    },
+    {
+      "type": "collection_list",
+      "id": "collection_list",
+      "label": "Category collections",
+      "info": "Product collections shown under Category (same as Shop by Category). If empty, all store collections are listed."
+    },
+    {
+      "type": "range",
+      "id": "products_per_page",
+      "label": "Products per page",
+      "min": 8,
+      "max": 48,
+      "step": 4,
+      "default": 24
+    }
+  ],
+  "presets": [
+    {
+      "name": "Grosyhub collection"
+    }
+  ]
+}
+{% endschema %}

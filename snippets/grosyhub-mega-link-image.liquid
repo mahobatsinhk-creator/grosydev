@@ -1,0 +1,59 @@
+{%- comment -%}
+  Featured image for mega menu links (collections / products / pages).
+  @param {object} link
+  @param {object} [fallback_link] - use parent column image when child has none
+  @param {string} [class]
+  @param {number} [width]
+{%- endcomment -%}
+{%- liquid
+  assign img_class = class | default: 'gh-mega__link-img'
+  assign img_width = width | default: 280
+  assign featured = nil
+
+  if link.type == 'collection_link' and link.object != blank
+    if link.object.featured_image != blank
+      assign featured = link.object.featured_image
+    elsif link.object.products_count > 0
+      for product in link.object.products limit: 12
+        if product.featured_image != blank
+          assign featured = product.featured_image
+          break
+        endif
+      endfor
+    endif
+  elsif link.type == 'product_link' and link.object != blank and link.object.featured_image != blank
+    assign featured = link.object.featured_image
+  elsif link.type == 'page_link' and link.object != blank and link.object.image != blank
+    assign featured = link.object.image
+  elsif link.type == 'blog_link' and link.object != blank and link.object.image != blank
+    assign featured = link.object.image
+  elsif link.type == 'article_link' and link.object != blank and link.object.image != blank
+    assign featured = link.object.image
+  endif
+
+  if featured == blank and fallback_link != blank
+    if fallback_link.type == 'collection_link' and fallback_link.object != blank
+      if fallback_link.object.featured_image != blank
+        assign featured = fallback_link.object.featured_image
+      elsif fallback_link.object.products_count > 0
+        for product in fallback_link.object.products limit: 12
+          if product.featured_image != blank
+            assign featured = product.featured_image
+            break
+          endif
+        endfor
+      endif
+    elsif fallback_link.type == 'product_link' and fallback_link.object != blank and fallback_link.object.featured_image != blank
+      assign featured = fallback_link.object.featured_image
+    endif
+  endif
+-%}
+{%- if featured != blank -%}
+  {{
+    featured
+    | image_url: width: img_width
+    | image_tag: class: img_class, loading: 'lazy', sizes: '(min-width: 990px) 160px, 80px', alt: link.title
+  }}
+{%- else -%}
+  <span class="gh-mega__link-img-placeholder" aria-hidden="true"></span>
+{%- endif -%}

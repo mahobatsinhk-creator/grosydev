@@ -1,0 +1,464 @@
+{{ 'grosyhub-contact-page.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'grosyhub-contact-page.js' | asset_url }}" defer></script>
+
+{%- liquid
+  assign brand = section.settings.brand_color | default: '#A56A2A'
+-%}
+
+<div
+  class="gh-contact"
+  data-gh-contact-page
+  style="--gh-contact-brand: {{ brand }}; --gh-contact-brand-dark: color-mix(in srgb, {{ brand }} 82%, #3d2810);"
+  {{ section.shopify_attributes }}
+>
+  <div class="gh-contact__hero">
+    {%- if section.settings.hero_image != blank -%}
+      {{
+        section.settings.hero_image
+        | image_url: width: 2400
+        | image_tag:
+          class: 'gh-contact__hero-bg',
+          loading: 'eager',
+          fetchpriority: 'high',
+          sizes: '100vw',
+          widths: '800, 1200, 1600, 2000, 2400',
+          alt: ''
+      }}
+    {%- endif -%}
+    <div class="gh-contact__hero-overlay" aria-hidden="true"></div>
+    <div class="gh-container gh-contact__hero-inner">
+      <div class="gh-contact__hero-grid">
+        <div class="gh-contact__info">
+          {%- if section.settings.eyebrow != blank -%}
+            <p class="gh-contact__eyebrow">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M4 4h16v12H5.2L4 20l3.6-2.4H20V4z"/>
+              </svg>
+              {{ section.settings.eyebrow }}
+            </p>
+          {%- endif -%}
+
+          <h1 class="gh-contact__title">
+            {{ section.settings.heading_before | default: "We'd love to" }}
+            {%- if section.settings.heading_highlight != blank -%}
+              <em>{{ section.settings.heading_highlight }}</em>
+            {%- endif -%}
+          </h1>
+
+          {%- if section.settings.subheading != blank -%}
+            <p class="gh-contact__subtitle">{{ section.settings.subheading }}</p>
+          {%- endif -%}
+
+          <ul class="gh-contact__cards" role="list">
+            {%- if section.settings.phone != blank -%}
+              <li class="gh-contact__card">
+                <span class="gh-contact__card-icon" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6.6 4h2.2l1.2 5-3.1 2.1a11 11 0 005.4 5.4l2.1-3.1 5 1.2v2.2a2 2 0 01-2 1.9C12.1 18.5 5.5 11.9 4.7 6.6A2 2 0 016.6 4z" stroke="currentColor" stroke-width="1.4"/></svg>
+                </span>
+                <div>
+                  <strong>{{ section.settings.phone_label | default: 'Phone Number' }}</strong>
+                  <a href="tel:{{ section.settings.phone | replace: ' ', '' }}">{{ section.settings.phone }}</a>
+                  {%- if section.settings.phone_note != blank -%}<span>{{ section.settings.phone_note }}</span>{%- endif -%}
+                </div>
+              </li>
+            {%- endif -%}
+
+            {%- if section.settings.email != blank -%}
+              <li class="gh-contact__card">
+                <span class="gh-contact__card-icon" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 6h16v12H4V6zm0 0l8 7 8-7" stroke="currentColor" stroke-width="1.4"/></svg>
+                </span>
+                <div>
+                  <strong>{{ section.settings.email_label | default: 'Email Address' }}</strong>
+                  <a href="mailto:{{ section.settings.email }}">{{ section.settings.email }}</a>
+                  {%- if section.settings.email_note != blank -%}<span>{{ section.settings.email_note }}</span>{%- endif -%}
+                </div>
+              </li>
+            {%- endif -%}
+
+            {%- if section.settings.address != blank -%}
+              <li class="gh-contact__card">
+                <span class="gh-contact__card-icon" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 4v6c0 4-3 7-7 8-4-1-7-4-7-8V7l7-4z" stroke="currentColor" stroke-width="1.4"/></svg>
+                </span>
+                <div>
+                  <strong>{{ section.settings.address_label | default: 'Store Location' }}</strong>
+                  <span class="gh-contact__card-text">{{ section.settings.address | newline_to_br }}</span>
+                </div>
+              </li>
+            {%- endif -%}
+
+            {%- if section.settings.hours != blank -%}
+              <li class="gh-contact__card">
+                <span class="gh-contact__card-icon" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 6v6l4 2M12 3a9 9 0 110 18 9 9 0 010-18z" stroke="currentColor" stroke-width="1.4"/></svg>
+                </span>
+                <div>
+                  <strong>{{ section.settings.hours_label | default: 'Support Timing' }}</strong>
+                  <span class="gh-contact__card-text">{{ section.settings.hours }}</span>
+                  {%- if section.settings.hours_note != blank -%}<span>{{ section.settings.hours_note }}</span>{%- endif -%}
+                </div>
+              </li>
+            {%- endif -%}
+          </ul>
+
+          {%- if section.settings.show_social -%}
+            <div class="gh-contact__social">
+              <span class="gh-contact__social-label">{{ section.settings.social_heading | default: 'Follow us on' }}</span>
+              <div class="gh-contact__social-links">
+                {%- if section.settings.facebook_url != blank -%}
+                  <a href="{{ section.settings.facebook_url }}" target="_blank" rel="noopener" aria-label="Facebook">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M14 8h3V5h-3c-2.8 0-5 2.2-5 5v2H7v3h2v9h3v-9h2.7l.3-3H12V9c0-.6.4-1 1-1z"/></svg>
+                  </a>
+                {%- endif -%}
+                {%- if section.settings.instagram_url != blank -%}
+                  <a href="{{ section.settings.instagram_url }}" target="_blank" rel="noopener" aria-label="Instagram">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="4" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3.5" stroke="currentColor" stroke-width="1.6"/></svg>
+                  </a>
+                {%- endif -%}
+                {%- if section.settings.pinterest_url != blank -%}
+                  <a href="{{ section.settings.pinterest_url }}" target="_blank" rel="noopener" aria-label="Pinterest">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12c0 4.2 2.6 7.8 6.3 9.3-.1-.8-.1-2 .2-3 .2-.9 1.4-5.9 1.4-5.9s-.4-.8-.4-2c0-1.9 1.1-3.3 2.5-3.3 1.2 0 1.7.9 1.7 2s-.6 2.6-.9 4c-.3 1.1.6 2 1.7 2 2 0 3.6-2.1 3.6-5.1 0-2.7-1.9-4.6-4.7-4.6-3.2 0-5.1 2.4-5.1 4.9 0 1 .4 1.7.9 2.2.1.1.1.2.1.3-.1.4-.3 1.3-.4 1.5-.1.4-.4.5-.8.4-1.6-.7-2.6-2.9-2.6-4.7 0-3.8 2.8-7.3 8-7.3 4.2 0 7.5 3 7.5 7 0 4.2-2.6 7.5-6.3 7.5-1.2 0-2.4-.6-2.8-1.4l-.8 3c-.3 1-1.1 2.3-1.6 3.1 1.2.4 2.5.6 3.8.6 5.5 0 10-4.5 10-10S17.5 2 12 2z"/></svg>
+                  </a>
+                {%- endif -%}
+                {%- if section.settings.youtube_url != blank -%}
+                  <a href="{{ section.settings.youtube_url }}" target="_blank" rel="noopener" aria-label="YouTube">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M10 8l6 4-6 4V8zm11-1.2s-.2-1.4-.8-2C18.4 4 17 4 17 4H7s-1.4 0-3.2.8C3.2 5.4 3 6.8 3 6.8S2 8.6 2 11.2v1.6c0 2.6.2 4.4.2 4.4s.2 1.4.8 2C5.6 20 7 20 7 20h10s1.4 0 3.2-.8c.6-.6.8-2 .8-2s.2-1.8.2-4.4v-1.6c0-2.6-.2-4.4-.2-4.4z"/></svg>
+                  </a>
+                {%- endif -%}
+              </div>
+            </div>
+          {%- endif -%}
+        </div>
+
+        <div class="gh-contact__form-panel">
+          <h2 class="gh-contact__form-title">{{ section.settings.form_heading | default: 'Send us a message' }}</h2>
+          <span class="gh-contact__form-line" aria-hidden="true"></span>
+
+          {%- form 'contact', id: 'gh-contact-form', class: 'gh-contact__form' -%}
+            <div class="gh-contact__field">
+              <label class="visually-hidden" for="gh-contact-name">Full name</label>
+              <span class="gh-contact__field-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.4"/><path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7" stroke="currentColor" stroke-width="1.4"/></svg>
+              </span>
+              <input id="gh-contact-name" type="text" name="contact[name]" placeholder="{{ section.settings.name_placeholder | default: 'Full Name' }}" required autocomplete="name" value="{% if form.name %}{{ form.name }}{% elsif customer %}{{ customer.name }}{% endif %}">
+            </div>
+
+            <div class="gh-contact__field">
+              <label class="visually-hidden" for="gh-contact-email">Email</label>
+              <span class="gh-contact__field-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 6h16v12H4V6zm0 0l8 7 8-7" stroke="currentColor" stroke-width="1.4"/></svg>
+              </span>
+              <input id="gh-contact-email" type="email" name="contact[email]" placeholder="{{ section.settings.email_placeholder | default: 'Email Address' }}" required autocomplete="email" value="{% if form.email %}{{ form.email }}{% elsif customer %}{{ customer.email }}{% endif %}">
+            </div>
+
+            <div class="gh-contact__field">
+              <label class="visually-hidden" for="gh-contact-phone">Phone</label>
+              <span class="gh-contact__field-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6.6 4h2.2l1.2 5-3.1 2.1a11 11 0 005.4 5.4l2.1-3.1 5 1.2v2.2a2 2 0 01-2 1.9C12.1 18.5 5.5 11.9 4.7 6.6A2 2 0 016.6 4z" stroke="currentColor" stroke-width="1.4"/></svg>
+              </span>
+              <input id="gh-contact-phone" type="tel" name="contact[phone]" placeholder="{{ section.settings.phone_placeholder | default: 'Phone Number' }}" autocomplete="tel">
+            </div>
+
+            <div class="gh-contact__field gh-contact__field--select">
+              <label class="visually-hidden" for="gh-contact-subject">Subject</label>
+              <span class="gh-contact__field-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 6h16v2H4V6zm0 5h10v2H4v-2zm0 5h16v2H4v-2z" stroke="currentColor" stroke-width="1.4"/></svg>
+              </span>
+              <select id="gh-contact-subject" name="contact[Subject]">
+                <option value="">{{ section.settings.subject_placeholder | default: 'Subject' }}</option>
+                <option value="Order Inquiry">Order Inquiry</option>
+                <option value="Product Question">Product Question</option>
+                <option value="Returns & Refunds">Returns & Refunds</option>
+                <option value="Wholesale / Partnership">Wholesale / Partnership</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div class="gh-contact__field gh-contact__field--message">
+              <label class="visually-hidden" for="gh-contact-message">Message</label>
+              <span class="gh-contact__field-icon gh-contact__field-icon--top" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 5h16v10H8l-4 4V5z" stroke="currentColor" stroke-width="1.4"/></svg>
+              </span>
+              <textarea id="gh-contact-message" name="contact[body]" rows="5" maxlength="500" placeholder="{{ section.settings.message_placeholder | default: 'Message' }}" required data-gh-contact-message>{{ form.body }}</textarea>
+              <span class="gh-contact__char-count"><span data-gh-contact-char-count>0</span>/500</span>
+            </div>
+
+            <button type="submit" class="gh-contact__submit">
+              {{ section.settings.submit_label | default: 'Send Message' }}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </button>
+          {%- endform -%}
+
+          {%- if form.posted_successfully? -%}
+            <p class="gh-contact__form-msg gh-contact__form-msg--ok" role="status">{{ section.settings.success_message }}</p>
+          {%- endif -%}
+          {%- if form.errors -%}
+            <p class="gh-contact__form-msg gh-contact__form-msg--err" role="alert">{{ form.errors | default_errors }}</p>
+          {%- endif -%}
+
+          {%- if section.settings.form_note != blank -%}
+            <p class="gh-contact__form-note">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 12l2 2 4-4M12 3l7 3v5c0 4.5-3.2 8.4-7 9-3.8-.6-7-4.5-7-9V6l7-3z" stroke="#2e9e5b" stroke-width="1.4"/></svg>
+              {{ section.settings.form_note }}
+            </p>
+          {%- endif -%}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {%- if section.settings.show_trust_bar -%}
+    <div class="gh-contact__trust-wrap">
+      <div class="gh-container">
+        <ul class="gh-contact__trust" role="list">
+          {%- for i in (1..4) -%}
+            {%- assign tk = 'trust_' | append: i | append: '_title' -%}
+            {%- assign sk = 'trust_' | append: i | append: '_text' -%}
+            {%- assign tv = section.settings[tk] -%}
+            {%- if tv != blank -%}
+              <li>
+                <span class="gh-contact__trust-icon" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    {%- case i -%}
+                      {%- when 1 -%}<path d="M12 3l7 3v5c0 4.5-3.2 8.4-7 9-3.8-.6-7-4.5-7-9V6l7-3z" stroke="currentColor" stroke-width="1.4"/>
+                      {%- when 2 -%}<path d="M12 6v6l4 2M12 3a9 9 0 110 18 9 9 0 010-18z" stroke="currentColor" stroke-width="1.4"/>
+                      {%- when 3 -%}<path d="M4 7h16v10H4V7zm2 2v6h12V9H6z" stroke="currentColor" stroke-width="1.4"/>
+                      {%- else -%}<path d="M12 3l2.4 4.8 5.4.8-3.9 3.8.9 5.4L12 16.8 7.2 17l.9-5.4-3.9-3.8 5.4-.8L12 3z" stroke="currentColor" stroke-width="1.4"/>
+                    {%- endcase -%}
+                  </svg>
+                </span>
+                <div>
+                  <strong>{{ tv }}</strong>
+                  {%- assign st = section.settings[sk] -%}
+                  {%- if st != blank -%}<span>{{ st }}</span>{%- endif -%}
+                </div>
+              </li>
+            {%- endif -%}
+          {%- endfor -%}
+        </ul>
+      </div>
+    </div>
+  {%- endif -%}
+
+  <div class="gh-contact__mid">
+    <div class="gh-container">
+      <div class="gh-contact__mid-grid">
+        <div class="gh-contact__faq">
+          <div class="gh-contact__faq-head">
+            <h2>{{ section.settings.faq_heading | default: 'Frequently Asked Questions' }}</h2>
+            {%- if section.settings.faq_link != blank -%}
+              <a href="{{ section.settings.faq_link }}" class="gh-contact__faq-link">{{ section.settings.faq_link_label | default: 'View All FAQs' }} →</a>
+            {%- endif -%}
+          </div>
+          <div class="gh-contact__faq-list">
+            {%- for block in section.blocks -%}
+              {%- if block.type == 'faq' -%}
+                {%- assign faq_id = 'gh-faq-' | append: block.id -%}
+                <div class="gh-contact__faq-item" {{ block.shopify_attributes }}>
+                  <button type="button" class="gh-contact__faq-q" data-gh-contact-faq aria-expanded="false" aria-controls="{{ faq_id }}">
+                    {{ block.settings.question }}
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5"/></svg>
+                  </button>
+                  <div id="{{ faq_id }}" class="gh-contact__faq-a" hidden>
+                    <p>{{ block.settings.answer }}</p>
+                  </div>
+                </div>
+              {%- endif -%}
+            {%- endfor -%}
+          </div>
+        </div>
+
+        <div class="gh-contact__highlight">
+          <span class="gh-contact__highlight-icon" aria-hidden="true">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M4 14v2a2 2 0 002 2h2l2 4 4-4h6a2 2 0 002-2v-2M4 10V8a2 2 0 012-2h2l2-4 4 4h6a2 2 0 012 2v2" stroke="currentColor" stroke-width="1.4"/></svg>
+          </span>
+          <h3>{{ section.settings.highlight_title | default: 'Quick Response' }}</h3>
+          <p>{{ section.settings.highlight_text }}</p>
+        </div>
+
+        <div class="gh-contact__why">
+          <h2>{{ section.settings.why_heading | default: 'Why Customers Love Us' }}</h2>
+          <ul role="list">
+            {%- for block in section.blocks -%}
+              {%- if block.type == 'why_item' -%}
+                <li {{ block.shopify_attributes }}>
+                  <span class="gh-contact__why-icon" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3l2.4 4.8 5.4.8-3.9 3.8.9 5.4L12 16.8 7.2 17l.9-5.4-3.9-3.8 5.4-.8L12 3z" stroke="currentColor" stroke-width="1.4"/></svg>
+                  </span>
+                  <div>
+                    <strong>{{ block.settings.title }}</strong>
+                    {%- if block.settings.text != blank -%}<span>{{ block.settings.text }}</span>{%- endif -%}
+                  </div>
+                </li>
+              {%- endif -%}
+            {%- endfor -%}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="gh-contact__bottom">
+    <div class="gh-container">
+      <div class="gh-contact__bottom-grid">
+        <div class="gh-contact__map-card">
+          {%- if section.settings.map_image != blank -%}
+            {{
+              section.settings.map_image
+              | image_url: width: 1200
+              | image_tag: class: 'gh-contact__map-img', loading: 'lazy', sizes: '(min-width: 990px) 50vw, 100vw', widths: '600, 900, 1200', alt: 'Store location map'
+            }}
+          {%- else -%}
+            <div class="gh-contact__map-placeholder" aria-hidden="true"></div>
+          {%- endif -%}
+          <div class="gh-contact__map-overlay">
+            <h3>{{ section.settings.map_heading | default: 'Visit Our Store' }}</h3>
+            {%- if section.settings.map_address != blank -%}<p>{{ section.settings.map_address }}</p>{%- endif -%}
+            {%- if section.settings.map_directions_url != blank -%}
+              <a href="{{ section.settings.map_directions_url }}" class="gh-contact__map-btn" target="_blank" rel="noopener">
+                {{ section.settings.map_button_label | default: 'Get Directions' }} →
+              </a>
+            {%- endif -%}
+          </div>
+        </div>
+
+        <div class="gh-contact__newsletter">
+          <h3>{{ section.settings.newsletter_heading | default: 'Stay Updated with Grosyhub' }}</h3>
+          {%- if section.settings.newsletter_text != blank -%}<p>{{ section.settings.newsletter_text }}</p>{%- endif -%}
+          {%- form 'customer', class: 'gh-contact__newsletter-form' -%}
+            <input type="hidden" name="contact[tags]" value="newsletter">
+            <div class="gh-contact__newsletter-row">
+              <input type="email" name="contact[email]" placeholder="{{ section.settings.newsletter_placeholder | default: 'Enter your email' }}" required autocomplete="email">
+              <button type="submit" aria-label="Subscribe">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              </button>
+            </div>
+          {%- endform -%}
+          {%- if section.settings.newsletter_note != blank -%}<p class="gh-contact__newsletter-note">{{ section.settings.newsletter_note }}</p>{%- endif -%}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {%- if section.settings.show_service_bar -%}
+    <div class="gh-contact__service">
+      <div class="gh-container">
+        <ul role="list">
+          {%- for i in (1..4) -%}
+            {%- assign sk = 'service_' | append: i -%}
+            {%- assign sv = section.settings[sk] -%}
+            {%- if sv != blank -%}<li>{{ sv }}</li>{%- endif -%}
+          {%- endfor -%}
+        </ul>
+      </div>
+    </div>
+  {%- endif -%}
+</div>
+
+{% schema %}
+{
+  "name": "Grosyhub contact page",
+  "tag": "section",
+  "class": "grosyhub-contact-section",
+  "settings": [
+    { "type": "color", "id": "brand_color", "label": "Brand color", "default": "#A56A2A" },
+    { "type": "image_picker", "id": "hero_image", "label": "Hero background image" },
+    { "type": "text", "id": "eyebrow", "label": "Badge", "default": "CONTACT GROSYHUB" },
+    { "type": "text", "id": "heading_before", "label": "Heading", "default": "We'd love to" },
+    { "type": "text", "id": "heading_highlight", "label": "Heading highlight", "default": "hear from you" },
+    { "type": "textarea", "id": "subheading", "label": "Subheading", "default": "Have questions about products, orders, or partnerships? Our team is here to help." },
+    { "type": "header", "content": "Contact details" },
+    { "type": "text", "id": "phone", "label": "Phone", "default": "+91 97245 91484" },
+    { "type": "text", "id": "phone_label", "label": "Phone label", "default": "Phone Number" },
+    { "type": "text", "id": "phone_note", "label": "Phone note", "default": "Mon–Sat, 9:00 AM – 7:00 PM" },
+    { "type": "text", "id": "email", "label": "Email", "default": "support@grosyhub.com" },
+    { "type": "text", "id": "email_label", "label": "Email label", "default": "Email Address" },
+    { "type": "text", "id": "email_note", "label": "Email note", "default": "We reply within 2 hours" },
+    { "type": "textarea", "id": "address", "label": "Address" },
+    { "type": "text", "id": "address_label", "label": "Address label", "default": "Store Location" },
+    { "type": "text", "id": "hours", "label": "Hours", "default": "Mon – Sat: 9:00 AM – 7:00 PM (IST)" },
+    { "type": "text", "id": "hours_label", "label": "Hours label", "default": "Support Timing" },
+    { "type": "text", "id": "hours_note", "label": "Hours note", "default": "We're always here to help" },
+    { "type": "checkbox", "id": "show_social", "label": "Show social links", "default": true },
+    { "type": "text", "id": "social_heading", "label": "Social heading", "default": "Follow us on" },
+    { "type": "url", "id": "facebook_url", "label": "Facebook" },
+    { "type": "url", "id": "instagram_url", "label": "Instagram" },
+    { "type": "url", "id": "pinterest_url", "label": "Pinterest" },
+    { "type": "url", "id": "youtube_url", "label": "YouTube" },
+    { "type": "header", "content": "Contact form" },
+    { "type": "text", "id": "form_heading", "label": "Form heading", "default": "Send us a message" },
+    { "type": "text", "id": "submit_label", "label": "Submit button", "default": "Send Message" },
+    { "type": "text", "id": "form_note", "label": "Form note", "default": "We typically reply within 2 hours" },
+    { "type": "text", "id": "success_message", "label": "Success message", "default": "Thanks for reaching out! We'll get back to you soon." },
+    { "type": "header", "content": "Trust bar" },
+    { "type": "checkbox", "id": "show_trust_bar", "label": "Show trust bar", "default": true },
+    { "type": "text", "id": "trust_1_title", "label": "Trust 1", "default": "Secure Support" },
+    { "type": "text", "id": "trust_1_text", "label": "Trust 1 text", "default": "Your information is safe with us" },
+    { "type": "text", "id": "trust_2_title", "label": "Trust 2", "default": "Fast Response" },
+    { "type": "text", "id": "trust_2_text", "label": "Trust 2 text", "default": "We reply within 2 hours" },
+    { "type": "text", "id": "trust_3_title", "label": "Trust 3", "default": "24/7 Assistance" },
+    { "type": "text", "id": "trust_3_text", "label": "Trust 3 text", "default": "We're here anytime you need" },
+    { "type": "text", "id": "trust_4_title", "label": "Trust 4", "default": "Customer Satisfaction" },
+    { "type": "text", "id": "trust_4_text", "label": "Trust 4 text", "default": "Your happiness is our priority" },
+    { "type": "header", "content": "FAQ" },
+    { "type": "text", "id": "faq_heading", "label": "FAQ heading", "default": "Frequently Asked Questions" },
+    { "type": "url", "id": "faq_link", "label": "View all FAQs link" },
+    { "type": "text", "id": "faq_link_label", "label": "FAQ link label", "default": "View All FAQs" },
+    { "type": "header", "content": "Highlight card" },
+    { "type": "text", "id": "highlight_title", "label": "Title", "default": "Quick Response" },
+    { "type": "textarea", "id": "highlight_text", "label": "Text", "default": "Within 2 Hours — Our support team is always ready to assist you quickly." },
+    { "type": "text", "id": "why_heading", "label": "Why heading", "default": "Why Customers Love Us" },
+    { "type": "header", "content": "Map & newsletter" },
+    { "type": "image_picker", "id": "map_image", "label": "Map image" },
+    { "type": "text", "id": "map_heading", "label": "Map heading", "default": "Visit Our Store" },
+    { "type": "textarea", "id": "map_address", "label": "Map address" },
+    { "type": "url", "id": "map_directions_url", "label": "Directions URL (Google Maps)" },
+    { "type": "text", "id": "map_button_label", "label": "Directions button", "default": "Get Directions" },
+    { "type": "text", "id": "newsletter_heading", "label": "Newsletter heading", "default": "Stay Updated with Grosyhub" },
+    { "type": "textarea", "id": "newsletter_text", "label": "Newsletter text", "default": "Get exclusive offers, new arrivals, and updates straight to your inbox." },
+    { "type": "text", "id": "newsletter_note", "label": "Newsletter note", "default": "Join 25,000+ happy subscribers" },
+    { "type": "header", "content": "Service bar" },
+    { "type": "checkbox", "id": "show_service_bar", "label": "Show service bar", "default": true },
+    { "type": "text", "id": "service_1", "label": "Service 1", "default": "Free Shipping" },
+    { "type": "text", "id": "service_2", "label": "Service 2", "default": "Easy Returns" },
+    { "type": "text", "id": "service_3", "label": "Service 3", "default": "Secure Payments" },
+    { "type": "text", "id": "service_4", "label": "Service 4", "default": "Cash on Delivery" }
+  ],
+  "blocks": [
+    {
+      "type": "faq",
+      "name": "FAQ item",
+      "settings": [
+        { "type": "text", "id": "question", "label": "Question", "default": "How can I track my order?" },
+        { "type": "textarea", "id": "answer", "label": "Answer", "default": "Once your order ships, you'll receive a tracking link by email and SMS." }
+      ]
+    },
+    {
+      "type": "why_item",
+      "name": "Why item",
+      "settings": [
+        { "type": "text", "id": "title", "label": "Title", "default": "Friendly Support" },
+        { "type": "text", "id": "text", "label": "Description", "default": "Real people, real help" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Grosyhub contact page",
+      "blocks": [
+        { "type": "faq", "settings": { "question": "How can I track my order?", "answer": "Once your order ships, you'll receive a tracking link by email and SMS." } },
+        { "type": "faq", "settings": { "question": "What is your return policy?", "answer": "We offer easy 7-day returns on most products. Items must be unused and in original packaging." } },
+        { "type": "faq", "settings": { "question": "Do you offer Cash on Delivery?", "answer": "Yes, COD is available on eligible orders across India." } },
+        { "type": "faq", "settings": { "question": "How long does delivery take?", "answer": "Most orders arrive within 3–7 business days depending on your location." } },
+        { "type": "why_item", "settings": { "title": "Friendly Support", "text": "Real people, real help" } },
+        { "type": "why_item", "settings": { "title": "Easy Returns", "text": "Hassle-free 7-day returns" } },
+        { "type": "why_item", "settings": { "title": "Quality Assured", "text": "Premium home essentials" } },
+        { "type": "why_item", "settings": { "title": "Secure & Safe", "text": "100% protected checkout" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

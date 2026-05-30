@@ -1,0 +1,41 @@
+{%- comment -%}
+  Shared section header (Shop By Reels layout).
+  title OR eyebrow, subtitle OR subheading, view_all_url, view_all_label,
+  icon: reels | category | star | trending | products, show_sparkle (default true)
+{%- endcomment -%}
+
+{%- liquid
+  assign header_title = title | default: eyebrow
+  assign header_sub = subtitle | default: subheading
+  assign header_icon = icon | default: 'star'
+-%}
+
+<header class="gh-sec-head">
+  <div class="gh-sec-head__main">
+    <span class="gh-sec-head__icon" aria-hidden="true">
+      {% render 'grosyhub-section-header-icon', icon: header_icon %}
+    </span>
+    <div class="gh-sec-head__text">
+      {%- if header_title != blank -%}
+        <h2 class="gh-sec-head__title">
+          {{ header_title }}
+          {%- if show_sparkle != false -%}
+            <span class="gh-sec-head__sparkle" aria-hidden="true">✨</span>
+          {%- endif -%}
+        </h2>
+      {%- endif -%}
+      {%- if header_sub != blank -%}
+        <p class="gh-sec-head__sub">{{ header_sub }}</p>
+      {%- endif -%}
+    </div>
+  </div>
+
+  {%- if view_all_url != blank and view_all_label != blank -%}
+    <a href="{{ view_all_url }}" class="gh-sec-head__cta gh-sec-head__cta--top">
+      {{ view_all_label }}
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+  {%- endif -%}
+</header>

@@ -1,0 +1,507 @@
+{{ 'grosyhub-home-deal-of-day.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'grosyhub-home-deal-of-day.js' | asset_url }}" defer></script>
+
+{%- liquid
+  assign brand_color = section.settings.brand_color | default: '#b89774'
+  assign product = section.settings.product
+
+  if product == blank and section.settings.collection != blank
+    assign product = section.settings.collection.products.first
+  endif
+  if product == blank
+    assign product = collections.all.products.first
+  endif
+
+  if product != blank
+    assign variant = product.selected_or_first_available_variant
+    assign price = variant.price
+    assign compare_at = variant.compare_at_price
+    assign on_sale = false
+    if compare_at > price
+      assign on_sale = true
+      assign save_amount = compare_at | minus: price
+      assign discount_pct = save_amount | times: 100 | divided_by: compare_at
+    endif
+  endif
+
+  if section.settings.discount_override != blank
+    assign discount_pct = section.settings.discount_override
+  endif
+
+  assign stock_left = section.settings.stock_left | default: 200
+  assign stock_total = section.settings.stock_total | default: 500
+  if stock_total < 1
+    assign stock_total = 500
+  endif
+  assign stock_pct = stock_left | times: 100 | divided_by: stock_total
+  if stock_pct > 100
+    assign stock_pct = 100
+  endif
+
+  assign rating_value = product.metafields.reviews.rating.value.rating | default: section.settings.rating_fallback | default: '4.8'
+  assign reviews_count = product.metafields.reviews.rating_count | default: section.settings.reviews_count_fallback | default: '1300'
+
+  assign can_quick_add = false
+  if product != blank and product.variants_count == 1 and variant.available
+    assign can_quick_add = true
+  endif
+
+  assign detail_blocks = section.blocks | where: 'type', 'detail_thumb'
+  assign benefit_blocks = section.blocks | where: 'type', 'benefit'
+  assign highlight_blocks = section.blocks | where: 'type', 'highlight'
+-%}
+
+<section
+  class="gh-dod section-{{ section.id }}"
+  style="--gh-dod-brand: {{ brand_color }}; --gh-dod-brand-dark: color-mix(in srgb, {{ brand_color }} 78%, #000);"
+  {{ section.shopify_attributes }}
+>
+  <div class="gh-dod__container">
+    {%- if product == blank -%}
+      <p class="gh-dod__empty">{{ section.settings.empty_text | default: 'Select a product for Deal of the Day.' }}</p>
+    {%- else -%}
+      <div class="gh-dod__card">
+        <div class="gh-dod__grid">
+          {%- comment -%} Left — offer & urgency {%- endcomment -%}
+          <div class="gh-dod__col gh-dod__col--offer">
+            {%- if section.settings.eyebrow != blank -%}
+              <span class="gh-dod__eyebrow">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M13 2L4 14h7l-1 8 10-14H13V2z"/>
+                </svg>
+                {{ section.settings.eyebrow }}
+              </span>
+            {%- endif -%}
+
+            {%- if section.settings.description != blank -%}
+              <p class="gh-dod__desc">{{ section.settings.description }}</p>
+            {%- endif -%}
+
+            <div
+              class="gh-dod__countdown"
+              data-gh-dod-countdown
+              data-hours="{{ section.settings.countdown_hours | default: 24 }}"
+            >
+              <div class="gh-dod__countdown-unit">
+                <span class="gh-dod__countdown-num" data-gh-dod-hours>00</span>
+                <span class="gh-dod__countdown-label">Hours</span>
+              </div>
+              <span class="gh-dod__countdown-sep" aria-hidden="true">:</span>
+              <div class="gh-dod__countdown-unit">
+                <span class="gh-dod__countdown-num" data-gh-dod-minutes>00</span>
+                <span class="gh-dod__countdown-label">Minutes</span>
+              </div>
+              <span class="gh-dod__countdown-sep" aria-hidden="true">:</span>
+              <div class="gh-dod__countdown-unit">
+                <span class="gh-dod__countdown-num" data-gh-dod-seconds>00</span>
+                <span class="gh-dod__countdown-label">Seconds</span>
+              </div>
+            </div>
+
+            <div class="gh-dod__stock">
+              <p class="gh-dod__stock-text">
+                {{ section.settings.stock_label | default: 'Hurry up! Only' }}
+                <strong>{{ stock_left }}</strong>
+                {{ section.settings.stock_label_suffix | default: 'items left' }}
+              </p>
+              <div class="gh-dod__stock-bar" role="progressbar" aria-valuenow="{{ stock_left }}" aria-valuemin="0" aria-valuemax="{{ stock_total }}">
+                <span class="gh-dod__stock-fill" style="width: {{ stock_pct }}%;"></span>
+              </div>
+            </div>
+
+            {%- if highlight_blocks.size > 0 -%}
+              <ul class="gh-dod__highlights">
+                {%- for block in highlight_blocks -%}
+                  <li class="gh-dod__highlight" {{ block.shopify_attributes }}>
+                    <span class="gh-dod__highlight-icon" aria-hidden="true">
+                      {%- case block.settings.icon -%}
+                        {%- when 'storage' -%}
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 7h16v12H4V7zm2-4h12l2 4H6l-2-4z" stroke="currentColor" stroke-width="1.5"/></svg>
+                        {%- when 'quality' -%}
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.4L12 16.8 7.1 18l.9-5.4-4-3.9 5.5-.8L12 3z" stroke="currentColor" stroke-width="1.5"/></svg>
+                        {%- when 'durable' -%}
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 4v6c0 4-3 7-7 8-4-1-7-4-7-8V7l7-4z" stroke="currentColor" stroke-width="1.5"/></svg>
+                        {%- else -%}
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/></svg>
+                      {%- endcase -%}
+                    </span>
+                    <span>{{ block.settings.title }}</span>
+                  </li>
+                {%- endfor -%}
+              </ul>
+            {%- endif -%}
+          </div>
+
+          {%- comment -%} Center — full-column showcase {%- endcomment -%}
+          <div class="gh-dod__col gh-dod__col--showcase">
+            <div class="gh-dod__showcase-visual">
+              {%- if section.settings.showcase_scene != blank -%}
+                {{
+                  section.settings.showcase_scene
+                  | image_url: width: 1600
+                  | image_tag:
+                    class: 'gh-dod__scene-cover',
+                    loading: 'lazy',
+                    widths: '800, 1200, 1600',
+                    sizes: '(min-width: 990px) 42vw, 100vw',
+                    alt: product.title
+                }}
+              {%- else -%}
+                <div class="gh-dod__scene-built" aria-hidden="true">
+                  <div class="gh-dod__arch"></div>
+                  <div class="gh-dod__pedestal"></div>
+                </div>
+              {%- endif -%}
+
+              <div class="gh-dod__leaf" aria-hidden="true">
+                <svg viewBox="0 0 120 140" fill="none">
+                  <path d="M60 8C38 28 18 58 22 92c4 28 22 42 38 42s34-14 38-42c4-34-16-64-38-84z" fill="#5a9e62" opacity=".92"/>
+                  <path d="M60 20c-12 18-20 40-18 62 2 16 10 26 18 26s16-10 18-26c2-22-6-44-18-62z" fill="#7cb883" opacity=".55"/>
+                </svg>
+              </div>
+
+              {%- if discount_pct != blank and discount_pct > 0 -%}
+                <div class="gh-dod__discount-badge" aria-hidden="true">
+                  <span class="gh-dod__discount-badge-label">{{ section.settings.discount_badge_label | default: 'SPECIAL OFFER' }}</span>
+                  <strong class="gh-dod__discount-badge-value"><span>{{ discount_pct }}%</span> OFF</strong>
+                </div>
+              {%- endif -%}
+
+              {%- unless section.settings.showcase_scene != blank -%}
+                {%- if product.featured_media != blank -%}
+                  <img
+                    class="gh-dod__main-img"
+                    data-gh-dod-main-img
+                    src="{{ product.featured_media | image_url: width: 1400 }}"
+                    srcset="
+                      {{ product.featured_media | image_url: width: 700 }} 700w,
+                      {{ product.featured_media | image_url: width: 1000 }} 1000w,
+                      {{ product.featured_media | image_url: width: 1400 }} 1400w
+                    "
+                    sizes="(min-width: 990px) 42vw, 100vw"
+                    alt="{{ product.featured_media.alt | default: product.title | escape }}"
+                    width="1400"
+                    height="1400"
+                    loading="lazy"
+                  >
+                {%- else -%}
+                  <div class="gh-dod__main-placeholder">{{ 'product-1' | placeholder_svg_tag }}</div>
+                {%- endif -%}
+              {%- endunless -%}
+            </div>
+
+            {%- if detail_blocks.size > 0 and section.settings.showcase_scene == blank -%}
+              <ul class="gh-dod__thumbs">
+                {%- for block in detail_blocks -%}
+                  {%- liquid
+                    assign thumb_img = block.settings.image
+                    if thumb_img == blank and product.media.size > forloop.index0
+                      assign thumb_media = product.media[forloop.index0]
+                      if thumb_media.media_type == 'image'
+                        assign thumb_img = thumb_media
+                      else
+                        assign thumb_img = thumb_media.preview_image
+                      endif
+                    endif
+                  -%}
+                  {%- if thumb_img != blank -%}
+                    <li {{ block.shopify_attributes }}>
+                      <button
+                        type="button"
+                        class="gh-dod__thumb{% if forloop.first %} is-active{% endif %}"
+                        data-gh-dod-thumb
+                        data-full-src="{{ thumb_img | image_url: width: 1000 }}"
+                        data-alt="{{ block.settings.label | escape }}"
+                        aria-label="{{ block.settings.label | default: 'View image' }}"
+                        aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
+                      >
+                        <span class="gh-dod__thumb-ring">
+                        {{
+                          thumb_img
+                          | image_url: width: 120
+                          | image_tag: loading: 'lazy', widths: '80, 120', sizes: '72px', alt: ''
+                        }}
+                        </span>
+                        {%- if block.settings.label != blank -%}
+                          <span class="gh-dod__thumb-label">{{ block.settings.label }}</span>
+                        {%- endif -%}
+                      </button>
+                    </li>
+                  {%- endif -%}
+                {%- endfor -%}
+              </ul>
+            {%- endif -%}
+          </div>
+
+          {%- comment -%} Right — product info & purchase {%- endcomment -%}
+          <div class="gh-dod__col gh-dod__col--buy">
+            {%- if section.settings.product_badge != blank -%}
+              <span class="gh-dod__product-badge">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M12 2l2.2 4.5 5 .7-3.6 3.5.9 5L12 13.8 7.5 16l.9-5-3.6-3.5 5-.7L12 2z"/>
+                </svg>
+                {{ section.settings.product_badge }}
+              </span>
+            {%- endif -%}
+
+            <h3 class="gh-dod__product-title">
+              <a href="{{ product.url }}">{{ product.title }}</a>
+            </h3>
+
+            <p class="gh-dod__rating">
+              <span class="gh-dod__stars" aria-hidden="true">
+                {%- assign star_rating = rating_value | round -%}
+                {%- for i in (1..5) -%}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="{% if i <= star_rating %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="1.2">
+                    <path d="M12 2l2.9 6.1 6.8.6-5.1 4.4 1.6 6.6L12 16.9l-6.2 3.8 1.6-6.6-5.1-4.4 6.8-.6L12 2z"/>
+                  </svg>
+                {%- endfor -%}
+              </span>
+              <span>{{ rating_value }} ({{ reviews_count }} Reviews)</span>
+            </p>
+
+            <div class="gh-dod__price-block">
+              <div class="gh-dod__price-row">
+                <span class="gh-dod__price">{{ price | money }}</span>
+                {%- if on_sale -%}
+                  <span class="gh-dod__off-pill">{{ discount_pct }}% OFF</span>
+                {%- endif -%}
+              </div>
+              {%- if on_sale -%}
+                <span class="gh-dod__compare">{{ compare_at | money }}</span>
+              {%- endif -%}
+            </div>
+
+            {%- if benefit_blocks.size > 0 -%}
+              <ul class="gh-dod__benefits">
+                {%- for block in benefit_blocks -%}
+                  <li {{ block.shopify_attributes }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle cx="12" cy="12" r="10" fill="#f5ebe3" stroke="var(--gh-dod-brand)" stroke-width="1.4"/>
+                      <path d="M8 12l2.5 2.5L16 9" stroke="var(--gh-dod-brand)" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <span>{{ block.settings.text }}</span>
+                  </li>
+                {%- endfor -%}
+              </ul>
+            {%- endif -%}
+
+            {%- if section.settings.shipping_note != blank -%}
+              <div class="gh-dod__shipping">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M20 12v8H4V12M2 7h20v5H2V7zm8 0V4h4v3" stroke="currentColor" stroke-width="1.5"/>
+                </svg>
+                <span>{{ section.settings.shipping_note }}</span>
+              </div>
+            {%- endif -%}
+
+            <div class="gh-dod__actions">
+              {%- if can_quick_add -%}
+                <button type="button" class="gh-dod__add-cart" data-gh-dod-add-cart="{{ variant.id }}">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M6 7h15l-1.5 9H8L6 7zm3-3h9l1 3H8l1-3z" stroke="currentColor" stroke-width="1.6"/>
+                  </svg>
+                  {{ section.settings.add_to_cart_label | default: 'Add to Cart' }}
+                </button>
+              {%- else -%}
+                <a href="{{ product.url }}" class="gh-dod__add-cart">
+                  {{ section.settings.view_product_label | default: 'View Product' }}
+                </a>
+              {%- endif -%}
+
+              <button
+                type="button"
+                class="gh-dod__wishlist"
+                data-gh-wishlist-toggle
+                data-wishlist-variant-id="{{ variant.id }}"
+                data-wishlist-product-id="{{ product.id }}"
+                data-wishlist-title="{{ product.title | escape }}"
+                data-wishlist-url="{{ product.url }}"
+                data-wishlist-image="{% if product.featured_media %}{{ product.featured_media | image_url: width: 200 }}{% endif %}"
+                data-wishlist-price="{{ price }}"
+                data-wishlist-compare-at="{{ compare_at }}"
+                aria-label="Add to wishlist"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 21s-7.5-4.7-9.8-9.4C.4 8.2 2.6 4 6.4 4c2 0 3.2 1.2 3.6 1.8C10.4 5.2 11.6 4 13.6 4c3.8 0 6 4.2 4.2 7.6C19.5 16.3 12 21 12 21z" stroke="currentColor" stroke-width="1.6"/>
+                </svg>
+              </button>
+            </div>
+
+            <ul class="gh-dod__mini-trust">
+              {%- if section.settings.mini_trust_1 != blank -%}
+                <li>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 4v6c0 4-3 7-7 8-4-1-7-4-7-8V7l7-4z" stroke="currentColor" stroke-width="1.5"/></svg>
+                  {{ section.settings.mini_trust_1 }}
+                </li>
+              {%- endif -%}
+              {%- if section.settings.mini_trust_2 != blank -%}
+                <li>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 7h16v10H4V7zm2-3h12l2 3H6l-2-3z" stroke="currentColor" stroke-width="1.5"/></svg>
+                  {{ section.settings.mini_trust_2 }}
+                </li>
+              {%- endif -%}
+            </ul>
+          </div>
+        </div>
+
+        {%- if section.settings.show_trust_bar -%}
+        <ul class="gh-dod__trust-bar">
+          {%- if section.settings.trust_1 != blank -%}
+            <li>
+              <span class="gh-dod__trust-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 7h13v8H3V7zm13 0h3l2 4v4h-5V7zM2 5h14v2H2V5z" stroke="currentColor" stroke-width="1.4"/></svg>
+              </span>
+              <span class="gh-dod__trust-text">
+                <strong>{{ section.settings.trust_1 }}</strong>
+                {%- if section.settings.trust_1_sub != blank -%}<span>{{ section.settings.trust_1_sub }}</span>{%- endif -%}
+              </span>
+            </li>
+          {%- endif -%}
+          {%- if section.settings.trust_2 != blank -%}
+            <li>
+              <span class="gh-dod__trust-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 4v6h16V4M7 14h10l2 4H5l2-4z" stroke="currentColor" stroke-width="1.4"/></svg>
+              </span>
+              <span class="gh-dod__trust-text">
+                <strong>{{ section.settings.trust_2 }}</strong>
+                {%- if section.settings.trust_2_sub != blank -%}<span>{{ section.settings.trust_2_sub }}</span>{%- endif -%}
+              </span>
+            </li>
+          {%- endif -%}
+          {%- if section.settings.trust_3 != blank -%}
+            <li>
+              <span class="gh-dod__trust-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 4v6c0 4-3 7-7 8-4-1-7-4-7-8V7l7-4z" stroke="currentColor" stroke-width="1.4"/></svg>
+              </span>
+              <span class="gh-dod__trust-text">
+                <strong>{{ section.settings.trust_3 }}</strong>
+                {%- if section.settings.trust_3_sub != blank -%}<span>{{ section.settings.trust_3_sub }}</span>{%- endif -%}
+              </span>
+            </li>
+          {%- endif -%}
+          {%- if section.settings.trust_4 != blank -%}
+            <li>
+              <span class="gh-dod__trust-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 7h16v10H4V7zm2-3h12l2 3H6l-2-3z" stroke="currentColor" stroke-width="1.4"/></svg>
+              </span>
+              <span class="gh-dod__trust-text">
+                <strong>{{ section.settings.trust_4 }}</strong>
+                {%- if section.settings.trust_4_sub != blank -%}<span>{{ section.settings.trust_4_sub }}</span>{%- endif -%}
+              </span>
+            </li>
+          {%- endif -%}
+        </ul>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Grosyhub deal of the day",
+  "tag": "section",
+  "class": "grosyhub-deal-of-day-section",
+  "max_blocks": 16,
+  "settings": [
+    { "type": "product", "id": "product", "label": "Deal product" },
+    { "type": "collection", "id": "collection", "label": "Fallback collection", "info": "Uses first product if none selected above." },
+    { "type": "color", "id": "brand_color", "label": "Brand color", "default": "#b89774" },
+    { "type": "header", "content": "Offer column" },
+    { "type": "text", "id": "eyebrow", "label": "Badge", "default": "LIMITED TIME OFFER" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Deal of the Day" },
+    { "type": "textarea", "id": "description", "label": "Description", "default": "Exclusive offer on premium products. Grab it before the time runs out!" },
+    { "type": "range", "id": "countdown_hours", "label": "Countdown duration (hours)", "min": 1, "max": 72, "step": 1, "default": 24 },
+    { "type": "text", "id": "stock_label", "label": "Stock text (before number)", "default": "Hurry up! Only" },
+    { "type": "text", "id": "stock_label_suffix", "label": "Stock text (after number)", "default": "items left" },
+    { "type": "number", "id": "stock_left", "label": "Items left", "default": 200 },
+    { "type": "number", "id": "stock_total", "label": "Total stock (for bar)", "default": 500 },
+    { "type": "header", "content": "Showcase" },
+    {
+      "type": "image_picker",
+      "id": "showcase_scene",
+      "label": "Full-column showcase image",
+      "info": "Optional lifestyle image that fills the center column (like your design mockup). Leave empty to use the product photo with arch and pedestal."
+    },
+    { "type": "text", "id": "discount_badge_label", "label": "Discount badge ring text", "default": "SPECIAL OFFER" },
+    { "type": "number", "id": "discount_override", "label": "Discount % override (optional)" },
+    { "type": "header", "content": "Product column" },
+    { "type": "text", "id": "product_badge", "label": "Product badge", "default": "PREMIUM PRODUCT" },
+    { "type": "text", "id": "rating_fallback", "label": "Rating fallback", "default": "4.8" },
+    { "type": "text", "id": "reviews_count_fallback", "label": "Reviews fallback", "default": "1.3k" },
+    { "type": "text", "id": "shipping_note", "label": "Shipping promo", "default": "Free Shipping on orders over Rs. 499" },
+    { "type": "text", "id": "add_to_cart_label", "label": "Add to cart label", "default": "Add to Cart" },
+    { "type": "text", "id": "view_product_label", "label": "View product label", "default": "View Product" },
+    { "type": "text", "id": "mini_trust_1", "label": "Mini trust 1", "default": "Secure Payments" },
+    { "type": "text", "id": "mini_trust_2", "label": "Mini trust 2", "default": "Cash on Delivery" },
+    { "type": "header", "content": "Trust bar" },
+    { "type": "checkbox", "id": "show_trust_bar", "label": "Show trust bar", "default": true },
+    { "type": "text", "id": "trust_1", "label": "Trust 1 title", "default": "Free Shipping" },
+    { "type": "text", "id": "trust_1_sub", "label": "Trust 1 subtitle", "default": "On orders over Rs. 499" },
+    { "type": "text", "id": "trust_2", "label": "Trust 2 title", "default": "7 Days Easy Returns" },
+    { "type": "text", "id": "trust_2_sub", "label": "Trust 2 subtitle", "default": "Hassle-free returns" },
+    { "type": "text", "id": "trust_3", "label": "Trust 3 title", "default": "Secure Payments" },
+    { "type": "text", "id": "trust_3_sub", "label": "Trust 3 subtitle", "default": "100% safe & secure" },
+    { "type": "text", "id": "trust_4", "label": "Trust 4 title", "default": "COD Available" },
+    { "type": "text", "id": "trust_4_sub", "label": "Trust 4 subtitle", "default": "Cash on delivery" },
+    { "type": "text", "id": "empty_text", "label": "Empty state", "default": "Select a product for Deal of the Day." }
+  ],
+  "blocks": [
+    {
+      "type": "highlight",
+      "name": "Highlight icon",
+      "settings": [
+        { "type": "text", "id": "title", "label": "Label", "default": "Premium Quality" },
+        {
+          "type": "select",
+          "id": "icon",
+          "label": "Icon",
+          "default": "quality",
+          "options": [
+            { "value": "quality", "label": "Quality" },
+            { "value": "storage", "label": "Storage" },
+            { "value": "durable", "label": "Durable" },
+            { "value": "easy", "label": "Easy use" }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "detail_thumb",
+      "name": "Detail thumbnail",
+      "settings": [
+        { "type": "image_picker", "id": "image", "label": "Image" },
+        { "type": "text", "id": "label", "label": "Label", "default": "Material" }
+      ]
+    },
+    {
+      "type": "benefit",
+      "name": "Product benefit",
+      "settings": [
+        { "type": "text", "id": "text", "label": "Text", "default": "Spacious & Large Capacity" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Grosyhub deal of the day",
+      "blocks": [
+        { "type": "highlight", "settings": { "title": "Premium Quality", "icon": "quality" } },
+        { "type": "highlight", "settings": { "title": "Spacious Storage", "icon": "storage" } },
+        { "type": "highlight", "settings": { "title": "Durable & Sturdy", "icon": "durable" } },
+        { "type": "highlight", "settings": { "title": "Easy to Use", "icon": "easy" } },
+        { "type": "detail_thumb", "settings": { "label": "Premium Material" } },
+        { "type": "detail_thumb", "settings": { "label": "Smooth Zipper" } },
+        { "type": "detail_thumb", "settings": { "label": "Large Capacity" } },
+        { "type": "benefit", "settings": { "text": "Spacious & Large Capacity" } },
+        { "type": "benefit", "settings": { "text": "Dustproof & Moistureproof" } },
+        { "type": "benefit", "settings": { "text": "Durable & Sturdy Build" } },
+        { "type": "benefit", "settings": { "text": "Easy to Use & Store" } },
+        { "type": "benefit", "settings": { "text": "Premium Quality Material" } },
+        { "type": "benefit", "settings": { "text": "Perfect for Home & Travel" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

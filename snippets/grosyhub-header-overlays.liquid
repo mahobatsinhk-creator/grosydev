@@ -1,0 +1,244 @@
+﻿{%- comment -%} Navigation drawer + categories drawer + search {%- endcomment -%}
+{%- assign drawer_brand = section.settings.brand_color | default: '#b89774' -%}
+
+<div
+  id="gh-nav-drawer"
+  class="gh-nav-drawer gh-nav-drawer--menu"
+  data-gh-mobile-drawer
+  data-gh-nav-drawer
+  role="dialog"
+  aria-modal="true"
+  aria-label="Menu"
+  hidden
+  style="--gh-brand: {{ drawer_brand }}; --gh-brand-deep: {{ drawer_brand }};"
+>
+  <div class="gh-nav-drawer__backdrop" data-gh-drawer-close tabindex="-1" aria-hidden="true"></div>
+  <div class="gh-nav-drawer__panel">
+    <div class="gh-nav-drawer__head">
+      <a href="{{ routes.root_url }}" class="gh-nav-drawer__logo" aria-label="{{ shop.name }}">
+        {% render 'grosyhub-logo', size: 'mobile', link: false %}
+      </a>
+      <button type="button" class="gh-nav-drawer__close" data-gh-drawer-close aria-label="Close menu">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="gh-nav-drawer__body">
+      {% render 'grosyhub-nav-drawer-menu', menu: menu, section: section %}
+
+      {%- if section.settings.drawer_show_ctas != false -%}
+        <div class="gh-nav-drawer__ctas">
+          <a href="{{ routes.all_products_collection_url }}" class="gh-nav-drawer__cta gh-nav-drawer__cta--shipping">
+            <span class="gh-nav-drawer__cta-icon" aria-hidden="true">
+              {% render 'grosyhub-announcement-icon', index: 1 %}
+            </span>
+            <span class="gh-nav-drawer__cta-copy">
+              <span class="gh-nav-drawer__cta-title">{{ section.settings.mega_trust_1_title | default: 'Free Shipping' }}</span>
+              <span class="gh-nav-drawer__cta-sub">{{ section.settings.mega_trust_1_text | default: 'On Orders Over ₹499' }}</span>
+            </span>
+            <svg class="gh-nav-drawer__cta-chevron" width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+              <path d="M4 3l4 4-4 4" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+          </a>
+
+          <a
+            href="{% if customer %}{{ routes.account_url }}{% else %}{{ routes.account_login_url }}{% endif %}"
+            class="gh-nav-drawer__cta gh-nav-drawer__cta--account"
+          >
+            <span class="gh-nav-drawer__cta-icon gh-nav-drawer__cta-icon--light" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="9" r="4" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M6 20c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <span class="gh-nav-drawer__cta-copy">
+              <span class="gh-nav-drawer__cta-title">
+                {%- if customer -%}
+                  {{ section.settings.account_label | default: 'My Account' }}
+                {%- else -%}
+                  {{ section.settings.drawer_login_title | default: 'Login / Sign Up' }}
+                {%- endif -%}
+              </span>
+              <span class="gh-nav-drawer__cta-sub">
+                {{ section.settings.drawer_login_subtitle | default: 'Access your orders, wishlist & more' }}
+              </span>
+            </span>
+            <svg class="gh-nav-drawer__cta-chevron" width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+              <path d="M4 3l4 4-4 4" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+          </a>
+        </div>
+      {%- endif -%}
+    </div>
+
+    {%- if section.settings.drawer_show_trust_footer != false -%}
+      <div class="gh-nav-drawer__foot" role="group" aria-label="Store benefits">
+        <div class="gh-nav-drawer__trust">
+          <span class="gh-nav-drawer__trust-item">
+            {% render 'grosyhub-nav-drawer-trust-icon', icon: 'secure' %}
+            <span>{{ section.settings.mega_trust_3_title | default: 'Secure Payments' }}</span>
+          </span>
+          <span class="gh-nav-drawer__trust-item">
+            {% render 'grosyhub-nav-drawer-trust-icon', icon: 'returns' %}
+            <span>{{ section.settings.mega_trust_2_title | default: 'Easy Returns' }}</span>
+          </span>
+          <span class="gh-nav-drawer__trust-item">
+            {% render 'grosyhub-nav-drawer-trust-icon', icon: 'quality' %}
+            <span>{{ section.settings.cart_trust_3 | default: 'Premium Quality' }}</span>
+          </span>
+          <span class="gh-nav-drawer__trust-item">
+            {% render 'grosyhub-nav-drawer-trust-icon', icon: 'support' %}
+            <span>{{ section.settings.phone_label | default: '24/7 Support' }}</span>
+          </span>
+        </div>
+      </div>
+    {%- endif -%}
+  </div>
+</div>
+
+<div
+  id="gh-categories-drawer"
+  class="gh-nav-drawer gh-nav-drawer--categories"
+  data-gh-categories-drawer
+  role="dialog"
+  aria-modal="true"
+  aria-label="{{ all_categories_label }}"
+  hidden
+>
+  <div class="gh-nav-drawer__backdrop" data-gh-categories-close tabindex="-1" aria-hidden="true"></div>
+  <div class="gh-nav-drawer__panel">
+    <div class="gh-nav-drawer__head">
+      <p class="gh-nav-drawer__title" id="gh-categories-drawer-title">{{ all_categories_label }}</p>
+      <button type="button" class="gh-nav-drawer__close" data-gh-categories-close aria-label="Close categories">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+    <div class="gh-nav-drawer__body" aria-labelledby="gh-categories-drawer-title">
+      <ul class="gh-mobile-cat-list" role="list">
+        {%- if has_mega and mega_menu_ref != blank and mega_menu_ref.links.size > 0 -%}
+          {%- for cat_link in mega_menu_ref.links -%}
+            {%- capture skip_cat -%}{% render 'grosyhub-mega-skip-link', link: cat_link, section: section %}{%- endcapture -%}
+            {%- assign skip_cat = skip_cat | strip -%}
+            {%- unless skip_cat == 'true' -%}
+              <li class="gh-mobile-cat-list__item">
+                <button type="button" class="gh-mobile-cat-list__toggle" data-gh-cat-toggle aria-expanded="false">
+                  <span class="gh-mobile-cat-list__label">
+                    {% render 'grosyhub-mega-resolve-icon', title: cat_link.title, section: section %}
+                    {{ cat_link.title }}
+                  </span>
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M4 3l4 4-4 4" stroke="currentColor" stroke-width="1.5"/></svg>
+                </button>
+                <div class="gh-mobile-cat-list__sub" hidden>
+                  {%- for col_link in cat_link.links -%}
+                    <div class="gh-mobile-cat-list__group">
+                      <a href="{{ col_link.url }}" class="gh-mobile-cat-list__group-head">
+                        <span class="gh-mobile-cat-list__group-thumb">
+                          {% render 'grosyhub-mega-link-image', link: col_link, class: 'gh-mobile-cat-list__thumb-img', width: 160 %}
+                        </span>
+                        <span class="gh-mobile-cat-list__group-title">{{ col_link.title }}</span>
+                      </a>
+                      <ul>
+                        {%- if col_link.links.size > 0 -%}
+                          {%- for child_link in col_link.links -%}
+                            <li><a href="{{ child_link.url }}">{{ child_link.title }}</a></li>
+                          {%- endfor -%}
+                        {%- endif -%}
+                        <li><a href="{{ col_link.url }}" class="gh-mobile-cat-list__view-all">{{ section.settings.mega_view_all_label | default: 'View All' }}</a></li>
+                      </ul>
+                    </div>
+                  {%- endfor -%}
+                  {%- if cat_link.links.size == 0 -%}
+                    <ul>
+                      <li><a href="{{ cat_link.url }}">{{ section.settings.mega_view_all_label | default: 'View All' }}</a></li>
+                    </ul>
+                  {%- endif -%}
+                </div>
+              </li>
+            {%- endunless -%}
+          {%- endfor -%}
+        {%- elsif menu != blank and menu.links.size > 0 -%}
+          {%- for link in menu.links -%}
+            {%- capture hide_nav -%}{% render 'grosyhub-nav-hide-link', link: link %}{%- endcapture -%}
+            {%- assign hide_nav = hide_nav | strip -%}
+            {%- unless hide_nav == 'true' -%}
+              <li class="gh-mobile-cat-list__item gh-mobile-cat-list__item--flat">
+                <a href="{{ link.url }}" class="gh-mobile-cat-list__flat-link">{{ link.title }}</a>
+              </li>
+            {%- endunless -%}
+          {%- endfor -%}
+        {%- else -%}
+          {%- for block in section.blocks -%}
+            {%- if block.type == 'mega_column' -%}
+              <li class="gh-mobile-cat-list__item">
+                <button type="button" class="gh-mobile-cat-list__toggle" data-gh-cat-toggle aria-expanded="false">
+                  <span class="gh-mobile-cat-list__label">
+                    {% render 'grosyhub-mega-menu-icon', icon: block.settings.icon %}
+                    {{ block.settings.title }}
+                  </span>
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M4 3l4 4-4 4" stroke="currentColor" stroke-width="1.5"/></svg>
+                </button>
+                <ul class="gh-mobile-cat-list__sub" hidden>
+                  {%- if block.settings.menu != blank -%}
+                    {%- for child_link in linklists[block.settings.menu].links -%}
+                      <li><a href="{{ child_link.url }}">{{ child_link.title }}</a></li>
+                    {%- endfor -%}
+                  {%- endif -%}
+                  {%- if block.settings.view_all_label != blank -%}
+                    <li><a href="{{ block.settings.view_all_url | default: routes.all_products_collection_url }}" class="gh-mobile-cat-list__view-all">{{ block.settings.view_all_label }}</a></li>
+                  {%- endif -%}
+                </ul>
+              </li>
+            {%- endif -%}
+          {%- endfor -%}
+        {%- endif -%}
+      </ul>
+      {%- assign promo = section.blocks | where: 'type', 'mega_promo' | first -%}
+      {%- if has_mega and promo -%}
+        <div class="gh-mobile-cat-promo">
+          {%- if promo.settings.badge != blank -%}<span class="gh-mobile-cat-promo__badge">{{ promo.settings.badge }}</span>{%- endif -%}
+          {%- if promo.settings.title != blank -%}<p class="gh-mobile-cat-promo__title">{{ promo.settings.title }}</p>{%- endif -%}
+          {%- if promo.settings.subtitle != blank -%}<p class="gh-mobile-cat-promo__sub">{{ promo.settings.subtitle }}</p>{%- endif -%}
+          {%- if promo.settings.button_label != blank -%}
+            <a href="{{ promo.settings.button_link | default: routes.all_products_collection_url }}" class="gh-mega__promo-btn">{{ promo.settings.button_label }}</a>
+          {%- endif -%}
+        </div>
+      {%- endif -%}
+    </div>
+  </div>
+</div>
+
+<div id="gh-mobile-search" class="gh-mobile-search-overlay" data-gh-search-overlay hidden>
+  <div class="gh-mobile-search-overlay__head">
+    <button type="button" class="gh-mobile-search-overlay__back" data-gh-search-close aria-label="Back">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <span>Search</span>
+    <button type="button" class="gh-mobile-search-overlay__close" data-gh-search-close aria-label="Close">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <div class="gh-mobile-search-overlay__body">
+    <form action="{{ routes.search_url }}" method="get" role="search" class="gh-search gh-search--overlay">
+      <input type="search" name="q" class="gh-search__input" placeholder="{{ search_placeholder }}" aria-label="{{ 'content.search_input_label' | t }}" autofocus>
+      <button type="submit" class="gh-search__btn" aria-label="{{ 'content.search' | t }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </form>
+    {%- if section.settings.popular_searches != blank -%}
+      <p class="gh-mobile-search-overlay__label">Popular Searches</p>
+      <div class="gh-mobile-search-overlay__pills">
+        {%- assign terms = section.settings.popular_searches | split: ',' -%}
+        {%- for term in terms -%}
+          {%- assign t = term | strip -%}
+          {%- if t != blank -%}
+            <a href="{{ routes.search_url }}?q={{ t | url_param_escape }}" class="gh-search-pill">{{ t }}</a>
+          {%- endif -%}
+        {%- endfor -%}
+      </div>
+    {%- endif -%}
+  </div>
+</div>

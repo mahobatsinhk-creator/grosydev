@@ -1,0 +1,255 @@
+{%- liquid
+  assign product = product
+  assign block = block
+  assign brand_color = brand_color | default: '#b89774'
+
+  assign reel_video = nil
+  if block != blank
+    assign reel_video = block.settings.video
+  endif
+  if reel_video == blank and product != blank
+    for media in product.media
+      if media.media_type == 'video'
+        assign reel_video = media
+        break
+      endif
+    endfor
+  endif
+
+  assign poster = nil
+  if block != blank
+    assign poster = block.settings.poster
+  endif
+  if poster == blank and product != blank and product.featured_media != blank
+    if product.featured_media.media_type == 'image'
+      assign poster = product.featured_media
+    else
+      assign poster = product.featured_media.preview_image
+    endif
+  endif
+
+  assign badge = 'none'
+  if block != blank
+    assign badge = block.settings.badge | default: 'none'
+  endif
+  if badge == 'none' and product != blank
+    if product.tags contains 'bestseller' or product.tags contains 'Bestseller'
+      assign badge = 'bestseller'
+    elsif product.tags contains 'trending' or product.tags contains 'Trending'
+      assign badge = 'trending'
+    endif
+  endif
+
+  if product != blank
+    assign variant = product.selected_or_first_available_variant
+    assign price = variant.price
+    assign compare_at = variant.compare_at_price
+    assign price_on_sale = false
+    if compare_at > price
+      assign price_on_sale = true
+    endif
+  endif
+  assign rating_value = ''
+  if block != blank
+    assign rating_value = block.settings.rating_override
+  endif
+  if rating_value == blank
+    assign rating_value = product.metafields.reviews.rating.value.rating | default: rating_fallback | default: '4.8'
+  endif
+  assign reviews_count = ''
+  if block != blank
+    assign reviews_count = block.settings.reviews_override
+  endif
+  if reviews_count == blank
+    assign reviews_count = product.metafields.reviews.rating_count | default: reviews_count_fallback | default: '108'
+  endif
+
+  assign can_quick_add = false
+  if product != blank and product.variants_count == 1 and variant.available
+    assign can_quick_add = true
+  endif
+
+  assign product_title = product.title
+  assign product_url = product.url
+  if block != blank
+    if product_title == blank
+      assign product_title = block.settings.title_override
+    endif
+    if product_url == blank
+      assign product_url = block.settings.link_override
+    endif
+  endif
+
+  assign caption_top = ''
+  assign caption_bottom = ''
+  if block != blank
+    assign caption_top = block.settings.caption_top
+    assign caption_bottom = block.settings.caption_bottom
+  endif
+
+  assign reel_tag_box = tag_layout | default: false, allow_false: true
+  assign reel_show_cart = false
+  assign reel_show_rating = false
+  unless reel_tag_box
+    assign reel_show_cart = show_cart | default: false, allow_false: true
+    assign reel_show_rating = show_rating | default: false, allow_false: true
+  endunless
+
+  assign thumb_media = nil
+  if product != blank and product.featured_media != blank
+    if product.featured_media.media_type == 'image'
+      assign thumb_media = product.featured_media
+    else
+      assign thumb_media = product.featured_media.preview_image
+    endif
+  elsif poster != blank
+    assign thumb_media = poster
+  endif
+-%}
+
+<article
+  class="gh-reel-card{% if reel_tag_box %} gh-reel-card--tag{% endif %}{% if reel_show_cart == false and reel_show_rating == false and reel_tag_box == false %} gh-reel-card--compact{% endif %}"
+  data-gh-reel-card
+  {% if block %}{{ block.shopify_attributes }}{% endif %}
+  style="--gh-reel-brand: {{ brand_color }};"
+>
+  <div class="gh-reel-card__media">
+    {%- if reel_video != blank -%}
+      <div class="gh-reel-card__video-wrap">
+        {{
+          reel_video
+          | video_tag:
+            class: 'gh-reel-card__video',
+            autoplay: true,
+            loop: true,
+            muted: true,
+            controls: false,
+            playsinline: true,
+            preload: 'auto',
+            image_size: '600x'
+        }}
+        {%- if poster != blank -%}
+          {{
+            poster
+            | image_url: width: 600
+            | image_tag:
+              class: 'gh-reel-card__poster',
+              data-gh-reel-poster: '',
+              loading: 'lazy',
+              widths: '300, 400, 600',
+              sizes: '(min-width: 990px) 220px, 78vw',
+              alt: product_title | escape
+          }}
+        {%- endif -%}
+      </div>
+    {%- elsif poster != blank -%}
+      {{
+        poster
+        | image_url: width: 600
+        | image_tag:
+          class: 'gh-reel-card__poster gh-reel-card__poster--only',
+          loading: 'lazy',
+          widths: '300, 400, 600',
+          sizes: '(min-width: 990px) 220px, 78vw',
+          alt: product_title | escape
+      }}
+    {%- else -%}
+      <div class="gh-reel-card__placeholder">{{ 'product-1' | placeholder_svg_tag }}</div>
+    {%- endif -%}
+
+    <span class="gh-reel-card__play" aria-hidden="true">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M8 5v14l11-7z"/>
+      </svg>
+    </span>
+
+    {%- unless badge == 'none' or badge == blank -%}
+      <span class="gh-reel-card__badge gh-reel-card__badge--{{ badge }}">
+        {%- case badge -%}
+          {%- when 'bestseller' -%}BESTSELLER
+          {%- when 'trending' -%}TRENDING
+          {%- when 'hot' -%}HOT
+          {%- when 'new' -%}NEW
+          {%- when 'popular' -%}POPULAR
+          {%- else -%}{{ badge | upcase }}
+        {%- endcase -%}
+      </span>
+    {%- endunless -%}
+
+    {%- if caption_top != blank -%}
+      <p class="gh-reel-card__caption gh-reel-card__caption--top">{{ caption_top }}</p>
+    {%- endif -%}
+
+    {%- if product != blank -%}
+      <button
+        type="button"
+        class="gh-reel-card__wishlist"
+        data-gh-wishlist-toggle
+        data-wishlist-variant-id="{{ variant.id }}"
+        data-wishlist-product-id="{{ product.id }}"
+        data-wishlist-title="{{ product.title | escape }}"
+        data-wishlist-url="{{ product.url }}"
+        data-wishlist-image="{% if product.featured_media %}{{ product.featured_media | image_url: width: 200 }}{% endif %}"
+        data-wishlist-price="{{ price }}"
+        data-wishlist-compare-at="{{ variant.compare_at_price }}"
+        aria-label="Add to wishlist"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 21s-7.5-4.7-9.8-9.4C.4 8.2 2.6 4 6.4 4c2 0 3.2 1.2 3.6 1.8C10.4 5.2 11.6 4 13.6 4c3.8 0 6 4.2 4.2 7.6C19.5 16.3 12 21 12 21z" stroke="currentColor" stroke-width="1.6"/>
+        </svg>
+      </button>
+    {%- endif -%}
+
+    {%- if caption_bottom != blank -%}
+      <p class="gh-reel-card__caption gh-reel-card__caption--bottom">{{ caption_bottom }}</p>
+    {%- endif -%}
+
+    {%- if product != blank or product_title != blank -%}
+      <a href="{{ product_url }}" class="gh-reel-card__product">
+        {%- if thumb_media != blank -%}
+          <span class="gh-reel-card__thumb">
+            {{
+              thumb_media
+              | image_url: width: 120
+              | image_tag: loading: 'lazy', widths: '80, 120', sizes: '48px', alt: ''
+            }}
+          </span>
+        {%- endif -%}
+        <span class="gh-reel-card__info">
+          {%- if product_title != blank -%}
+            <span class="gh-reel-card__title">{{ product_title }}</span>
+          {%- endif -%}
+          {%- if product != blank -%}
+            <span class="gh-reel-card__price">{{ price | money }}</span>
+          {%- endif -%}
+          {%- if reel_show_rating and product != blank -%}
+            <span class="gh-reel-card__rating">
+              <span class="gh-reel-card__stars" aria-hidden="true">★</span>
+              <span>{{ rating_value }} ({{ reviews_count }})</span>
+            </span>
+          {%- endif -%}
+        </span>
+        {%- if reel_show_cart and product != blank -%}
+          {%- if can_quick_add -%}
+            <button
+              type="button"
+              class="gh-reel-card__cart"
+              data-gh-reel-add-cart="{{ variant.id }}"
+              aria-label="Add to cart"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M6 7h15l-1.5 9H8L6 7zm3-3h9l1 3H8l1-3z" stroke="currentColor" stroke-width="1.6"/>
+              </svg>
+            </button>
+          {%- else -%}
+            <span class="gh-reel-card__cart" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M6 7h15l-1.5 9H8L6 7zm3-3h9l1 3H8l1-3z" stroke="currentColor" stroke-width="1.6"/>
+              </svg>
+            </span>
+          {%- endif -%}
+        {%- endif -%}
+      </a>
+    {%- endif -%}
+  </div>
+</article>

@@ -1,0 +1,20 @@
+{%- comment -%}
+  Renders star icons.
+  rating: number 1-5 (can be decimal; uses round for fill)
+  size: pixel width/height (default 16)
+  class: optional extra class on wrapper
+{%- endcomment -%}
+
+{%- liquid
+  assign star_rating = rating | default: 5 | round
+  assign star_size = size | default: 16
+  assign star_class = class | default: 'gh-stars'
+-%}
+
+<span class="{{ star_class }}" aria-hidden="true">
+  {%- for i in (1..5) -%}
+    <svg width="{{ star_size }}" height="{{ star_size }}" viewBox="0 0 24 24" fill="{% if i <= star_rating %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="1.2">
+      <path d="M12 2l2.9 6.1 6.8.6-5.1 4.4 1.6 6.6L12 16.9l-6.2 3.8 1.6-6.6-5.1-4.4 6.8-.6L12 2z"/>
+    </svg>
+  {%- endfor -%}
+</span>

@@ -1,0 +1,20 @@
+{%- liquid
+  assign t = title | downcase
+  assign icon = 'home'
+  if t contains 'kitchen' or t contains 'dining' or t contains 'yogurt' or t contains 'strainer'
+    assign icon = 'kitchen'
+  elsif t contains 'bath'
+    assign icon = 'bathroom'
+  elsif t contains 'beauty' or t contains 'personal' or t contains 'ice face' or t contains 'glow brush' or t contains 'glow'
+    assign icon = 'beauty'
+  elsif t contains 'garden' or t contains 'outdoor' or t contains 'equipment'
+    assign icon = 'garden'
+  elsif t contains 'rack' or t contains 'organ'
+    assign icon = 'racks'
+  elsif t contains 'curtain' or t contains 'sealant' or t contains 'door mat' or t contains 'door mats'
+    assign icon = 'home'
+  elsif t contains 'wholesale' or t contains 'bulk'
+    assign icon = 'wholesale'
+  endif
+-%}
+{% render 'grosyhub-mega-menu-icon', icon: icon %}

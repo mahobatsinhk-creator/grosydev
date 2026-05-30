@@ -1,0 +1,119 @@
+{%- capture variants_markup -%}
+  {%- for block in section.blocks -%}
+    {%- if block.type == 'variant-picker' -%}
+      {% render 'variant-main-picker', product_resource: closest.product, section: section, product: closest.product, block: block %}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endcapture -%}
+
+{% render 'grosyhub-product-info',
+  product: closest.product,
+  section: section,
+  block: block,
+  settings: block.settings,
+  show_breadcrumbs: false,
+  variants_markup: variants_markup
+%}
+
+{% schema %}
+{
+  "name": "Grosyhub product info",
+  "tag": null,
+  "settings": [
+    {
+      "type": "color",
+      "id": "brand_color",
+      "label": "Brand color",
+      "default": "#b89774"
+    },
+    {
+      "type": "text",
+      "id": "tax_note",
+      "label": "Tax note under price",
+      "default": "Inclusive of all taxes"
+    },
+    {
+      "type": "textarea",
+      "id": "feature_bullets",
+      "label": "Price card bullet points (one per line)",
+      "default": "Wide & Narrow stream for every need\nHigh pressure nozzle for powerful spray\nErgonomic design & easy to use\nPerfect for plants, car, cleaning & more"
+    },
+    {
+      "type": "text",
+      "id": "trust_payment",
+      "label": "Trust badge — payment",
+      "default": "Secure Payment"
+    },
+    {
+      "type": "text",
+      "id": "social_proof",
+      "label": "Social proof line",
+      "default": "200+ bought in last month"
+    },
+    {
+      "type": "text",
+      "id": "prepaid_note",
+      "label": "Prepaid offer note",
+      "default": "Extra 10% off on Prepaid Orders"
+    },
+    {
+      "type": "text",
+      "id": "trust_shipping",
+      "label": "Trust badge — shipping",
+      "default": "Free Shipping"
+    },
+    {
+      "type": "text",
+      "id": "trust_returns",
+      "label": "Trust badge — returns",
+      "default": "7 Days Easy Returns"
+    },
+    {
+      "type": "text",
+      "id": "delivery_ready",
+      "label": "Delivery — ready estimate",
+      "default": "1–2 days"
+    },
+    {
+      "type": "text",
+      "id": "delivery_arrival",
+      "label": "Delivery — arrival estimate",
+      "default": "3–5 days"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_specs",
+      "label": "Show specifications table",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_description",
+      "label": "Show description accordion",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "variant_style",
+      "label": "Variant style",
+      "options": [
+        { "value": "buttons", "label": "Buttons" },
+        { "value": "dropdowns", "label": "Dropdowns" }
+      ],
+      "default": "buttons"
+    },
+    {
+      "type": "text_alignment",
+      "id": "alignment",
+      "label": "Variant alignment",
+      "default": "left"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Grosyhub product info",
+      "category": "Product"
+    }
+  ]
+}
+{% endschema %}

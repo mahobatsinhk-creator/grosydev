@@ -1,0 +1,127 @@
+/* Grosyhub homepage — Trending Now */
+.gh-tn {
+  position: relative;
+  padding-block: 48px 56px;
+  background: #f9f7f4;
+  color: #1a1a1a;
+  overflow: hidden;
+}
+
+.gh-tn__decor {
+  position: absolute;
+  top: 24px;
+  right: max(0px, calc((100% - var(--page-width, 1280px)) / 2 + 24px));
+  width: 100px;
+  height: 160px;
+  pointer-events: none;
+  z-index: 0;
+  color: color-mix(in srgb, var(--gh-rec-brand) 35%, #d4c4b0);
+}
+
+.gh-tn__decor-leaf {
+  width: 100%;
+  height: 100%;
+}
+
+.gh-tn__container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: var(--page-width, 1280px);
+  margin-inline: auto;
+  padding-inline: var(--page-margin, 16px);
+  box-sizing: border-box;
+}
+
+.gh-tn__empty {
+  margin: 0;
+  text-align: center;
+  color: #666;
+  padding: 32px 0;
+}
+
+/* Trending product badge */
+.gh-tn .gh-rec-card__badge--trending {
+  background: repeating-linear-gradient(
+    -45deg,
+    #ff7a1f,
+    #ff7a1f 5px,
+    #ff9a47 5px,
+    #ff9a47 10px
+  );
+  color: #fff;
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  box-shadow: 0 2px 6px rgb(255 122 31 / 0.35);
+}
+
+@media (max-width: 989px) {
+  .gh-tn__decor {
+    right: 12px;
+    width: 72px;
+    height: 120px;
+    opacity: 0.7;
+  }
+}
+
+@media (max-width: 749px) {
+  .gh-tn {
+    padding-block: 32px 40px;
+  }
+
+  .gh-tn__container {
+    padding-inline: 12px;
+  }
+
+  .gh-tn__decor {
+    display: none;
+  }
+
+  .gh-tn .gh-rec-card__features {
+    padding: 8px 6px;
+    gap: 4px 6px;
+  }
+
+  .gh-tn .gh-rec-card__feature {
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 3px;
+    padding: 4px 2px;
+    font-size: 0.5625rem;
+    line-height: 1.2;
+    text-align: center;
+    min-height: 2.75rem;
+  }
+
+  .gh-tn .gh-rec-card__feature span {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    word-break: break-word;
+  }
+
+  .gh-tn .gh-rec-card__feature-icon,
+  .gh-tn .gh-rec-card__feature svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .gh-tn .gh-rec-card__body {
+    padding: 10px 12px 14px;
+    gap: 6px;
+  }
+
+  .gh-tn .gh-rec-card__title {
+    font-size: 0.875rem;
+    line-height: 1.4;
+    -webkit-line-clamp: 3;
+  }
+
+  .gh-tn .gh-rec-card:hover {
+    transform: none;
+    box-shadow: 0 2px 10px rgb(0 0 0 / 0.04);
+  }
+}

@@ -1,0 +1,141 @@
+{%- liquid
+  assign filters = collection.filters
+  assign sort_by = collection.sort_by | default: collection.default_sort_by
+  assign results_url = collection.url
+  assign brand_color = brand_color | default: '#b89774'
+  assign price_filter = nil
+  for filter in filters
+    if filter.type == 'price_range'
+      assign price_filter = filter
+      break
+    endif
+  endfor
+
+  assign has_category_collections = false
+  if category_collections != blank and category_collections.size > 0
+    assign has_category_collections = true
+  endif
+-%}
+
+<aside class="gh-plp-sidebar" data-gh-plp-sidebar style="--gh-plp-brand: {{ brand_color }};">
+  <div class="gh-plp-sidebar__drawer-head">
+    <h2 class="gh-plp-sidebar__drawer-title">Filters</h2>
+    <button type="button" class="gh-plp-sidebar__drawer-close" data-gh-plp-filters-close aria-label="Close filters">
+      <span class="gh-plp-sidebar__drawer-close-icon" aria-hidden="true">×</span>
+      <span class="gh-plp-sidebar__drawer-close-label">Close</span>
+    </button>
+  </div>
+  <facets-form-component
+    class="gh-plp-sidebar__form-wrap"
+    section-id="{{ section_id }}"
+    form-style="vertical"
+  >
+    <form action="{{ results_url }}" method="get" class="gh-plp-sidebar__form" id="GrosyhubFacetForm-{{ section_id }}">
+      {%- if collection.sort_by -%}
+        <input type="hidden" name="sort_by" value="{{ sort_by }}">
+      {%- endif -%}
+
+      {%- if price_filter -%}
+        <details class="gh-plp-filter" open>
+          <summary class="gh-plp-filter__title">Price</summary>
+          <div class="gh-plp-filter__body">
+            <div class="gh-plp-price-inputs">
+              <label class="gh-plp-price-field">
+                <span>From ({{ cart.currency.symbol }})</span>
+                <input
+                  type="text"
+                  inputmode="decimal"
+                  name="{{ price_filter.min_value.param_name }}"
+                  {% if price_filter.min_value.value %}
+                    value="{{ price_filter.min_value.value | money_without_currency }}"
+                  {% endif %}
+                  placeholder="0"
+                  class="gh-plp-price-input"
+                  autocomplete="off"
+                >
+              </label>
+              <label class="gh-plp-price-field">
+                <span>To ({{ cart.currency.symbol }})</span>
+                <input
+                  type="text"
+                  inputmode="decimal"
+                  name="{{ price_filter.max_value.param_name }}"
+                  {% if price_filter.max_value.value %}
+                    value="{{ price_filter.max_value.value | money_without_currency }}"
+                  {% endif %}
+                  placeholder="{{ price_filter.range_max | money_without_currency }}"
+                  class="gh-plp-price-input"
+                  autocomplete="off"
+                >
+              </label>
+            </div>
+            <p class="gh-plp-price-hint">The highest price is {{ price_filter.range_max | money }}.</p>
+            <button type="submit" class="gh-plp-filter__apply">Apply</button>
+          </div>
+        </details>
+      {%- endif -%}
+
+      {%- for filter in filters -%}
+        {%- if filter.type == 'list' and filter.values.size > 0 -%}
+          <details class="gh-plp-filter" open>
+            <summary class="gh-plp-filter__title">{{ filter.label }}</summary>
+            <div class="gh-plp-filter__body">
+              <ul class="gh-plp-facet-list" role="list">
+                {%- for value in filter.values -%}
+                  <li class="gh-plp-facet-list__item">
+                    <label class="gh-plp-facet-list__label">
+                      <input
+                        type="checkbox"
+                        name="{{ value.param_name }}"
+                        value="{{ value.value }}"
+                        {% if value.active %}checked{% endif %}
+                        {% if value.count == 0 and value.active == false %}disabled{% endif %}
+                      >
+                      <span>{{ value.label }}</span>
+                      {%- if value.count != nil -%}
+                        <span class="gh-plp-facet-list__count">({{ value.count }})</span>
+                      {%- endif -%}
+                    </label>
+                  </li>
+                {%- endfor -%}
+              </ul>
+              <button type="submit" class="gh-plp-filter__apply">Apply</button>
+            </div>
+          </details>
+        {%- endif -%}
+      {%- endfor -%}
+
+      <div class="gh-plp-filter gh-plp-filter--categories">
+        <p class="gh-plp-filter__title gh-plp-filter__title--static">Category</p>
+        <ul class="gh-plp-categories" role="list">
+          {%- if has_category_collections -%}
+            {%- for coll in category_collections -%}
+              <li>
+                <a
+                  href="{{ coll.url }}"
+                  class="gh-plp-categories__link{% if coll.handle == collection.handle %} is-active{% endif %}"
+                >
+                  {{ coll.title }}
+                </a>
+              </li>
+            {%- endfor -%}
+          {%- else -%}
+            {%- for coll in collections -%}
+              {%- if coll.handle == 'frontpage' or coll.handle == 'all' -%}
+                {%- continue -%}
+              {%- endif -%}
+              <li>
+                <a
+                  href="{{ coll.url }}"
+                  class="gh-plp-categories__link{% if coll.handle == collection.handle %} is-active{% endif %}"
+                >
+                  {{ coll.title }}
+                </a>
+              </li>
+            {%- endfor -%}
+          {%- endif -%}
+        </ul>
+      </div>
+    </form>
+  </facets-form-component>
+</aside>

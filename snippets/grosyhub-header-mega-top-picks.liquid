@@ -1,0 +1,32 @@
+{%- comment -%}
+  Top picks column for mega menu (collection from theme settings).
+  @param {object} section
+{%- endcomment -%}
+{%- if section.settings.show_mega_top_picks -%}
+  {%- assign picks_collection = section.settings.mega_top_picks_collection -%}
+  {%- if picks_collection != blank and picks_collection.products_count > 0 -%}
+    <aside class="gh-mega__picks" aria-label="{{ section.settings.mega_top_picks_heading | default: 'Top Picks' }}">
+      <p class="gh-mega__picks-heading">{{ section.settings.mega_top_picks_heading | default: 'Top Picks' }}</p>
+      <ul class="gh-mega__picks-list" role="list">
+        {%- for product in picks_collection.products limit: 2 -%}
+          <li class="gh-mega__picks-item">
+            <a href="{{ product.url }}" class="gh-mega__picks-card">
+              <span class="gh-mega__picks-media">
+                {%- if product.featured_image -%}
+                  {{
+                    product.featured_image
+                    | image_url: width: 200
+                    | image_tag: class: 'gh-mega__picks-img', loading: 'lazy', alt: product.title
+                  }}
+                {%- else -%}
+                  <span class="gh-mega__picks-placeholder" aria-hidden="true"></span>
+                {%- endif -%}
+              </span>
+              <span class="gh-mega__picks-btn">{{ section.settings.mega_top_picks_button | default: 'Shop Now' }}</span>
+            </a>
+          </li>
+        {%- endfor -%}
+      </ul>
+    </aside>
+  {%- endif -%}
+{%- endif -%}

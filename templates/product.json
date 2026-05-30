@@ -1,0 +1,190 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "grosyhub-product",
+      "blocks": {
+        "variant_picker": {
+          "type": "variant-picker",
+          "settings": {}
+        }
+      },
+      "block_order": [
+        "variant_picker"
+      ],
+      "settings": {
+        "color_scheme": "scheme-1",
+        "brand_color": "#b89774",
+        "show_best_seller_badge": true,
+        "show_trust_cards": true,
+        "trust_1_title": "Free Shipping",
+        "trust_1_text": "On all orders",
+        "trust_2_title": "Easy Returns",
+        "trust_2_text": "7 days hassle-free",
+        "trust_3_title": "Secure Payments",
+        "trust_3_text": "100% safe checkout",
+        "trust_4_title": "Premium Quality",
+        "trust_4_text": "Handpicked essentials",
+        "reviews_count_fallback": "108",
+        "show_pack_selector": true,
+        "pack_option_name": "Pack",
+        "pack_bundle_discount": 100,
+        "pack_bestseller_label": "Bestseller",
+        "pack_bestseller_value": "",
+        "show_promo_banner": false,
+        "prepaid_note": "10% off on Prepaid Orders",
+        "trust_shipping": "Free Shipping",
+        "trust_returns": "7 Days Return",
+        "show_specs": true,
+        "show_description": true
+      }
+    },
+    "grosyhub_recommendations": {
+      "type": "grosyhub-product-recommendations",
+      "settings": {
+        "recommendation_type": "related",
+        "max_products": 8,
+        "eyebrow": "YOU MAY ALSO LIKE",
+        "heading": "Recommended for You",
+        "show_heart": true,
+        "subheading": "Handpicked products that complement your choice",
+        "show_feature_tags": false,
+        "rating_fallback": "4.8",
+        "reviews_count_fallback": "108",
+        "brand_color": "#b89774",
+        "empty_text": "No recommendations available right now."
+      }
+    },
+    "grosyhub_reviews": {
+      "type": "grosyhub-product-reviews",
+      "settings": {
+        "heading": "Customer Reviews",
+        "average_rating": "4.8",
+        "reviews_count": "108",
+        "star_color": "#ffb400",
+        "count_5_star": 72,
+        "count_4_star": 21,
+        "count_3_star": 8,
+        "count_2_star": 4,
+        "count_1_star": 3,
+        "reviews_per_page": 5,
+        "write_review_label": "Write a review",
+        "modal_title": "Write a review",
+        "max_photos": 5
+      },
+      "blocks": {
+        "review_1": {
+          "type": "review",
+          "settings": {
+            "author": "Aryan K.",
+            "rating": 5,
+            "title": "Absolute Life Saver",
+            "body": "This product exceeded my expectations. Great quality and fast delivery. Would definitely recommend to anyone looking for a reliable solution.",
+            "date_label": "11 months ago",
+            "verified": true
+          }
+        },
+        "review_2": {
+          "type": "review",
+          "settings": {
+            "author": "Priya M.",
+            "rating": 5,
+            "title": "Worth every rupee",
+            "body": "Sturdy build and easy to assemble. Using it daily in the kitchen and it still looks brand new.",
+            "date_label": "9 months ago",
+            "verified": true
+          }
+        },
+        "review_3": {
+          "type": "review",
+          "settings": {
+            "author": "Rahul S.",
+            "rating": 5,
+            "title": "Perfect for small spaces",
+            "body": "Fits perfectly in our bathroom. The anti-skid feature works really well.",
+            "date_label": "8 months ago",
+            "verified": true
+          }
+        },
+        "review_4": {
+          "type": "review",
+          "settings": {
+            "author": "Neha T.",
+            "rating": 4,
+            "title": "Good quality",
+            "body": "Happy with the purchase. Delivery was quick. Only wish it came in more color options.",
+            "date_label": "6 months ago",
+            "verified": true
+          }
+        },
+        "review_5": {
+          "type": "review",
+          "settings": {
+            "author": "Vikram D.",
+            "rating": 5,
+            "title": "Highly recommend",
+            "body": "Bought two for my parents. They love how easy it is to move around when folded.",
+            "date_label": "5 months ago",
+            "verified": true
+          }
+        },
+        "review_6": {
+          "type": "review",
+          "settings": {
+            "author": "Ananya R.",
+            "rating": 5,
+            "title": "Great purchase",
+            "body": "Exactly as shown in the pictures. Customer support was helpful when I had a sizing question.",
+            "date_label": "3 months ago",
+            "verified": true
+          }
+        },
+        "review_7": {
+          "type": "review",
+          "settings": {
+            "author": "Karan J.",
+            "rating": 4,
+            "title": "Solid product",
+            "body": "Does the job well. Assembly took about 10 minutes with the included instructions.",
+            "date_label": "2 months ago",
+            "verified": true
+          }
+        },
+        "review_8": {
+          "type": "review",
+          "settings": {
+            "author": "Sneha P.",
+            "rating": 5,
+            "title": "Love it!",
+            "body": "Using it as extra storage in the bedroom. Looks neat and premium.",
+            "date_label": "1 month ago",
+            "verified": true
+          }
+        }
+      },
+      "block_order": [
+        "review_1",
+        "review_2",
+        "review_3",
+        "review_4",
+        "review_5",
+        "review_6",
+        "review_7",
+        "review_8"
+      ]
+    }
+  },
+  "order": [
+    "main",
+    "grosyhub_reviews",
+    "grosyhub_recommendations"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "sections": {
+    "main": {
+      "type": "grosyhub-collection",
+      "settings": {
+        "brand_color": "#b89774",
+        "products_per_page": 24
+      }
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

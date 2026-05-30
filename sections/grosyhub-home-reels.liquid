@@ -1,0 +1,137 @@
+{{ 'grosyhub-section-header.css' | asset_url | stylesheet_tag }}
+{{ 'grosyhub-home-reels.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'grosyhub-home-reels.js' | asset_url }}" defer></script>
+
+{%- liquid
+  assign brand_color = section.settings.brand_color | default: '#b89774'
+  assign max_reels = section.settings.max_reels | default: 12
+  assign collection = section.settings.collection
+  if collection != blank
+    assign products = collection.products
+  else
+    assign products = collections.all.products
+  endif
+
+  if section.settings.view_all_url != blank
+    assign view_all_url = section.settings.view_all_url
+  else
+    assign view_all_url = routes.all_products_collection_url
+  endif
+
+  assign section_title = section.settings.heading | default: 'Shop By Reels'
+  assign section_subtitle = section.settings.subheading | default: 'Watch products in action & shop instantly'
+-%}
+
+<section
+  class="gh-reels section-{{ section.id }}"
+  style="--gh-sec-brand: {{ brand_color }}; --gh-reel-brand: {{ brand_color }}; --gh-reel-brand-dark: color-mix(in srgb, {{ brand_color }} 75%, #000000);"
+  {{ section.shopify_attributes }}
+>
+  <div class="gh-reels__container">
+    {% render 'grosyhub-section-header',
+      title: section_title,
+      subtitle: section_subtitle,
+      view_all_url: view_all_url,
+      view_all_label: section.settings.view_all_label,
+      icon: 'reels',
+      show_sparkle: true
+    %}
+
+    <div class="gh-reels__body" data-gh-reels-body>
+      {%- if section.blocks.size > 0 or products.size > 0 -%}
+        <div class="gh-reels__desktop">
+          {% render 'grosyhub-reels-carousel',
+            section: section,
+            products: products,
+            max_reels: max_reels,
+            brand_color: brand_color,
+            rating_fallback: section.settings.rating_fallback,
+            reviews_count_fallback: section.settings.reviews_count_fallback
+          %}
+        </div>
+
+        <div class="gh-reels__mobile">
+          {% render 'grosyhub-reels-mobile-grid',
+            section: section,
+            products: products,
+            mobile_reels_limit: section.settings.mobile_reels_count,
+            brand_color: brand_color,
+            rating_fallback: section.settings.rating_fallback,
+            reviews_count_fallback: section.settings.reviews_count_fallback,
+            view_all_url: view_all_url,
+            view_all_label: section.settings.view_all_label
+          %}
+        </div>
+      {%- else -%}
+        <p class="gh-reels__empty">{{ section.settings.empty_text | default: 'Add reel blocks with a product and video.' }}</p>
+      {%- endif -%}
+    </div>
+
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Grosyhub shop by reels",
+  "tag": "section",
+  "class": "grosyhub-home-reels-section",
+  "max_blocks": 16,
+  "settings": [
+    { "type": "color", "id": "brand_color", "label": "Brand color", "default": "#b89774" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Shop By Reels" },
+    { "type": "text", "id": "subheading", "label": "Subtitle", "default": "Watch products in action & shop instantly" },
+    { "type": "text", "id": "view_all_label", "label": "View all button", "default": "View All Reels" },
+    { "type": "url", "id": "view_all_url", "label": "View all link" },
+    { "type": "collection", "id": "collection", "label": "Fallback collection", "info": "Used when no reel blocks are added." },
+    { "type": "range", "id": "max_reels", "label": "Max reels from collection", "min": 4, "max": 16, "step": 1, "default": 12 },
+    { "type": "range", "id": "mobile_reels_count", "label": "Mobile reels to show", "min": 2, "max": 8, "step": 2, "default": 6, "info": "Shown in a 2-column grid on mobile and tablet." },
+    { "type": "text", "id": "rating_fallback", "label": "Rating fallback", "default": "4.8" },
+    { "type": "text", "id": "reviews_count_fallback", "label": "Reviews count fallback", "default": "108" },
+    { "type": "text", "id": "empty_text", "label": "Empty state", "default": "Add reel blocks with a product and video." }
+  ],
+  "blocks": [
+    {
+      "type": "reel",
+      "name": "Reel",
+      "settings": [
+        { "type": "product", "id": "product", "label": "Product" },
+        { "type": "video", "id": "video", "label": "Reel video", "info": "Optional if the product has a video in its media." },
+        { "type": "image_picker", "id": "poster", "label": "Poster image", "info": "Shown before the video starts or while loading." },
+        {
+          "type": "select",
+          "id": "badge",
+          "label": "Badge",
+          "default": "none",
+          "options": [
+            { "value": "none", "label": "None" },
+            { "value": "bestseller", "label": "Bestseller" },
+            { "value": "trending", "label": "Trending" },
+            { "value": "hot", "label": "Hot" },
+            { "value": "new", "label": "New" },
+            { "value": "popular", "label": "Popular" }
+          ]
+        },
+        { "type": "text", "id": "caption_top", "label": "Video caption (top)", "info": "Optional text overlay on the video." },
+        { "type": "text", "id": "caption_bottom", "label": "Video caption (bottom)", "info": "Optional text above the product card." },
+        { "type": "text", "id": "rating_override", "label": "Rating override" },
+        { "type": "text", "id": "reviews_override", "label": "Reviews count override" },
+        { "type": "text", "id": "title_override", "label": "Title override (no product)" },
+        { "type": "url", "id": "link_override", "label": "Link override (no product)" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Grosyhub shop by reels",
+      "blocks": [
+        { "type": "reel", "settings": { "badge": "bestseller" } },
+        { "type": "reel", "settings": { "badge": "trending" } },
+        { "type": "reel", "settings": { "badge": "hot" } },
+        { "type": "reel", "settings": { "badge": "new" } },
+        { "type": "reel", "settings": { "badge": "popular" } },
+        { "type": "reel", "settings": { "badge": "bestseller" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

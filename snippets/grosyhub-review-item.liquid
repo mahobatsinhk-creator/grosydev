@@ -1,0 +1,55 @@
+{%- liquid
+  assign author = block.settings.author
+  assign rating = block.settings.rating | default: 5
+  assign title = block.settings.title
+  assign body = block.settings.body
+  assign date_label = block.settings.date_label
+  assign verified = block.settings.verified
+  assign initials = block.settings.initials
+
+  if initials == blank and author != blank
+    assign first_initial = author | slice: 0, 1
+    assign last_initial = ''
+    if author contains ' '
+      assign name_parts = author | split: ' '
+      assign last_name = name_parts | last
+      assign last_initial = last_name | slice: 0, 1
+    endif
+    assign initials = first_initial | append: last_initial | upcase
+  endif
+-%}
+
+<article
+  class="gh-reviews__item"
+  data-gh-review-item
+  data-rating="{{ rating }}"
+  {{ block.shopify_attributes }}
+>
+  <div class="gh-reviews__item-meta">
+    <span class="gh-reviews__avatar" aria-hidden="true">{{ initials }}</span>
+    <div class="gh-reviews__item-author">
+      <p class="gh-reviews__name">{{ author }}</p>
+      {%- if verified -%}
+        <p class="gh-reviews__verified">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M8 12l2.5 2.5L16 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          Verified purchase
+        </p>
+      {%- endif -%}
+      {%- if date_label != blank -%}
+        <p class="gh-reviews__date">{{ date_label }}</p>
+      {%- endif -%}
+    </div>
+  </div>
+  <div class="gh-reviews__item-content">
+    {% render 'grosyhub-stars', rating: rating, size: 16, class: 'gh-reviews__item-stars' %}
+    {%- if title != blank -%}
+      <h3 class="gh-reviews__item-title">{{ title }}</h3>
+    {%- endif -%}
+    {%- if body != blank -%}
+      <p class="gh-reviews__item-body">{{ body }}</p>
+    {%- endif -%}
+  </div>
+</article>

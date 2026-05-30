@@ -1,0 +1,67 @@
+<aside
+  id="gh-wishlist-drawer"
+  class="gh-drawer gh-wishlist-drawer"
+  data-gh-wishlist-drawer
+  hidden
+  aria-label="Wishlist"
+>
+  <div class="gh-drawer__backdrop" data-gh-wishlist-close tabindex="-1" aria-hidden="true"></div>
+  <div class="gh-drawer__panel gh-wishlist-drawer__panel" role="dialog" aria-modal="true" aria-labelledby="gh-wishlist-drawer-title">
+    <div class="gh-drawer__head gh-wishlist-drawer__head">
+      <h2 id="gh-wishlist-drawer-title" class="gh-drawer__title" data-gh-wishlist-title>
+        {{ wishlist_heading | default: 'My Wishlist' }}
+      </h2>
+      <button type="button" class="gh-drawer__close" data-gh-wishlist-close aria-label="Close wishlist">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="gh-drawer__body gh-wishlist-drawer__body" data-gh-wishlist-body>
+      <div class="gh-wishlist-drawer__promo">
+        <span class="gh-wishlist-drawer__promo-icon" aria-hidden="true">
+          <svg viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="14" y="22" width="28" height="22" rx="3" fill="#e8dfd4" stroke="#b89774" stroke-width="1.2"/>
+            <path d="M18 22v-4a10 10 0 0120 0v4" stroke="#b89774" stroke-width="1.2"/>
+            <path d="M22 36c0-2 2-4 6-4s6 2 6 4" fill="#b89774" opacity="0.35"/>
+            <path d="M10 18c0-1.5 1.2-2.5 2.5-2.5S15 16.5 15 18s-1.2 2.5-2.5 2.5S10 19.5 10 18z" fill="#e25555"/>
+            <path d="M41 14c0-1.2 1-2 2-2s2 .8 2 2-1 2-2 2-2-.8-2-2z" fill="#e25555"/>
+            <path d="M44 38c0-1 1-1.8 2-1.8s2 .8 2 1.8-1 1.8-2 1.8-2-.8-2-1.8z" fill="#e25555"/>
+          </svg>
+        </span>
+        <p class="gh-wishlist-drawer__promo-text">
+          {{ promo_text | default: 'Your favorites, all in one place! Move items to cart and shop what you love.' }}
+        </p>
+      </div>
+
+      <p class="gh-wishlist-drawer__empty" data-gh-wishlist-empty hidden>
+        {{ empty_text | default: 'Your wishlist is empty.' }}
+      </p>
+
+      <ul class="gh-wishlist-drawer__list" data-gh-wishlist-list role="list"></ul>
+    </div>
+
+    <div class="gh-drawer__foot gh-wishlist-drawer__foot" data-gh-wishlist-foot hidden>
+      <div class="gh-wishlist-drawer__total">
+        <span data-gh-wishlist-total-label>Total (0 items)</span>
+        <strong data-gh-wishlist-total-price>Rs. 0.00</strong>
+      </div>
+      <div class="gh-wishlist-drawer__foot-actions">
+        <button type="button" class="gh-wishlist-drawer__btn gh-wishlist-drawer__btn--cart" data-gh-wishlist-move-all>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M8 8a4 4 0 118 0h2l1.5 9H6.5L5 6H3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+          <span>{{ move_all_label | default: 'Move All To Cart' }}</span>
+        </button>
+        <a
+          href="{{ wishlist_page_url | default: routes.all_products_collection_url }}"
+          class="gh-wishlist-drawer__btn gh-wishlist-drawer__btn--view"
+          data-gh-wishlist-view-link
+        >
+          {{ view_wishlist_label | default: 'View Wishlist' }}
+        </a>
+      </div>
+    </div>
+  </div>
+</aside>

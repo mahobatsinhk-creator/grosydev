@@ -1,0 +1,13 @@
+{%- comment -%}
+  Outputs "true" if link should be hidden from header navigation.
+  @param {object} link
+{%- endcomment -%}
+{%- liquid
+  assign hide = false
+  assign title_down = link.title | downcase | strip
+  assign handle_down = link.handle | downcase
+
+  if title_down == 'contact' or title_down == 'contact us' or handle_down == 'contact' or handle_down == 'contact-us'
+    assign hide = true
+  endif
+-%}{{- hide -}}

@@ -1,0 +1,72 @@
+{%- comment -%}
+  Shop by Reels — mobile/tablet 2-column grid.
+{%- endcomment -%}
+
+{%- liquid
+  assign mobile_reels_limit = mobile_reels_limit | default: 6
+-%}
+
+<div class="gh-reels__grid" data-gh-reels-grid>
+  {%- assign reels_shown = 0 -%}
+  {%- if section.blocks.size > 0 -%}
+    {%- assign coll_fill_index = 0 -%}
+    {%- for block in section.blocks -%}
+      {%- if reels_shown >= mobile_reels_limit -%}
+        {%- break -%}
+      {%- endif -%}
+      {%- if block.type == 'reel' -%}
+        {%- liquid
+          assign reel_product = block.settings.product
+          if reel_product == blank and block.settings.link_override != blank
+            assign link_handle = block.settings.link_override | split: '/products/' | last | split: '?' | first | split: '#' | first
+            if link_handle != blank
+              assign reel_product = all_products[link_handle]
+            endif
+          endif
+          if reel_product == blank and products.size > coll_fill_index
+            assign reel_product = products[coll_fill_index]
+            assign coll_fill_index = coll_fill_index | plus: 1
+          endif
+        -%}
+        <div class="gh-reels__grid-item">
+          {% render 'grosyhub-reel-card',
+            block: block,
+            product: reel_product,
+            brand_color: brand_color,
+            rating_fallback: rating_fallback,
+            reviews_count_fallback: reviews_count_fallback,
+            tag_layout: true
+          %}
+        </div>
+        {%- assign reels_shown = reels_shown | plus: 1 -%}
+      {%- endif -%}
+    {%- endfor -%}
+  {%- elsif products.size > 0 -%}
+    {%- for product in products -%}
+      {%- if reels_shown >= mobile_reels_limit -%}
+        {%- break -%}
+      {%- endif -%}
+      <div class="gh-reels__grid-item">
+        {% render 'grosyhub-reel-card',
+          product: product,
+          brand_color: brand_color,
+          rating_fallback: rating_fallback,
+          reviews_count_fallback: reviews_count_fallback,
+          tag_layout: true
+        %}
+      </div>
+      {%- assign reels_shown = reels_shown | plus: 1 -%}
+    {%- endfor -%}
+  {%- endif -%}
+</div>
+
+{%- if view_all_url != blank and view_all_label != blank -%}
+  <div class="gh-reels__mobile-cta">
+    <a href="{{ view_all_url }}" class="gh-sec-head__cta gh-sec-head__cta--bottom">
+      {{ view_all_label }}
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+  </div>
+{%- endif -%}

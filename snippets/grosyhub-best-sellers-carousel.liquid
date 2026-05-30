@@ -1,0 +1,29 @@
+{%- comment -%}
+  Best Sellers — static grid (8 products, 4×2 desktop, 2×4 mobile).
+{%- endcomment -%}
+
+<ul class="gh-hp-products__grid" role="list">
+  {%- assign shown = 0 -%}
+  {%- for product in products -%}
+    {%- if shown >= max_products -%}
+      {%- break -%}
+    {%- endif -%}
+    <li class="gh-hp-products__grid-item">
+      {% render 'grosyhub-recommendation-card',
+        product: product,
+        brand_color: brand_color,
+        show_features: show_features,
+        force_bestseller: true,
+        rating_fallback: rating_fallback,
+        reviews_count_fallback: reviews_count_fallback,
+        default_feature_1: default_feature_1,
+        default_feature_2: default_feature_2,
+        default_feature_3: default_feature_3,
+        default_feature_1_alt: default_feature_1_alt,
+        default_feature_2_alt: default_feature_2_alt,
+        default_feature_3_alt: default_feature_3_alt
+      %}
+    </li>
+    {%- assign shown = shown | plus: 1 -%}
+  {%- endfor -%}
+</ul>

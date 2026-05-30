@@ -1,0 +1,43 @@
+{%- liquid
+  assign logo_class = 'gh-logo__img'
+  if size == 'desktop'
+    assign logo_class = logo_class | append: ' gh-logo__img--desktop'
+  elsif size == 'compact'
+    assign logo_class = logo_class | append: ' gh-logo__img--compact'
+  elsif size == 'mobile'
+    assign logo_class = logo_class | append: ' gh-logo__img--mobile'
+  endif
+-%}
+{%- if link == false -%}
+  <span class="gh-logo">
+{%- else -%}
+  <a href="{{ routes.root_url }}" class="gh-logo" aria-label="{{ shop.name }}">
+{%- endif -%}
+  {% if settings.logo != blank %}
+    {{
+      settings.logo
+      | image_url: width: 400
+      | image_tag:
+        class: logo_class,
+        alt: shop.name,
+        widths: '140, 200, 280, 400',
+        height: settings.logo_height,
+        loading: 'eager',
+        fetchpriority: 'high'
+    }}
+  {% else %}
+    <img
+      src="{{ 'grosyhub-logo.svg' | asset_url }}"
+      class="{{ logo_class }}"
+      alt="{{ shop.name }}"
+      width="200"
+      height="48"
+      loading="eager"
+      fetchpriority="high"
+    >
+  {% endif %}
+{%- if link == false -%}
+  </span>
+{%- else -%}
+  </a>
+{%- endif -%}

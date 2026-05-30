@@ -1,0 +1,225 @@
+{%- liquid
+  assign view_all_label = section.settings.mega_view_all_label | default: 'View All →'
+  assign promo_block = nil
+  for block in section.blocks
+    if block.type == 'mega_promo'
+      assign promo_block = block
+    endif
+  endfor
+
+  assign nav_menu = menu
+  if nav_menu == blank
+    assign nav_menu = mega_menu_ref
+  endif
+
+  assign pane_count = 0
+  assign use_nav_panes = false
+  if nav_menu != blank and nav_menu.links.size > 0
+    for link in nav_menu.links
+      capture hide_nav
+        render 'grosyhub-nav-hide-link', link: link
+      endcapture
+      assign hide_nav = hide_nav | strip
+      if hide_nav != 'true' and link.links.size > 0
+        capture skip_mega
+          render 'grosyhub-mega-skip-link', link: link, section: section
+        endcapture
+        assign skip_mega = skip_mega | strip
+        unless skip_mega == 'true'
+          assign use_nav_panes = true
+          assign pane_count = pane_count | plus: 1
+        endunless
+      endif
+    endfor
+  endif
+
+  assign first_pane_set = false
+-%}
+
+<div class="gh-mega" data-gh-mega-menu role="dialog" aria-label="Navigation menu">
+  <div class="gh-mega__shell">
+    <div class="gh-mega__body gh-mega__body--ref">
+      {%- if use_nav_panes -%}
+        <div class="gh-mega__center">
+          {%- assign mega_nav_index = 0 -%}
+          {%- assign first_pane_set = false -%}
+          {%- for parent_link in nav_menu.links -%}
+            {%- capture hide_nav -%}{% render 'grosyhub-nav-hide-link', link: parent_link %}{%- endcapture -%}
+            {%- assign hide_nav = hide_nav | strip -%}
+            {%- if hide_nav != 'true' and parent_link.links.size > 0 -%}
+              {%- capture skip_mega -%}{% render 'grosyhub-mega-skip-link', link: parent_link, section: section %}{%- endcapture -%}
+              {%- assign skip_mega = skip_mega | strip -%}
+              {%- unless skip_mega == 'true' -%}
+                <div
+                  class="gh-mega__pane{% unless first_pane_set %} is-active{% endunless %}"
+                  data-gh-mega-pane="{{ mega_nav_index }}"
+                  {% if first_pane_set %}hidden{% endif %}
+                >
+                  <div class="gh-mega__pane-grid">
+                    {%- if promo_block != nil -%}
+                      <aside class="gh-mega__promo-wrap gh-mega__promo-wrap--left" {{ promo_block.shopify_attributes }}>
+                        <div class="gh-mega__promo gh-mega__promo--card">
+                          {%- if promo_block.settings.image != blank -%}
+                            <a href="{{ promo_block.settings.button_link | default: parent_link.url }}" class="gh-mega__promo-media">
+                              {{
+                                promo_block.settings.image
+                                | image_url: width: 480
+                                | image_tag: class: 'gh-mega__promo-img', loading: 'lazy', alt: promo_block.settings.title
+                              }}
+                            </a>
+                          {%- else -%}
+                            <div class="gh-mega__promo-placeholder" aria-hidden="true"></div>
+                          {%- endif -%}
+                          <div class="gh-mega__promo-copy">
+                            {%- if promo_block.settings.badge != blank -%}
+                              <span class="gh-mega__promo-badge">{{ promo_block.settings.badge }}</span>
+                            {%- endif -%}
+                            {%- if promo_block.settings.title != blank -%}
+                              <p class="gh-mega__promo-title">{{ promo_block.settings.title }}</p>
+                            {%- endif -%}
+                            {%- if promo_block.settings.subtitle != blank -%}
+                              <p class="gh-mega__promo-sub">{{ promo_block.settings.subtitle }}</p>
+                            {%- endif -%}
+                            {%- if promo_block.settings.button_label != blank -%}
+                              <a href="{{ promo_block.settings.button_link | default: parent_link.url }}" class="gh-mega__promo-btn">
+                                {{ promo_block.settings.button_label }}
+                              </a>
+                            {%- endif -%}
+                          </div>
+                        </div>
+                      </aside>
+                    {%- endif -%}
+
+                    <div class="gh-mega__columns-wrap">
+                      <div class="gh-mega__columns">
+                        {%- for col_link in parent_link.links -%}
+                          <div class="gh-mega__col">
+                            <a href="{{ col_link.url }}" class="gh-mega__col-media">
+                              {% render 'grosyhub-mega-link-image', link: col_link, class: 'gh-mega__col-img', width: 400 %}
+                            </a>
+                            <p class="gh-mega__col-heading">
+                              <a href="{{ col_link.url }}" class="gh-mega__col-title">{{ col_link.title }}</a>
+                            </p>
+                            {%- if col_link.links.size > 0 -%}
+                              <ul class="gh-mega__col-links" role="list">
+                                {%- for child_link in col_link.links -%}
+                                  <li class="gh-mega__col-link-row">
+                                    <a href="{{ child_link.url }}" class="gh-mega__col-link">
+                                      <span class="gh-mega__col-link-thumb">
+                                        {% render 'grosyhub-mega-link-image', link: child_link, fallback_link: col_link, class: 'gh-mega__col-link-img', width: 160 %}
+                                      </span>
+                                      <span class="gh-mega__col-link-label">{{ child_link.title }}</span>
+                                    </a>
+                                  </li>
+                                {%- endfor -%}
+                              </ul>
+                            {%- endif -%}
+                            <a href="{{ col_link.url }}" class="gh-mega__view-all">
+                              {{ view_all_label }}
+                            </a>
+                          </div>
+                        {%- endfor -%}
+                      </div>
+                    </div>
+
+                    {% render 'grosyhub-header-mega-top-picks', section: section %}
+                  </div>
+                </div>
+                {%- assign mega_nav_index = mega_nav_index | plus: 1 -%}
+                {%- unless first_pane_set -%}{%- assign first_pane_set = true -%}{%- endunless -%}
+              {%- endunless -%}
+            {%- endif -%}
+          {%- endfor -%}
+        </div>
+      {%- elsif mega_menu_ref != blank and mega_menu_ref.links.size > 0 -%}
+        <div class="gh-mega__center">
+          <div class="gh-mega__pane is-active" data-gh-mega-pane="0">
+            <div class="gh-mega__pane-grid">
+              {%- if promo_block != nil -%}
+                <aside class="gh-mega__promo-wrap gh-mega__promo-wrap--left" {{ promo_block.shopify_attributes }}>
+                  <div class="gh-mega__promo gh-mega__promo--card">
+                    {%- if promo_block.settings.image != blank -%}
+                      <a href="{{ promo_block.settings.button_link | default: routes.all_products_collection_url }}" class="gh-mega__promo-media">
+                        {{
+                          promo_block.settings.image
+                          | image_url: width: 480
+                          | image_tag: class: 'gh-mega__promo-img', loading: 'lazy', alt: promo_block.settings.title
+                        }}
+                      </a>
+                    {%- endif -%}
+                    <div class="gh-mega__promo-copy">
+                      {%- if promo_block.settings.title != blank -%}<p class="gh-mega__promo-title">{{ promo_block.settings.title }}</p>{%- endif -%}
+                      {%- if promo_block.settings.subtitle != blank -%}<p class="gh-mega__promo-sub">{{ promo_block.settings.subtitle }}</p>{%- endif -%}
+                      {%- if promo_block.settings.button_label != blank -%}
+                        <a href="{{ promo_block.settings.button_link | default: routes.all_products_collection_url }}" class="gh-mega__promo-btn">{{ promo_block.settings.button_label }}</a>
+                      {%- endif -%}
+                    </div>
+                  </div>
+                </aside>
+              {%- endif -%}
+              <div class="gh-mega__columns-wrap">
+                <div class="gh-mega__columns">
+                  {%- for col_link in mega_menu_ref.links -%}
+                    {%- capture skip_cat -%}{% render 'grosyhub-mega-skip-link', link: col_link, section: section %}{%- endcapture -%}
+                    {%- assign skip_cat = skip_cat | strip -%}
+                    {%- unless skip_cat == 'true' -%}
+                      <div class="gh-mega__col">
+                        <a href="{{ col_link.url }}" class="gh-mega__col-media">
+                          {% render 'grosyhub-mega-link-image', link: col_link, class: 'gh-mega__col-img', width: 400 %}
+                        </a>
+                        <p class="gh-mega__col-heading">
+                          <a href="{{ col_link.url }}" class="gh-mega__col-title">{{ col_link.title }}</a>
+                        </p>
+                        {%- if col_link.links.size > 0 -%}
+                          <ul class="gh-mega__col-links" role="list">
+                            {%- for child_link in col_link.links -%}
+                              <li class="gh-mega__col-link-row">
+                                <a href="{{ child_link.url }}" class="gh-mega__col-link">
+                                  <span class="gh-mega__col-link-thumb">
+                                    {% render 'grosyhub-mega-link-image', link: child_link, fallback_link: col_link, class: 'gh-mega__col-link-img', width: 160 %}
+                                  </span>
+                                  <span class="gh-mega__col-link-label">{{ child_link.title }}</span>
+                                </a>
+                              </li>
+                            {%- endfor -%}
+                          </ul>
+                        {%- endif -%}
+                        <a href="{{ col_link.url }}" class="gh-mega__view-all">{{ view_all_label }}</a>
+                      </div>
+                    {%- endunless -%}
+                  {%- endfor -%}
+                </div>
+              </div>
+              {% render 'grosyhub-header-mega-top-picks', section: section %}
+            </div>
+          </div>
+        </div>
+      {%- else -%}
+        <div class="gh-mega__center gh-mega__center--legacy">
+          <div class="gh-mega__columns gh-mega__columns--legacy">
+            {%- for block in section.blocks -%}
+              {%- if block.type == 'mega_column' -%}
+                <div class="gh-mega__col" {{ block.shopify_attributes }}>
+                  <p class="gh-mega__col-heading">
+                    {% render 'grosyhub-mega-menu-icon', icon: block.settings.icon %}
+                    <span>{{ block.settings.title }}</span>
+                  </p>
+                  <ul class="gh-mega__col-links" role="list">
+                    {%- if block.settings.menu != blank and linklists[block.settings.menu].links.size > 0 -%}
+                      {%- for child_link in linklists[block.settings.menu].links -%}
+                        <li><a href="{{ child_link.url }}">{{ child_link.title }}</a></li>
+                      {%- endfor -%}
+                    {%- endif -%}
+                  </ul>
+                  {%- if block.settings.view_all_label != blank -%}
+                    <a href="{{ block.settings.view_all_url | default: routes.all_products_collection_url }}" class="gh-mega__view-all">{{ block.settings.view_all_label }}</a>
+                  {%- endif -%}
+                </div>
+              {%- endif -%}
+            {%- endfor -%}
+          </div>
+        </div>
+      {%- endif -%}
+    </div>
+  </div>
+</div>

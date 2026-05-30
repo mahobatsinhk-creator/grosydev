@@ -1,0 +1,149 @@
+{%- liquid
+  assign product = product
+  assign brand_color = brand_color | default: '#b89774'
+  assign gallery_media_count = 0
+  assign show_best_seller = show_best_seller | default: false
+  if product.tags contains 'bestseller' or product.tags contains 'best-seller'
+    assign show_best_seller = true
+  endif
+  assign description_video_id = blank
+  for media in product.media
+    if media.media_type == 'video' or media.media_type == 'external_video'
+      assign description_video_id = media.id
+      break
+    endif
+  endfor
+
+  for media in product.media
+    unless media.id == description_video_id
+      assign gallery_media_count = gallery_media_count | plus: 1
+    endunless
+  endfor
+-%}
+
+<div class="gh-pdp-gallery" style="--gh-pdp-brand: {{ brand_color }};" data-gh-gallery>
+  <div class="gh-pdp-gallery__main">
+    <div class="gh-pdp-gallery__stage" data-gh-gallery-stage>
+      {%- if show_best_seller -%}
+        <span class="gh-pdp-gallery__badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 2l2.4 4.8 5.4.8-3.9 3.8.9 5.4L12 14.8 7.2 17l.9-5.4-3.9-3.8 5.4-.8L12 2z"/>
+          </svg>
+          BEST SELLER
+        </span>
+      {%- endif -%}
+
+      <button type="button" class="gh-pdp-gallery__zoom" aria-label="Zoom image" data-gh-zoom>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M15 15l5 5M10 17a7 7 0 110-14 7 7 0 010 14z" stroke="currentColor" stroke-width="1.8"/>
+        </svg>
+      </button>
+
+      {%- assign gallery_index = 0 -%}
+      {%- for media in product.media -%}
+        {%- if description_video_id != blank and media.id == description_video_id -%}
+          {%- continue -%}
+        {%- endif -%}
+        <div
+          class="gh-pdp-gallery__slide{% if gallery_index == 0 %} is-active{% endif %}"
+          data-gh-slide
+          data-index="{{ gallery_index }}"
+          {% unless gallery_index == 0 %}hidden{% endunless %}
+        >
+          {%- if media.media_type == 'video' -%}
+            {{ media | video_tag: class: 'gh-pdp-gallery__media', image_size: '900x', autoplay: false, loop: true, controls: true }}
+          {%- elsif media.media_type == 'model' -%}
+            {{ media | model_viewer_tag: class: 'gh-pdp-gallery__media' }}
+          {%- else -%}
+            {%- if gallery_index == 0 -%}
+              {{
+                media
+                | image_url: width: 1200
+                | image_tag:
+                  class: 'gh-pdp-gallery__media',
+                  loading: 'eager',
+                  widths: '400, 600, 900, 1200',
+                  sizes: '(min-width: 990px) 55vw, 100vw',
+                  alt: media.alt | default: product.title
+              }}
+            {%- else -%}
+              {{
+                media
+                | image_url: width: 1200
+                | image_tag:
+                  class: 'gh-pdp-gallery__media',
+                  loading: 'lazy',
+                  widths: '400, 600, 900, 1200',
+                  sizes: '(min-width: 990px) 55vw, 100vw',
+                  alt: media.alt | default: product.title
+              }}
+            {%- endif -%}
+          {%- endif -%}
+        </div>
+        {%- assign gallery_index = gallery_index | plus: 1 -%}
+      {%- endfor -%}
+
+      {%- if gallery_media_count > 0 -%}
+        <span class="gh-pdp-gallery__counter" data-gh-counter>1 / {{ gallery_media_count }}</span>
+      {%- endif -%}
+    </div>
+
+    {%- if gallery_media_count > 1 -%}
+      <div class="gh-pdp-gallery__dots" data-gh-gallery-dots role="tablist" aria-label="Product image pagination"></div>
+
+      <div class="gh-pdp-gallery__thumbs-wrap">
+        <button
+          type="button"
+          class="gh-pdp-gallery__thumbs-arrow gh-pdp-gallery__thumbs-arrow--prev"
+          data-gh-thumbs-prev
+          aria-label="Scroll thumbnails left"
+          disabled
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+
+        <div class="gh-pdp-gallery__thumbs" data-gh-thumbs-track role="tablist" aria-label="Product thumbnails">
+          {%- assign gallery_index = 0 -%}
+          {%- for media in product.media -%}
+            {%- if description_video_id != blank and media.id == description_video_id -%}
+              {%- continue -%}
+            {%- endif -%}
+            <button
+              type="button"
+              class="gh-pdp-gallery__thumb{% if gallery_index == 0 %} is-active{% endif %}"
+              data-gh-thumb
+              data-index="{{ gallery_index }}"
+              aria-label="View image {{ gallery_index | plus: 1 }} of {{ gallery_media_count }}"
+              aria-selected="{% if gallery_index == 0 %}true{% else %}false{% endif %}"
+            >
+              {%- if media.media_type == 'video' -%}
+                {{ media.preview_image | image_url: width: 160 | image_tag: loading: 'lazy', alt: media.alt | default: product.title }}
+                <span class="gh-pdp-gallery__thumb-play" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                </span>
+              {%- else -%}
+                {{ media | image_url: width: 160 | image_tag: loading: 'lazy', alt: media.alt | default: product.title }}
+              {%- endif -%}
+            </button>
+            {%- assign gallery_index = gallery_index | plus: 1 -%}
+          {%- endfor -%}
+        </div>
+
+        <button
+          type="button"
+          class="gh-pdp-gallery__thumbs-arrow gh-pdp-gallery__thumbs-arrow--next"
+          data-gh-thumbs-next
+          aria-label="Scroll thumbnails right"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+    {%- endif -%}
+  </div>
+</div>
+
+<script src="{{ 'grosyhub-product-gallery.js' | asset_url }}" defer></script>

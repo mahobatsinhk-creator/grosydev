@@ -1,0 +1,160 @@
+{%- liquid
+  assign pdp_video = product.metafields.custom.description_video.value
+  if pdp_video == blank
+    assign pdp_video = product.metafields.custom.description_video
+  endif
+
+  assign pdp_video_url = product.metafields.custom.description_video_url.value
+  if pdp_video_url == blank
+    assign pdp_video_url = product.metafields.custom.description_video_url
+  endif
+
+  assign pdp_media = blank
+  for media in product.media
+    if media.media_type == 'video' or media.media_type == 'external_video'
+      assign pdp_media = media
+      break
+    endif
+  endfor
+
+  assign has_video = false
+  if pdp_video != blank or pdp_video_url != blank or pdp_media != blank
+    assign has_video = true
+  endif
+
+  assign video_autoplay = autoplay | default: true
+  assign video_loop = loop | default: true
+  assign video_muted = muted | default: true
+  if video_autoplay and video_muted == false
+    assign video_muted = true
+  endif
+-%}
+
+{%- if show and has_video -%}
+  <div class="gh-pdp-info__video-block">
+    {%- if heading != blank -%}
+      <h2 class="gh-pdp-info__video-heading">{{ heading }}</h2>
+    {%- endif -%}
+
+    <div class="gh-pdp-info__video-player">
+      {%- if pdp_video != blank -%}
+        {{
+          pdp_video
+          | video_tag:
+            class: 'gh-pdp-info__video',
+            controls: true,
+            autoplay: video_autoplay,
+            loop: video_loop,
+            muted: video_muted,
+            playsinline: true,
+            preload: 'auto',
+            image_size: '1200x'
+        }}
+      {%- elsif pdp_media != blank -%}
+        {%- if pdp_media.media_type == 'external_video' -%}
+          {%- liquid
+            if video_muted
+              assign external_mute = '1'
+            else
+              assign external_mute = '0'
+            endif
+          -%}
+          {{
+            pdp_media
+            | external_video_url: autoplay: video_autoplay, loop: video_loop, mute: external_mute
+            | external_video_tag: class: 'gh-pdp-info__video-embed'
+          }}
+        {%- else -%}
+          {{
+            pdp_media
+            | video_tag:
+              class: 'gh-pdp-info__video',
+              controls: true,
+              autoplay: video_autoplay,
+              loop: video_loop,
+              muted: video_muted,
+              playsinline: true,
+              preload: 'auto',
+              image_size: '1200x'
+          }}
+        {%- endif -%}
+      {%- elsif pdp_video_url != blank -%}
+        {%- liquid
+          assign embed_url = blank
+          assign video_id = blank
+          assign url_lower = pdp_video_url | downcase | strip
+
+          if url_lower contains 'youtube.com/watch' and url_lower contains 'v='
+            assign video_id = pdp_video_url | split: 'v=' | last | split: '&' | first | strip
+          elsif url_lower contains 'youtu.be/'
+            assign video_id = pdp_video_url | split: 'youtu.be/' | last | split: '?' | first | split: '/' | first | strip
+          elsif url_lower contains 'youtube.com/embed/'
+            assign video_id = pdp_video_url | split: '/embed/' | last | split: '?' | first | split: '/' | first | strip
+          elsif url_lower contains 'youtube.com/shorts/'
+            assign video_id = pdp_video_url | split: '/shorts/' | last | split: '?' | first | split: '/' | first | strip
+          elsif url_lower contains 'player.vimeo.com/video/'
+            assign video_id = pdp_video_url | split: '/video/' | last | split: '?' | first | split: '/' | first | strip
+          elsif url_lower contains 'vimeo.com/'
+            assign vimeo_path = pdp_video_url | split: 'vimeo.com/' | last | split: '?' | first | strip
+            assign video_id = vimeo_path | split: '/' | last | strip
+            if video_id == 'channels' or video_id == 'groups' or video_id == 'video' or video_id == 'videos' or video_id == 'showcase'
+              assign video_id = blank
+            endif
+          endif
+
+          if video_id != blank
+            assign video_id_lower = video_id | downcase
+            if video_id_lower contains 'http' or video_id_lower contains 'youtube' or video_id_lower contains 'vimeo' or video_id contains '/' or video_id contains '.com' or video_id contains 'watch'
+              assign video_id = blank
+            endif
+          endif
+
+          if video_id != blank
+            assign video_id_length = video_id | size
+            if video_id_length < 5 or video_id_length > 20
+              assign video_id = blank
+            endif
+          endif
+
+          if video_id != blank
+            if url_lower contains 'vimeo'
+              assign embed_url = 'https://player.vimeo.com/video/' | append: video_id
+              if video_autoplay
+                assign embed_url = embed_url | append: '?autoplay=1'
+                if video_muted
+                  assign embed_url = embed_url | append: '&muted=1'
+                endif
+              endif
+            else
+              assign embed_url = 'https://www.youtube.com/embed/' | append: video_id | append: '?rel=0'
+              if video_autoplay
+                assign embed_url = embed_url | append: '&autoplay=1'
+              endif
+              if video_muted
+                assign embed_url = embed_url | append: '&mute=1'
+              endif
+              if video_loop
+                assign embed_url = embed_url | append: '&loop=1&playlist=' | append: video_id
+              endif
+            endif
+          endif
+        -%}
+
+        {%- if embed_url != blank -%}
+          <iframe
+            class="gh-pdp-info__video-embed"
+            src="{{ embed_url }}"
+            title="{{ heading | default: product.title | escape }}"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+            loading="lazy"
+          ></iframe>
+        {%- else -%}
+          <a class="gh-pdp-info__video-link" href="{{ pdp_video_url }}" target="_blank" rel="noopener">
+            {{ pdp_video_url }}
+          </a>
+        {%- endif -%}
+      {%- endif -%}
+    </div>
+  </div>
+{%- endif -%}

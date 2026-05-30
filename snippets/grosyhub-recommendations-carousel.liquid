@@ -1,0 +1,32 @@
+{%- comment -%}
+  Renders recommendation carousel slides.
+  rec_mode: "products" | "skeleton"
+{%- endcomment -%}
+
+{%- if rec_mode == 'skeleton' -%}
+  {%- for i in (1..4) -%}
+    <div class="gh-rec__slide gh-rec__slide--skeleton" data-gh-rec-slide>
+      <div class="gh-rec-card gh-rec-card--skeleton"></div>
+    </div>
+  {%- endfor -%}
+{%- else -%}
+  {%- assign rec_count = 0 -%}
+  {%- for rec_product in rec_products -%}
+    {%- if rec_count >= max_products -%}
+      {%- break -%}
+    {%- endif -%}
+    {%- if parent_product != blank and rec_product.id == parent_product.id -%}
+      {%- continue -%}
+    {%- endif -%}
+    <div class="gh-rec__slide" data-gh-rec-slide>
+      {% render 'grosyhub-recommendation-card',
+        product: rec_product,
+        brand_color: brand_color,
+        show_features: show_features,
+        rating_fallback: rating_fallback,
+        reviews_count_fallback: reviews_count_fallback
+      %}
+    </div>
+    {%- assign rec_count = rec_count | plus: 1 -%}
+  {%- endfor -%}
+{%- endif -%}

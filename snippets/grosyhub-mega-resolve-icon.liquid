@@ -1,0 +1,59 @@
+{%- comment -%}
+  Resolves icon key for a menu title via theme blocks, then keyword fallback.
+  @param {string} title
+  @param {object} section
+  @param {string} [default_icon]
+{%- endcomment -%}
+{%- liquid
+  assign icon_key = default_icon | default: 'default'
+  assign title_down = title | downcase
+
+  for block in section.blocks
+    if block.type == 'menu_icon'
+      assign match = block.settings.match_title | downcase | strip
+      if match != blank and title_down == match
+        assign icon_key = block.settings.icon
+        break
+      endif
+    endif
+  endfor
+
+  if icon_key == 'default' or icon_key == blank
+    if title_down == 'home' or title_down contains 'home page'
+      assign icon_key = 'home'
+    elsif title_down contains 'new arrival' or title_down contains 'new-arrival'
+      assign icon_key = 'new'
+    elsif title_down contains 'collection'
+      assign icon_key = 'collections'
+    elsif title_down contains 'best seller'
+      assign icon_key = 'bestseller'
+    elsif title_down contains 'combo'
+      assign icon_key = 'combo'
+    elsif title_down contains 'track' or title_down contains 'order status'
+      assign icon_key = 'track'
+    elsif title_down contains 'contact'
+      assign icon_key = 'contact'
+    elsif title_down contains 'about'
+      assign icon_key = 'about'
+    elsif title_down contains 'faq'
+      assign icon_key = 'faq'
+    elsif title_down contains 'bathroom'
+      assign icon_key = 'bathroom'
+    elsif title_down contains 'beauty' or title_down contains 'personal'
+      assign icon_key = 'beauty'
+    elsif title_down contains 'kitchen' or title_down contains 'dining'
+      assign icon_key = 'kitchen'
+    elsif title_down contains 'rack' or title_down contains 'organ'
+      assign icon_key = 'racks'
+    elsif title_down contains 'garden' or title_down contains 'outdoor'
+      assign icon_key = 'garden'
+    elsif title_down contains 'living' or title_down contains 'upgrade'
+      assign icon_key = 'home'
+    elsif title_down contains 'wholesale' or title_down contains 'bulk'
+      assign icon_key = 'wholesale'
+    else
+      assign icon_key = 'default'
+    endif
+  endif
+-%}
+{% render 'grosyhub-mega-menu-icon', icon: icon_key %}

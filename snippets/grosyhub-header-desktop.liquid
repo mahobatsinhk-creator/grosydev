@@ -1,0 +1,166 @@
+{%- comment -%} Desktop header (≥990px) — logo, nav, search + icons, overlay mega {%- endcomment -%}
+
+{%- if show_announcement -%}
+  <div class="gh-announcement gh-announcement--desktop" data-gh-announcement-marquee>
+    <div class="gh-announcement__viewport">
+      <div class="gh-announcement__track">
+        <ul class="gh-announcement__list" role="list">
+          {%- for i in (1..5) -%}
+            {%- assign key = 'announcement_' | append: i -%}
+            {%- assign text = section.settings[key] -%}
+            {%- if text != blank -%}
+              <li class="gh-announcement__item">
+                {% render 'grosyhub-announcement-icon', index: i %}
+                <span>{{ text }}</span>
+              </li>
+            {%- endif -%}
+          {%- endfor -%}
+        </ul>
+        <ul class="gh-announcement__list" aria-hidden="true">
+          {%- for i in (1..5) -%}
+            {%- assign key = 'announcement_' | append: i -%}
+            {%- assign text = section.settings[key] -%}
+            {%- if text != blank -%}
+              <li class="gh-announcement__item">
+                {% render 'grosyhub-announcement-icon', index: i %}
+                <span>{{ text }}</span>
+              </li>
+            {%- endif -%}
+          {%- endfor -%}
+        </ul>
+      </div>
+    </div>
+  </div>
+{%- endif -%}
+
+<div class="gh-header__desktop-wrap" data-gh-desktop-wrap>
+  <div class="gh-header__desktop-main">
+    <div class="gh-container">
+      <div class="gh-header__desktop-row gh-header__desktop-row--groza">
+        <div class="gh-header__brand">
+          {% render 'grosyhub-logo', size: 'desktop' %}
+        </div>
+
+        {%- if menu != blank and menu.links.size > 0 or show_contact_nav -%}
+          <nav class="gh-header__nav-inline" aria-label="{{ 'accessibility.header_navigation_label' | t }}">
+            <ul class="gh-header__nav-links" role="list">
+              {%- assign mega_nav_index = 0 -%}
+              {%- for link in menu.links -%}
+                {%- capture hide_nav -%}{% render 'grosyhub-nav-hide-link', link: link %}{%- endcapture -%}
+                {%- assign hide_nav = hide_nav | strip -%}
+                {%- unless hide_nav == 'true' -%}
+                  <li>
+                    {%- if link.links.size > 0 -%}
+                      {%- capture skip_mega -%}{% render 'grosyhub-mega-skip-link', link: link, section: section %}{%- endcapture -%}
+                      {%- assign skip_mega = skip_mega | strip -%}
+                      {%- if skip_mega == 'true' -%}
+                        <a
+                          href="{{ link.url }}"
+                          class="gh-header__nav-link{% if link.active %} is-active{% endif %}"
+                          {% if link.current %}aria-current="page"{% endif %}
+                        >
+                          <span>{{ link.title }}</span>
+                        </a>
+                      {%- else -%}
+                        <a
+                          href="{{ link.url }}"
+                          class="gh-header__nav-link gh-header__nav-link--has-mega{% if link.active %} is-active{% endif %}"
+                          data-gh-mega-trigger-nav="{{ mega_nav_index }}"
+                          data-gh-mega-nav
+                          aria-haspopup="true"
+                          aria-expanded="false"
+                        >
+                          <span>{{ link.title }}</span>
+                          <svg class="gh-header__nav-chevron" width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                            <path d="M3 5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                          </svg>
+                        </a>
+                        {%- assign mega_nav_index = mega_nav_index | plus: 1 -%}
+                      {%- endif -%}
+                    {%- else -%}
+                      <a
+                        href="{{ link.url }}"
+                        class="gh-header__nav-link{% if link.active %} is-active{% endif %}"
+                        {% if link.current %}aria-current="page"{% endif %}
+                      >
+                        <span>{{ link.title }}</span>
+                      </a>
+                    {%- endif -%}
+                  </li>
+                {%- endunless -%}
+              {%- endfor -%}
+              {%- if show_contact_nav -%}
+                <li>
+                  <a
+                    href="{{ contact_nav_url }}"
+                    class="gh-header__nav-link{% if contact_nav_active %} is-active{% endif %}"
+                    {% if contact_nav_active %}aria-current="page"{% endif %}
+                  >
+                    <span>{{ contact_nav_label }}</span>
+                  </a>
+                </li>
+              {%- endif -%}
+            </ul>
+          </nav>
+        {%- endif -%}
+
+        <div class="gh-header__desktop-end">
+          <form class="gh-search gh-search--desktop gh-search--header-end" action="{{ routes.search_url }}" method="get" role="search">
+            <label class="visually-hidden" for="gh-search-desktop">{{ 'content.search_input_label' | t }}</label>
+            <input
+              id="gh-search-desktop"
+              class="gh-search__input"
+              type="search"
+              name="q"
+              value="{{ search.terms | escape }}"
+              placeholder="{{ search_placeholder }}"
+              autocomplete="off"
+            >
+            <button type="submit" class="gh-search__btn" aria-label="{{ 'content.search' | t }}">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+                <path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </form>
+
+          <div class="gh-actions gh-actions--desktop gh-actions--icons-only">
+            <button type="button" class="gh-actions__item" data-gh-wishlist-open aria-label="{{ section.settings.wishlist_label | default: 'Wishlist' }}">
+              <span class="gh-actions__icon-wrap">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M12 21s-7.5-4.7-9.8-9.4C.4 8.2 2.6 4 6.4 4c2 0 3.2 1.2 3.6 1.8C10.4 5.2 11.6 4 13.6 4c3.8 0 6 4.2 4.2 7.6C19.5 16.3 12 21 12 21z" stroke="currentColor" stroke-width="1.6"/>
+                </svg>
+                <span class="gh-badge gh-badge--count" data-gh-wishlist-count>0</span>
+              </span>
+            </button>
+
+            <a href="{% if customer %}{{ routes.account_url }}{% else %}{{ routes.account_login_url }}{% endif %}" class="gh-actions__item" aria-label="{{ section.settings.account_label | default: 'Account' }}">
+              <span class="gh-actions__icon-wrap">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.6"/>
+                  <path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                </svg>
+              </span>
+            </a>
+
+            <button type="button" class="gh-actions__item gh-actions__item--cart" data-gh-cart-open aria-label="{{ section.settings.cart_label | default: 'Cart' }}">
+              <span class="gh-actions__icon-wrap">
+                <svg class="gh-actions__svg" width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M8 8a4 4 0 118 0h2l1.5 9H6.5L5 6H3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="gh-badge gh-badge--count" data-gh-cart-count>{{ cart.item_count }}</span>
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {%- if has_mega_menu or has_mega -%}
+    <div class="gh-header__desktop-mega" data-gh-mega-zone>
+      <div class="gh-mega-backdrop" data-gh-mega-backdrop aria-hidden="true"></div>
+      {% render 'grosyhub-header-mega-menu', section: section, menu: menu, mega_menu_ref: mega_menu_ref %}
+    </div>
+  {%- endif -%}
+</div>

@@ -1,0 +1,133 @@
+{{ 'grosyhub-policy-page.css' | asset_url | stylesheet_tag }}
+
+{%- liquid
+  assign brand = section.settings.brand_color | default: '#b89774'
+  assign policy_type = section.settings.policy_type | default: 'privacy'
+
+  if page.handle == 'privacy-policy'
+    assign policy_type = 'privacy'
+  elsif page.handle == 'refund-policy'
+    assign policy_type = 'refund'
+  elsif page.handle == 'shipping-policy'
+    assign policy_type = 'shipping'
+  elsif page.handle == 'terms-of-service'
+    assign policy_type = 'terms'
+  endif
+
+  if policy != blank
+    if shop.policies.privacy_policy != blank and policy == shop.policies.privacy_policy
+      assign policy_type = 'privacy'
+    elsif shop.policies.refund_policy != blank and policy == shop.policies.refund_policy
+      assign policy_type = 'refund'
+    elsif shop.policies.shipping_policy != blank and policy == shop.policies.shipping_policy
+      assign policy_type = 'shipping'
+    elsif shop.policies.terms_of_service != blank and policy == shop.policies.terms_of_service
+      assign policy_type = 'terms'
+    endif
+  endif
+
+  case policy_type
+    when 'privacy'
+      assign default_title = 'Privacy Policy'
+    when 'refund'
+      assign default_title = 'Refund Policy'
+    when 'shipping'
+      assign default_title = 'Shipping Policy'
+    when 'terms'
+      assign default_title = 'Terms of Service'
+    else
+      assign default_title = 'Policy'
+  endcase
+
+  if policy != blank and policy.title != blank
+    assign page_title = policy.title
+  else
+    assign page_title = page.title | default: default_title
+  endif
+-%}
+
+<article
+  class="gh-policy section-{{ section.id }}"
+  style="--gh-policy-brand: {{ brand }};"
+  {{ section.shopify_attributes }}
+>
+  <div class="gh-policy__container">
+    <nav class="gh-policy__breadcrumb" aria-label="Breadcrumb">
+      <a href="{{ routes.root_url }}">Home</a>
+      <span aria-hidden="true">›</span>
+      <span>{{ page_title }}</span>
+    </nav>
+
+    <h1 class="gh-policy__title">{{ page_title }}</h1>
+
+    {%- if section.settings.show_updated -%}
+      <p class="gh-policy__updated">Last updated: {{ section.settings.last_updated | default: 'May 2026' }}</p>
+    {%- endif -%}
+
+    <div class="gh-policy__body">
+      {% render 'grosyhub-policy-content',
+        policy_type: policy_type,
+        contact_email: section.settings.contact_email,
+        contact_phone: section.settings.contact_phone
+      %}
+    </div>
+  </div>
+</article>
+
+{% schema %}
+{
+  "name": "Grosyhub policy page",
+  "tag": "section",
+  "class": "grosyhub-policy-page-section",
+  "settings": [
+    {
+      "type": "color",
+      "id": "brand_color",
+      "label": "Brand color",
+      "default": "#b89774"
+    },
+    {
+      "type": "select",
+      "id": "policy_type",
+      "label": "Policy content",
+      "default": "privacy",
+      "options": [
+        { "value": "privacy", "label": "Privacy Policy" },
+        { "value": "refund", "label": "Refund Policy" },
+        { "value": "shipping", "label": "Shipping Policy" },
+        { "value": "terms", "label": "Terms of Service" }
+      ],
+      "info": "Auto-detected from page handle when the page URL is /pages/privacy-policy, etc."
+    },
+    {
+      "type": "checkbox",
+      "id": "show_updated",
+      "label": "Show last updated date",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "last_updated",
+      "label": "Last updated",
+      "default": "May 2026"
+    },
+    {
+      "type": "header",
+      "content": "Contact (shown in policy text)"
+    },
+    {
+      "type": "text",
+      "id": "contact_email",
+      "label": "Support email",
+      "default": "info@grosyhub.com"
+    },
+    {
+      "type": "text",
+      "id": "contact_phone",
+      "label": "Support phone",
+      "default": "+91 88665 59670"
+    }
+  ],
+  "presets": [{ "name": "Grosyhub policy page" }]
+}
+{% endschema %}

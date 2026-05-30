@@ -1,0 +1,343 @@
+{{ 'grosyhub-hero-slider.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'grosyhub-hero-slider.js' | asset_url }}" defer></script>
+
+{%- liquid
+  assign brand = section.settings.brand_color | default: '#b89774'
+  assign slides = section.blocks | where: 'type', 'slide'
+  assign slide_count = 0
+  for block in slides
+    if block.settings.image != blank
+      assign slide_count = slide_count | plus: 1
+    endif
+  endfor
+-%}
+
+<section
+  class="gh-hero-banner gh-hero-banner--fullscreen section-{{ section.id }}"
+  style="--gh-hero-brand: {{ brand }};"
+  {{ section.shopify_attributes }}
+>
+  <div class="gh-hero-banner__wrap">
+    {%- if slide_count > 0 -%}
+      <div
+        class="gh-hero-banner__slider"
+        data-gh-hero-slider
+        data-autoplay="{{ section.settings.autoplay }}"
+        data-interval="{{ section.settings.autoplay_speed | times: 1000 }}"
+        aria-roledescription="carousel"
+        aria-label="{{ section.settings.aria_label | default: 'Homepage banner' }}"
+      >
+        <div class="gh-hero-banner__track" data-gh-hero-track>
+          {%- assign slide_index = 0 -%}
+          {%- for block in slides -%}
+            {%- if block.settings.image != blank -%}
+              {%- liquid
+                assign mobile_image = block.settings.image_mobile
+                if mobile_image == blank
+                  assign mobile_image = block.settings.image
+                endif
+                assign primary_link = block.settings.button_link
+                if primary_link == blank
+                  assign primary_link = routes.collections_url
+                endif
+                assign secondary_link = block.settings.button_secondary_link
+                if secondary_link == blank
+                  assign secondary_link = routes.collections_url
+                endif
+                assign img_alt = block.settings.image_alt | default: block.settings.heading_before | default: 'Homepage banner' | escape
+                if slide_index == 0
+                  assign img_loading = 'eager'
+                  assign img_priority = 'high'
+                else
+                  assign img_loading = 'lazy'
+                  assign img_priority = 'auto'
+                endif
+              -%}
+              <article
+                class="gh-hero-banner__slide{% if slide_index == 0 %} is-active{% endif %}"
+                data-gh-hero-slide
+                {{ block.shopify_attributes }}
+                {% if slide_index > 0 %}
+                  aria-hidden="true"
+                {% endif %}
+              >
+                <div class="gh-hero-banner__panel">
+                  <div class="gh-hero-banner__media" aria-hidden="true">
+                    <picture class="gh-hero-banner__picture">
+                      {%- if block.settings.image_mobile != blank -%}
+                        <source
+                          media="(max-width: 749px)"
+                          srcset="
+                            {{ block.settings.image_mobile | image_url: width: 800 }} 800w,
+                            {{ block.settings.image_mobile | image_url: width: 1200 }} 1200w
+                          "
+                        >
+                      {%- else -%}
+                        <source
+                          media="(max-width: 749px)"
+                          srcset="
+                            {{ mobile_image | image_url: width: 800 }} 800w,
+                            {{ mobile_image | image_url: width: 1200 }} 1200w
+                          "
+                        >
+                      {%- endif -%}
+                      {{
+                        block.settings.image
+                        | image_url: width: 2400
+                        | image_tag:
+                          class: 'gh-hero-banner__img',
+                          loading: img_loading,
+                          fetchpriority: img_priority,
+                          widths: '800, 1200, 1600, 2000, 2400',
+                          sizes: '100vw',
+                          alt: img_alt
+                      }}
+                    </picture>
+                    {%- if block.settings.show_overlay -%}
+                      <span class="gh-hero-banner__shade"></span>
+                    {%- endif -%}
+                  </div>
+
+                  {%- if block.settings.show_overlay -%}
+                    <div class="gh-hero-banner__overlay">
+                      <div class="gh-hero-banner__content">
+                        {%- if block.settings.badge != blank -%}
+                          <span class="gh-hero-banner__badge">{{ block.settings.badge }}</span>
+                        {%- endif -%}
+
+                        {%- if block.settings.heading_before != blank or block.settings.heading_highlight != blank -%}
+                          <h2 class="gh-hero-banner__heading">
+                            {%- if block.settings.heading_before != blank -%}
+                              <span class="gh-hero-banner__heading-line">{{ block.settings.heading_before }}</span>
+                            {%- endif -%}
+                            {%- if block.settings.heading_highlight != blank -%}
+                              <span class="gh-hero-banner__heading-highlight">{{ block.settings.heading_highlight }}</span>
+                            {%- endif -%}
+                          </h2>
+                        {%- endif -%}
+
+                        {%- if block.settings.subheading != blank -%}
+                          <p class="gh-hero-banner__sub">{{ block.settings.subheading }}</p>
+                        {%- endif -%}
+
+                        <div class="gh-hero-banner__actions">
+                          {%- if block.settings.button_label != blank -%}
+                            <a
+                              href="{{ primary_link }}"
+                              class="gh-hero-banner__btn gh-hero-banner__btn--primary"
+                              {% if block.settings.open_in_new_tab %}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              {% endif %}
+                            >
+                              <span>{{ block.settings.button_label }}</span>
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                              </svg>
+                            </a>
+                          {%- endif -%}
+                          {%- if block.settings.button_secondary_label != blank -%}
+                            <a
+                              href="{{ secondary_link }}"
+                              class="gh-hero-banner__btn gh-hero-banner__btn--secondary"
+                              {% if block.settings.button_secondary_new_tab %}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              {% endif %}
+                            >
+                              {{ block.settings.button_secondary_label }}
+                            </a>
+                          {%- endif -%}
+                        </div>
+                      </div>
+                    </div>
+                  {%- endif -%}
+                </div>
+              </article>
+              {%- assign slide_index = slide_index | plus: 1 -%}
+            {%- endif -%}
+          {%- endfor -%}
+        </div>
+
+        {%- if slide_index > 1 -%}
+          <button type="button" class="gh-hero-banner__arrow gh-hero-banner__arrow--prev" data-gh-hero-prev aria-label="Previous slide">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M14 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <button type="button" class="gh-hero-banner__arrow gh-hero-banner__arrow--next" data-gh-hero-next aria-label="Next slide">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M10 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <div class="gh-hero-banner__dots" data-gh-hero-dots role="tablist" aria-label="Banner slides"></div>
+        {%- endif -%}
+      </div>
+    {%- else -%}
+      <div class="gh-hero-banner__empty">
+        <p>Add <strong>Banner slide</strong> blocks with a background image to build your homepage hero.</p>
+      </div>
+    {%- endif -%}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Grosyhub hero banner",
+  "tag": "section",
+  "class": "grosyhub-hero-slider-section",
+  "max_blocks": 8,
+  "settings": [
+    {
+      "type": "color",
+      "id": "brand_color",
+      "label": "Brand color",
+      "default": "#b89774"
+    },
+    {
+      "type": "checkbox",
+      "id": "autoplay",
+      "label": "Autoplay slides",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "autoplay_speed",
+      "label": "Autoplay interval",
+      "min": 3,
+      "max": 12,
+      "step": 1,
+      "unit": "s",
+      "default": 5
+    },
+    {
+      "type": "text",
+      "id": "aria_label",
+      "label": "Accessibility label",
+      "default": "Homepage banner"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "slide",
+      "name": "Banner slide",
+      "settings": [
+        {
+          "type": "header",
+          "content": "Background image"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Desktop image",
+          "info": "Wide lifestyle photo (2400×1000px+). Use a clean image without text for overlay slides."
+        },
+        {
+          "type": "image_picker",
+          "id": "image_mobile",
+          "label": "Mobile image",
+          "info": "Optional portrait crop for phones."
+        },
+        {
+          "type": "text",
+          "id": "image_alt",
+          "label": "Image alt text"
+        },
+        {
+          "type": "header",
+          "content": "Text overlay"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_overlay",
+          "label": "Show text overlay on this slide",
+          "default": true,
+          "info": "Turn off to use a full graphic banner (text baked into the image)."
+        },
+        {
+          "type": "text",
+          "id": "badge",
+          "label": "Badge",
+          "default": "Upgrade Your Space"
+        },
+        {
+          "type": "text",
+          "id": "heading_before",
+          "label": "Heading (first line)",
+          "default": "Make Your Home"
+        },
+        {
+          "type": "text",
+          "id": "heading_highlight",
+          "label": "Heading (highlighted)",
+          "default": "Smarter & Better"
+        },
+        {
+          "type": "textarea",
+          "id": "subheading",
+          "label": "Subheading",
+          "default": "Premium home essentials that simplify your everyday life."
+        },
+        {
+          "type": "text",
+          "id": "button_label",
+          "label": "Primary button",
+          "default": "Shop Now"
+        },
+        {
+          "type": "url",
+          "id": "button_link",
+          "label": "Primary button link"
+        },
+        {
+          "type": "checkbox",
+          "id": "open_in_new_tab",
+          "label": "Primary button — open in new tab",
+          "default": false
+        },
+        {
+          "type": "text",
+          "id": "button_secondary_label",
+          "label": "Secondary button",
+          "default": "Explore Collections"
+        },
+        {
+          "type": "url",
+          "id": "button_secondary_link",
+          "label": "Secondary button link"
+        },
+        {
+          "type": "checkbox",
+          "id": "button_secondary_new_tab",
+          "label": "Secondary button — open in new tab",
+          "default": false
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Grosyhub hero banner",
+      "blocks": [
+        {
+          "type": "slide",
+          "settings": {
+            "badge": "Upgrade Your Space",
+            "heading_before": "Make Your Home",
+            "heading_highlight": "Smarter & Better",
+            "subheading": "Premium home essentials that simplify your everyday life.",
+            "button_label": "Shop Now",
+            "button_secondary_label": "Explore Collections"
+          }
+        },
+        {
+          "type": "slide",
+          "settings": {
+            "show_overlay": false
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

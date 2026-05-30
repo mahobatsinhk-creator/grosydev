@@ -1,0 +1,26 @@
+{%- comment -%}
+  Outputs "true" if link must not open mega menu / appear in mega sidebar.
+  @param {object} link
+  @param {object} section
+{%- endcomment -%}
+{%- liquid
+  assign skip = false
+  assign title_down = link.title | downcase | strip
+  assign handle_down = link.handle | downcase
+
+  if title_down == 'contact' or title_down == 'contact us' or handle_down == 'contact' or handle_down == 'contact-us'
+    assign skip = true
+  endif
+
+  if skip == false
+    assign exclude_raw = section.settings.mega_exclude_links | default: 'home,new-arrivals,new arrivals'
+    assign exclude_parts = exclude_raw | split: ','
+    for part in exclude_parts
+      assign part_clean = part | downcase | strip
+      if part_clean == title_down or part_clean == handle_down
+        assign skip = true
+        break
+      endif
+    endfor
+  endif
+-%}{{- skip -}}

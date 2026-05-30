@@ -1,0 +1,62 @@
+{
+  "sections": {
+    "main": {
+      "type": "grosyhub-contact-page",
+      "blocks": {
+        "faq_1": {
+          "type": "faq",
+          "settings": {
+            "question": "How can I track my order?",
+            "answer": "Once your order ships, you'll receive a tracking link by email and SMS."
+          }
+        },
+        "faq_2": {
+          "type": "faq",
+          "settings": {
+            "question": "What is your return policy?",
+            "answer": "We offer easy 7-day returns on most products. Items must be unused and in original packaging."
+          }
+        },
+        "faq_3": {
+          "type": "faq",
+          "settings": {
+            "question": "Do you offer Cash on Delivery?",
+            "answer": "Yes, COD is available on eligible orders across India."
+          }
+        },
+        "faq_4": {
+          "type": "faq",
+          "settings": {
+            "question": "How long does delivery take?",
+            "answer": "Most orders arrive within 3–7 business days depending on your location."
+          }
+        },
+        "why_1": {
+          "type": "why_item",
+          "settings": { "title": "Friendly Support", "text": "Real people, real help" }
+        },
+        "why_2": {
+          "type": "why_item",
+          "settings": { "title": "Easy Returns", "text": "Hassle-free 7-day returns" }
+        },
+        "why_3": {
+          "type": "why_item",
+          "settings": { "title": "Quality Assured", "text": "Premium home essentials" }
+        },
+        "why_4": {
+          "type": "why_item",
+          "settings": { "title": "Secure & Safe", "text": "100% protected checkout" }
+        }
+      },
+      "block_order": ["faq_1", "faq_2", "faq_3", "faq_4", "why_1", "why_2", "why_3", "why_4"],
+      "settings": {
+        "brand_color": "#A56A2A",
+        "phone": "+91 97245 91484",
+        "email": "support@grosyhub.com",
+        "hours": "Mon – Sat: 9:00 AM – 7:00 PM (IST)",
+        "highlight_text": "Within 2 Hours — Our support team is always ready to assist you quickly."
+      }
+    }
+  },
+  "order": ["main"]
+}

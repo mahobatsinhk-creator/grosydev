@@ -1,0 +1,375 @@
+{% render 'grosyhub-home-banner-mount-inline' %}
+{{ 'grosyhub-section-header.css' | asset_url | stylesheet_tag }}
+
+{%- liquid
+  assign collections_list = section.settings.collection_list
+  assign limit = section.settings.categories_limit | default: 7
+  assign brand_color = section.settings.brand_color | default: '#b89774'
+  if section.settings.eyebrow != blank
+    assign category_eyebrow = section.settings.eyebrow
+  else
+    assign category_eyebrow = section.settings.heading_before | append: ' ' | append: section.settings.heading_highlight
+  endif
+  assign view_all_label = section.settings.view_all_label | default: 'View All Categories'
+  assign view_all_card_label = section.settings.view_all_card_label | default: 'View All'
+  if section.settings.view_all_url != blank
+    assign view_all_url = section.settings.view_all_url
+  else
+    assign view_all_url = routes.collections_url
+  endif
+-%}
+
+<section
+  class="gh-categories"
+  style="--gh-sec-brand: {{ brand_color }}; --gh-cat-brand: {{ brand_color }}; --gh-rec-brand: {{ brand_color }}; --gh-cat-brand-soft: color-mix(in srgb, {{ brand_color }} 12%, #ffffff); --gh-cat-brand-muted: color-mix(in srgb, {{ brand_color }} 22%, #ffffff);"
+  {{ section.shopify_attributes }}
+>
+  <div class="gh-categories__wrap gh-categories__container">
+    <div class="gh-categories__card">
+      <div class="gh-categories__header">
+        {% render 'grosyhub-section-header',
+          eyebrow: category_eyebrow,
+          subheading: section.settings.subheading,
+          view_all_url: view_all_url,
+          view_all_label: view_all_label,
+          icon: 'category'
+        %}
+      </div>
+
+      <div class="gh-categories__track-wrap">
+        <ul class="gh-categories__track" role="list">
+          {%- if collections_list != blank -%}
+            {%- for collection in collections_list limit: limit -%}
+              <li class="gh-categories__item">
+                <a href="{{ collection.url }}" class="gh-categories__link">
+                  <span class="gh-categories__media">
+                    {%- if collection.featured_image != blank -%}
+                      {{
+                        collection.featured_image
+                        | image_url: width: 240
+                        | image_tag:
+                          class: 'gh-categories__image',
+                          loading: 'lazy',
+                          widths: '120, 180, 240',
+                          sizes: '120px',
+                          alt: collection.title
+                      }}
+                    {%- else -%}
+                      <span class="gh-categories__placeholder" aria-hidden="true">
+                        {{ collection.title | slice: 0, 1 }}
+                      </span>
+                    {%- endif -%}
+                    <span class="gh-categories__arrow" aria-hidden="true">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                        <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </span>
+                  </span>
+                  <span class="gh-categories__label">{{ collection.title }}</span>
+                </a>
+              </li>
+            {%- endfor -%}
+          {%- else -%}
+            {%- for i in (1..limit) -%}
+              <li class="gh-categories__item">
+                <div class="gh-categories__link gh-categories__link--placeholder">
+                  <span class="gh-categories__media">
+                    <span class="gh-categories__placeholder" aria-hidden="true">{{ i }}</span>
+                    <span class="gh-categories__arrow" aria-hidden="true">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                        <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </span>
+                  </span>
+                  <span class="gh-categories__label">Category {{ i }}</span>
+                </div>
+              </li>
+            {%- endfor -%}
+          {%- endif -%}
+
+          <li class="gh-categories__item">
+            <a href="{{ view_all_url }}" class="gh-categories__link gh-categories__link--view-all">
+              <span class="gh-categories__media gh-categories__media--view-all">
+                <span class="gh-categories__grid-icon" aria-hidden="true">
+                  <span></span><span></span><span></span><span></span>
+                </span>
+              </span>
+              <span class="gh-categories__label gh-categories__label--bold">{{ view_all_card_label }}</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% style %}
+  @media screen and (max-width: 749px) {
+    #shopify-section-{{ section.id }} {
+      display: none !important;
+    }
+  }
+{% endstyle %}
+
+{% stylesheet %}
+  .gh-categories {
+    --gh-cat-text: #2b2b2b;
+    --gh-cat-text-muted: #555555;
+    --gh-cat-white: #ffffff;
+    --gh-cat-circle: 7.5rem;
+
+    padding-block: 1.5rem 2rem;
+    background: var(--gh-cat-brand-soft, #f7f3ee);
+    font-family: var(--font-body--family), system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  .gh-categories__container {
+    width: 100%;
+    max-width: var(--page-width, 100%);
+    margin-inline: auto;
+    padding-inline: var(--page-margin, 16px);
+  }
+
+  .gh-categories__card {
+    background: var(--gh-cat-white);
+    border-radius: 1rem;
+    padding: 1.25rem 1.5rem 1.5rem;
+    box-shadow: 0 2px 16px rgb(0 0 0 / 0.04);
+  }
+
+  .gh-categories__header {
+    margin-bottom: 1.25rem;
+  }
+
+  .gh-categories__header .gh-sec-head {
+    margin-bottom: 0;
+    width: 100%;
+  }
+
+  .gh-categories__track-wrap {
+    overflow: hidden;
+  }
+
+  .gh-categories__track {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.25rem;
+    margin: 0;
+    padding: 0.25rem 0.125rem 0.5rem;
+    list-style: none;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .gh-categories__track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .gh-categories__item {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    width: var(--gh-cat-circle);
+  }
+
+  .gh-categories__link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.625rem;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .gh-categories__link--placeholder {
+    pointer-events: none;
+    opacity: 0.65;
+  }
+
+  .gh-categories__media {
+    position: relative;
+    display: block;
+    width: var(--gh-cat-circle);
+    height: var(--gh-cat-circle);
+    border-radius: 50%;
+    overflow: hidden;
+    background: #f0f0f0;
+  }
+
+  .gh-categories__media--view-all {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gh-cat-brand-muted, #f0e8de);
+  }
+
+  .gh-categories__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .gh-categories__placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--gh-cat-brand);
+    background: var(--gh-cat-brand-muted);
+  }
+
+  .gh-categories__arrow {
+    position: absolute;
+    left: 50%;
+    bottom: 0.375rem;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.625rem;
+    height: 1.625rem;
+    border-radius: 50%;
+    background: var(--gh-cat-white);
+    color: var(--gh-cat-brand);
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.12);
+  }
+
+  .gh-categories__grid-icon {
+    display: grid;
+    grid-template-columns: repeat(2, 0.75rem);
+    gap: 0.25rem;
+  }
+
+  .gh-categories__grid-icon span {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 2px;
+    background: var(--gh-cat-brand);
+  }
+
+  .gh-categories__label {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--gh-cat-text-muted);
+    text-align: center;
+    line-height: 1.3;
+    max-width: var(--gh-cat-circle);
+    word-wrap: break-word;
+  }
+
+  .gh-categories__label--bold {
+    font-weight: 700;
+    color: var(--gh-cat-text);
+  }
+
+  .gh-categories__link:hover .gh-categories__label {
+    color: var(--gh-cat-brand);
+  }
+
+  @media screen and (min-width: 750px) {
+    .gh-categories {
+      --gh-cat-circle: 8.5rem;
+      padding-block: 2.5rem 3rem;
+    }
+
+    .gh-categories__card {
+      padding: 1.5rem 2rem 1.75rem;
+    }
+
+    .gh-categories__track {
+      gap: 1.75rem;
+    }
+  }
+
+  @media screen and (min-width: 1200px) {
+    .gh-categories__track {
+      justify-content: center;
+      overflow-x: visible;
+      flex-wrap: nowrap;
+    }
+  }
+
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Shop by Category",
+  "tag": "section",
+  "class": "shop-by-category-section",
+  "settings": [
+    {
+      "type": "color",
+      "id": "brand_color",
+      "label": "Brand color",
+      "default": "#b89774"
+    },
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Section badge",
+      "default": "Shop by Category"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subtitle (optional)"
+    },
+    {
+      "type": "text",
+      "id": "heading_before",
+      "label": "Heading (before highlight)",
+      "default": "Shop by",
+      "info": "Used only if section badge is empty."
+    },
+    {
+      "type": "text",
+      "id": "heading_highlight",
+      "label": "Heading highlight",
+      "default": "Category",
+      "info": "Used only if section badge is empty."
+    },
+    {
+      "type": "text",
+      "id": "view_all_label",
+      "label": "View all button label",
+      "default": "View All Categories"
+    },
+    {
+      "type": "url",
+      "id": "view_all_url",
+      "label": "View all link"
+    },
+    {
+      "type": "text",
+      "id": "view_all_card_label",
+      "label": "View all card label",
+      "default": "View All"
+    },
+    {
+      "type": "collection_list",
+      "id": "collection_list",
+      "label": "Categories",
+      "limit": 12
+    },
+    {
+      "type": "range",
+      "id": "categories_limit",
+      "label": "Categories to show",
+      "min": 4,
+      "max": 12,
+      "step": 1,
+      "default": 7
+    }
+  ],
+  "presets": [
+    {
+      "name": "Shop by Category"
+    }
+  ]
+}
+{% endschema %}
