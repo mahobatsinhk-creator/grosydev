@@ -126,18 +126,32 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
 
   const orderNum = String(order.name || '').replace('#', '');
   const serviceFooter = isCod ? `${packingSlip.serviceLabel} · COD` : packingSlip.serviceLabel;
+  const printW = `${packingSlip.printWidthMm}mm`;
+  const printH = `${packingSlip.printHeightMm}mm`;
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=${packingSlip.printWidthMm}, height=${packingSlip.printHeightMm}" />
   <title>Packing slip ${esc(order.name)} — ${esc(awb)}</title>
   <style>
-    @page { size: ${pageW} ${pageH}; margin: 0.04in; }
+    /* Exact 4×6 in = 101.6mm × 152.4mm — do not use 100mm or browser shrinks to ~10cm */
+    @page {
+      size: ${printW} ${printH} portrait;
+      size: ${pageW} ${pageH} portrait;
+      margin: 0;
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    html {
+      width: ${printW};
+      height: ${printH};
+    }
     body {
-      width: 3.92in;
-      max-height: 5.92in;
+      width: ${printW};
+      height: ${printH};
+      margin: 0;
+      padding: 0;
       overflow: hidden;
       font-family: Arial, Helvetica, sans-serif;
       font-size: 6pt;
@@ -146,7 +160,14 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
-    .sheet { border: 1px solid #000; }
+    .sheet {
+      width: ${printW};
+      height: ${printH};
+      border: 1px solid #000;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
     .row { display: flex; border-bottom: 1px solid #000; }
     .row:last-child { border-bottom: none; }
     .cell {
@@ -234,19 +255,36 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
       background: #d9f0d9;
     }
     @media screen {
+      html { margin: 0 auto; }
       body { margin: 12px auto; box-shadow: 0 0 8px rgba(0,0,0,.15); }
-      .no-print { display: block; text-align: center; margin: 12px; }
+      .no-print { display: block; text-align: center; margin: 12px; max-width: 520px; }
     }
     @media print {
+      html, body {
+        width: ${printW} !important;
+        height: ${printH} !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .sheet {
+        width: ${printW} !important;
+        height: ${printH} !important;
+        border: none;
+      }
       .no-print { display: none !important; }
-      body { margin: 0; box-shadow: none; }
     }
   </style>
 </head>
 <body>
   <div class="no-print">
-    <button onclick="window.print()" style="padding:8px 16px;font-size:14px;cursor:pointer">Print packing slip (4×6 inch)</button>
-    <p style="margin-top:8px;color:#666;font-size:12px">Printer: scale <strong>100%</strong>, paper <strong>4×6 in</strong> (101×152 mm) portrait</p>
+    <button type="button" onclick="window.print()" style="padding:8px 16px;font-size:14px;cursor:pointer">Print packing slip (4×6 inch)</button>
+    <p style="margin-top:8px;color:#333;font-size:12px;line-height:1.5">
+      <strong>Printer setup (required):</strong><br>
+      Paper size: <strong>4 × 6 inch</strong> (101 × 152 mm) — not A4, not 10×10 cm<br>
+      Margins: <strong>None</strong> · Scale: <strong>100%</strong> (turn off “Fit to page”)<br>
+      Orientation: <strong>Portrait</strong>
+    </p>
+    <p style="margin-top:6px;color:#888;font-size:11px">Label on printer: 4×6 / 101×152 / 100×150 mm thermal</p>
   </div>
 
   <div class="sheet">

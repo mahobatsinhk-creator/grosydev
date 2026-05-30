@@ -111,9 +111,11 @@ export const config = {
     serviceLabel: optional('PACKING_SLIP_SERVICE_LABEL', 'DART APEX'),
     dimensions: optional('PACKING_SLIP_DIMENSIONS', '10.00 * 10.00 * 10.00(cm)'),
     invoicePrefix: optional('PACKING_SLIP_INVOICE_PREFIX', 'GH'),
-    /** Portrait print size — default 4×6 inch thermal slip */
+    /** Portrait print size — default 4×6 inch (101.6 × 152.4 mm) */
     pageWidth: optional('PACKING_SLIP_PAGE_WIDTH', '4in'),
     pageHeight: optional('PACKING_SLIP_PAGE_HEIGHT', '6in'),
+    printWidthMm: optional('PACKING_SLIP_PRINT_WIDTH_MM', '101.6'),
+    printHeightMm: optional('PACKING_SLIP_PRINT_HEIGHT_MM', '152.4'),
   },
 
   shopify: {
