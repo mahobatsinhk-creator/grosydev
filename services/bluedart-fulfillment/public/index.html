@@ -10,7 +10,7 @@
       color: #1a1a1a;
       background: #f6f4f1;
     }
-    body { max-width: 960px; margin: 0 auto; padding: 24px; }
+    body { max-width: 1100px; margin: 0 auto; padding: 24px; }
     h1 { font-size: 1.4rem; margin-bottom: 4px; }
     .sub { color: #666; margin-bottom: 24px; font-size: 0.95rem; }
     .card { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
@@ -18,15 +18,22 @@
     input { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
     .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
     .row > * { flex: 1; min-width: 180px; }
-    button { background: #b89774; color: #fff; border: 0; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+    button { background: #b89774; color: #fff; border: 0; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
     button.secondary { background: #eee; color: #333; }
     button:disabled { opacity: 0.5; cursor: not-allowed; }
-    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #eee; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #eee; vertical-align: middle; }
+    th:last-child, td.actions { min-width: 220px; }
+    .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    .actions button { padding: 7px 10px; white-space: nowrap; }
+    .row-msg { font-size: 0.8rem; margin-top: 4px; padding: 6px 8px; border-radius: 6px; }
+    .row-msg.ok { background: #e8f5e9; color: #1b5e20; }
+    .row-msg.err { background: #ffebee; color: #b71c1c; }
     .msg { padding: 12px; border-radius: 8px; margin-top: 12px; font-size: 0.9rem; }
     .msg.ok { background: #e8f5e9; color: #1b5e20; }
     .msg.err { background: #ffebee; color: #b71c1c; }
     code { background: #f0ece6; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem; }
+    .table-wrap { overflow-x: auto; }
   </style>
 </head>
 <body>
@@ -36,11 +43,12 @@
   <div class="card">
     <div class="row">
       <div>
-        <label for="secret">API secret (from .env API_SECRET)</label>
-        <input id="secret" type="password" placeholder="Required if API_SECRET is set" />
+        <label for="secret">API secret <small style="color:#888">(saved in browser)</small></label>
+        <input id="secret" type="password" placeholder="Auto-saved after first use" autocomplete="off" />
       </div>
-      <div style="flex:0">
-        <button type="button" id="loadBtn">Load unfulfilled orders</button>
+      <div style="flex:0;display:flex;gap:8px;align-items:flex-end">
+        <button type="button" id="loadBtn">Refresh unfulfilled orders</button>
+        <button type="button" class="secondary" id="batchBtn">Fulfill all</button>
       </div>
     </div>
     <div id="status"></div>
@@ -48,11 +56,11 @@
 
   <div class="card">
     <h2 style="margin-top:0;font-size:1.1rem">Unfulfilled orders</h2>
-    <div id="orders">Click “Load unfulfilled orders”.</div>
+    <div id="orders">Loading orders…</div>
   </div>
 
   <div class="card">
-    <h2 style="margin-top:0;font-size:1.1rem">Manual fulfill</h2>
+    <h2 style="margin-top:0;font-size:1.1rem">Manual fulfill (optional)</h2>
     <div class="row">
       <div>
         <label for="orderId">Order name or ID (e.g. 1458 or #1458)</label>
@@ -82,6 +90,13 @@
       el.innerHTML = `<div class="msg ${ok ? 'ok' : 'err'}">${text}</div>`;
     }
 
+    function successHtml(data) {
+      return `AWB <code>${data.awb}</code> —
+        <a href="${data.trackingUrl}" target="_blank" rel="noopener">Track</a> ·
+        <a href="${data.packingSlipUrl || '/api/packing-slip/' + data.awb}" target="_blank" rel="noopener">Packing slip</a> ·
+        <a href="${data.labelPrintUrl || '/api/print-label/' + data.awb}" target="_blank" rel="noopener">Label</a>`;
+    }
+
     async function api(path, options = {}) {
       const res = await fetch(path, { ...options, headers: { ...headers(), ...options.headers } });
       const data = await res.json().catch(() => ({}));
@@ -89,59 +104,145 @@
       return data;
     }
 
-    document.getElementById('loadBtn').onclick = async () => {
-      try {
-        statusEl.textContent = 'Loading…';
-        const data = await api('/api/orders/unfulfilled');
-        if (!data.orders.length) {
-          ordersEl.innerHTML = '<p>No unfulfilled orders.</p>';
-        } else {
-          ordersEl.innerHTML = `<table>
-            <thead><tr><th>Order</th><th>Customer</th><th>Pincode</th><th>Total</th><th></th></tr></thead>
-            <tbody>${data.orders.map(o => `
-              <tr>
-                <td><strong>${o.name}</strong></td>
-                <td>${o.customer || '—'}</td>
-                <td>${o.pincode || '—'}</td>
-                <td>₹${o.total}</td>
-                <td><button type="button" data-order-id="${o.id}" data-order-name="${o.name}">Ship</button></td>
-              </tr>`).join('')}</tbody>
-          </table>`;
-          ordersEl.querySelectorAll('button[data-order-id]').forEach(btn => {
-            btn.onclick = () => {
-              document.getElementById('orderId').value = btn.dataset.orderId;
-              document.getElementById('fulfillBtn').click();
-            };
-          });
-        }
-        statusEl.textContent = '';
-      } catch (e) {
-        show(statusEl, e.message, false);
+    async function fulfillOrder(orderId, dryRun, resultEl, buttons) {
+      if (!orderId) {
+        if (resultEl) show(resultEl, 'Missing order ID.', false);
+        return;
       }
-    };
-
-    async function runFulfill(dryRun) {
-      const orderId = document.getElementById('orderId').value.trim();
-      if (!orderId) return show(manualResultEl, 'Enter an order name or ID.', false);
+      buttons?.forEach((b) => (b.disabled = true));
       try {
-        show(manualResultEl, dryRun ? 'Building preview…' : 'Creating Blue Dart AWB…', true);
+        if (resultEl) {
+          resultEl.innerHTML = `<div class="row-msg ok">${dryRun ? 'Building preview…' : 'Creating Blue Dart AWB…'}</div>`;
+        }
         const data = await api('/api/fulfill', {
           method: 'POST',
           body: JSON.stringify({ orderId, dryRun }),
         });
         if (dryRun) {
-          show(manualResultEl, `<pre style="white-space:pre-wrap;margin:0">${JSON.stringify(data, null, 2)}</pre>`, true);
+          if (resultEl) {
+            resultEl.innerHTML = `<div class="row-msg ok"><pre style="white-space:pre-wrap;margin:0;font-size:0.75rem">${JSON.stringify(data, null, 2)}</pre></div>`;
+          }
         } else {
-          show(manualResultEl, `Done — AWB <code>${data.awb}</code>. <a href="${data.trackingUrl}" target="_blank" rel="noopener">Track</a>`, true);
-          document.getElementById('loadBtn').click();
+          if (resultEl) {
+            resultEl.innerHTML = `<div class="row-msg ok">${successHtml(data)}</div>`;
+          }
+          loadOrders();
         }
+        return data;
       } catch (e) {
-        show(manualResultEl, e.message, false);
+        if (resultEl) {
+          resultEl.innerHTML = `<div class="row-msg err">${e.message}</div>`;
+        }
+        throw e;
+      } finally {
+        buttons?.forEach((b) => (b.disabled = false));
       }
+    }
+
+    const SECRET_STORAGE_KEY = 'grosyhub-bd-api-secret';
+
+    function saveSecret() {
+      const v = secretEl.value.trim();
+      if (v) localStorage.setItem(SECRET_STORAGE_KEY, v);
+    }
+
+    function loadSecret() {
+      const saved = localStorage.getItem(SECRET_STORAGE_KEY);
+      if (saved) secretEl.value = saved;
+    }
+
+    secretEl.addEventListener('input', saveSecret);
+    secretEl.addEventListener('change', saveSecret);
+
+    function bindOrderRows(data) {
+      if (!data.orders.length) {
+        ordersEl.innerHTML = '<p>No unfulfilled orders.</p>';
+        return;
+      }
+      ordersEl.innerHTML = `<div class="table-wrap"><table>
+        <thead><tr>
+          <th>Order</th><th>Customer</th><th>Pincode</th><th>Total</th><th>Actions</th>
+        </tr></thead>
+        <tbody>${data.orders.map((o) => `
+          <tr data-row="${o.id}">
+            <td><strong>${o.name}</strong></td>
+            <td>${o.customer || '—'}</td>
+            <td>${o.pincode || '—'}</td>
+            <td>₹${o.total}</td>
+            <td class="actions">
+              <button type="button" class="secondary btn-preview" data-order-id="${o.id}">Preview</button>
+              <button type="button" class="btn-fulfill" data-order-id="${o.id}">Create AWB &amp; fulfill</button>
+              <div class="row-result" id="result-${o.id}"></div>
+            </td>
+          </tr>`).join('')}</tbody>
+      </table></div>
+      <p style="margin-top:10px;font-size:0.85rem;color:#666">${data.orders.length} unfulfilled order(s) · updated ${new Date().toLocaleTimeString()}</p>`;
+
+      ordersEl.querySelectorAll('.btn-preview').forEach((btn) => {
+        btn.onclick = () => {
+          const id = btn.dataset.orderId;
+          const resultEl = document.getElementById('result-' + id);
+          const rowButtons = btn.closest('.actions').querySelectorAll('button');
+          fulfillOrder(id, true, resultEl, [...rowButtons]);
+        };
+      });
+
+      ordersEl.querySelectorAll('.btn-fulfill').forEach((btn) => {
+        btn.onclick = () => {
+          const id = btn.dataset.orderId;
+          const name = btn.closest('tr').querySelector('strong')?.textContent || id;
+          if (!confirm(`Create Blue Dart AWB for ${name}?`)) return;
+          const resultEl = document.getElementById('result-' + id);
+          const rowButtons = btn.closest('.actions').querySelectorAll('button');
+          fulfillOrder(id, false, resultEl, [...rowButtons]);
+        };
+      });
+    }
+
+    async function loadOrders() {
+      saveSecret();
+      try {
+        statusEl.textContent = 'Refreshing orders…';
+        ordersEl.innerHTML = '<p>Loading…</p>';
+        const data = await api('/api/orders/unfulfilled');
+        bindOrderRows(data);
+        statusEl.innerHTML = `<div class="msg ok" style="margin-top:8px">Orders refreshed (${data.orders.length} unfulfilled)</div>`;
+        setTimeout(() => { statusEl.textContent = ''; }, 2500);
+      } catch (e) {
+        show(statusEl, e.message, false);
+        ordersEl.innerHTML = '<p>Could not load orders. Check API secret and try Refresh.</p>';
+      }
+    }
+
+    document.getElementById('loadBtn').onclick = () => loadOrders();
+
+    async function runFulfill(dryRun) {
+      const orderId = document.getElementById('orderId').value.trim();
+      await fulfillOrder(orderId, dryRun, manualResultEl, null);
     }
 
     document.getElementById('dryRunBtn').onclick = () => runFulfill(true);
     document.getElementById('fulfillBtn').onclick = () => runFulfill(false);
+
+    document.getElementById('batchBtn').onclick = async () => {
+      if (!confirm('Create Blue Dart AWBs for ALL unfulfilled orders?')) return;
+      try {
+        show(statusEl, 'Processing all unfulfilled orders…', true);
+        const data = await api('/api/fulfill/batch', { method: 'POST', body: '{}' });
+        show(statusEl, `Batch done: ${data.success} succeeded, ${data.failed} failed (of ${data.processed})`, data.failed === 0);
+        loadOrders();
+      } catch (e) {
+        show(statusEl, e.message, false);
+      }
+    };
+
+    // Auto-fill secret + load orders on open
+    loadSecret();
+    if (!secretEl.value.trim()) {
+      secretEl.value = 'grosyhub-local-dev-secret';
+      saveSecret();
+    }
+    loadOrders();
   </script>
 </body>
 </html>

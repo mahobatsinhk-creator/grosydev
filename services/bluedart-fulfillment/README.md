@@ -1,89 +1,141 @@
 # Grosyhub Blue Dart Fulfillment
 
-Post-checkout Blue Dart integration for **igh9a1-1h.myshopify.com**.
+Post-checkout Blue Dart for **igh9a1-1h.myshopify.com**. **Shiprocket checkout is not modified.**
 
-**Shiprocket fast checkout is not modified.** Orders still checkout via Shiprocket; this tool runs afterward to create Blue Dart AWBs and mark Shopify orders fulfilled with tracking.
+## How this fits your main project
 
-## What it does
-
-1. Loads unfulfilled Shopify orders (Admin API)
-2. Maps order → Blue Dart `GenerateWayBill` payload
-3. Creates AWB + saves label PDF to `labels/`
-4. Fulfills the order in Shopify with Blue Dart tracking (customer gets shipped email)
-
-Pickup: **385001** (Palanpur / area **PLN**). Delivers pan-India via Blue Dart network.
-
-## One-time setup
-
-### 1. Blue Dart Customer Code
-
-Your account: **PLN347970** → API uses area **PLN** + customer code **347970**.
-
-Set either format in `.env`:
-
-```env
-BLUEDART_CUSTOMER_CODE=PLN347970
-# or
-BLUEDART_CUSTOMER_CODE=347970
-BLUEDART_ORIGIN_AREA=PLN
+```text
+grosydev (GitHub theme)     →  Shopify store (storefront + Shiprocket checkout)
+bluedart-fulfillment/       →  Separate server (AWB + labels + Shopify fulfill)
 ```
 
-Production waybill generation verified with this account.
+The theme and this service are **deployed separately**. No theme changes are required for live Blue Dart.
 
-### 2. Shopify Custom App
+| Part | Where it runs |
+|------|----------------|
+| Storefront, cart, Shiprocket | Shopify theme (`shopify theme push` / GitHub) |
+| Blue Dart AWB + labels | This Node app (PC, VPS, Railway, Render) |
 
-In Shopify Admin → Settings → Apps → Develop apps:
+---
 
-- Create a custom app
-- Scopes: `read_orders`, `write_fulfillments`, `read_merchant_managed_fulfillment_orders`, `write_merchant_managed_fulfillment_orders`
-- Install and copy **Admin API access token** → `SHOPIFY_ACCESS_TOKEN`
+## Generate AWBs for all orders (3 options)
 
-This does **not** change checkout or Shiprocket.
+### Option 1 — Manual batch (good to start)
 
-### 3. Configure environment
+Dashboard: **Fulfill all** button (after Load unfulfilled orders).
+
+CLI:
+
+```bash
+npm run fulfill-all
+# or limit: node src/cli.js fulfill-all 10
+```
+
+Processes every open unfulfilled order and creates AWB + Shopify tracking.
+
+---
+
+### Option 2 — Automatic on every paid order (live production)
+
+1. Deploy this app to a public HTTPS URL (see below).
+2. In `.env`:
+
+```env
+AUTO_FULFILL_MODE=webhook
+PUBLIC_URL=https://your-app.up.railway.app
+```
+
+3. In **Dev Dashboard** → your app → **Versions** → add webhook:
+   - Topic: `orders/paid`
+   - URL: `https://your-app.up.railway.app/webhooks/shopify/orders-paid`
+   - Release new version and reinstall on store if needed.
+
+Each paid order automatically gets a Blue Dart AWB and Shopify fulfillment.
+
+---
+
+### Option 3 — Scheduled batch (e.g. every 30 minutes)
+
+```env
+AUTO_FULFILL_MODE=batch
+AUTO_FULFILL_CRON_MINUTES=30
+AUTO_FULFILL_BATCH_LIMIT=50
+```
+
+Server processes all unfulfilled orders on that interval. Good if you pack orders in batches.
+
+Use `AUTO_FULFILL_MODE=all` for webhook + scheduled batch together.
+
+---
+
+## Go live (deploy)
+
+### Recommended: Railway or Render (free tier to start)
+
+1. Push `services/bluedart-fulfillment` to GitHub (same repo is fine).
+2. Create new **Web Service** on [Railway](https://railway.app) or [Render](https://render.com).
+3. Root directory: `services/bluedart-fulfillment`
+4. Start command: `npm start`
+5. Add all `.env` variables in the hosting dashboard (never commit secrets).
+6. Copy the public URL → set `PUBLIC_URL` in env.
+7. Register Shopify webhook (Option 2 above) if using auto mode.
+
+**Requirements:** Node 18+, persistent disk optional (labels stored on server; download via `/api/labels/{AWB}.pdf`).
+
+### Keep running on your PC (simple, not 24/7)
 
 ```bash
 cd services/bluedart-fulfillment
-cp .env.example .env
-# Edit .env — fill passwords, licence keys, customer code, warehouse address
-```
-
-Never commit `.env` or paste credentials in GitHub.
-
-### 4. Run
-
-```bash
 npm start
-# Open http://localhost:8787
 ```
 
-Or CLI:
+Use **Fulfill all** when you pack orders. PC must be on.
+
+---
+
+## Labels in production
+
+After fulfill, download label:
+
+```text
+https://your-app.up.railway.app/api/labels/90532504952.pdf
+```
+
+(Use your API secret in dashboard for admin actions; label URLs are public AWB numbers only.)
+
+Local path when running on PC:
+
+```text
+services/bluedart-fulfillment/labels/{AWB}.pdf
+```
+
+---
+
+## Daily workflow (recommended)
+
+1. Customer orders via Shiprocket (unchanged).
+2. You pack orders.
+3. Either:
+   - Click **Fulfill all** on dashboard, or
+   - Auto via webhook / cron if enabled.
+4. Print labels from `labels/` folder or download URLs.
+5. Hand packages to Blue Dart pickup.
+
+---
+
+## Commands
 
 ```bash
-node src/cli.js test-auth          # verify Blue Dart login + pincode 385001
-node src/cli.js dry-run 1001       # preview payload for order #1001
-node src/cli.js fulfill 1001       # create AWB + fulfill in Shopify
+npm start                    # dashboard http://localhost:8787
+npm run fulfill-all          # all unfulfilled orders
+node src/cli.js fulfill 1458 # single order
+node src/cli.js test-auth    # Blue Dart login test
 ```
 
-Set `API_SECRET` in `.env` and use the same value in the web UI when calling APIs.
-
-## Deploy (optional)
-
-Run on any small host (Railway, Render, VPS). Use HTTPS + `API_SECRET`. No theme deploy required.
-
-For auto-fulfill on every paid order, add a Shopify webhook `orders/paid` → `POST /api/fulfill` (only after Customer Code is verified in production).
-
-## Files
-
-| File | Role |
-|------|------|
-| `src/bluedart.js` | JWT auth, waybill, tracking |
-| `src/shopify.js` | Orders + fulfillments |
-| `src/map-order.js` | Shopify order → Blue Dart JSON |
-| `public/index.html` | Simple ops dashboard |
+---
 
 ## Security
 
-- Rotate Blue Dart password if shared in chat
-- Keep licence keys and tokens in `.env` only
-- Theme repo (`grosydev`) has **zero** Blue Dart secrets
+- Rotate secrets if shared in chat.
+- Set strong `API_SECRET` on production.
+- Webhooks verified with Shopify HMAC (Client secret).

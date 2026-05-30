@@ -1,16 +1,20 @@
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'node:http';
 import { readFileSync, existsSync } from 'node:fs';
 
 import { config, assertBlueDartConfig, assertBlueDartAuthConfig, assertShopifyConfig } from './config.js';
-import { getShippingJwt, generateWaybill, checkPincodeServiceability, trackingUrl } from './bluedart.js';
-import { getOrder, listUnfulfilledOrders, fulfillOrderWithAwb, testShopifyConnection } from './shopify.js';
-import { shopifyOrderToWaybill, summarizeOrder } from './map-order.js';
+import { getShippingJwt, checkPincodeServiceability } from './bluedart.js';
+import { listUnfulfilledOrders, testShopifyConnection } from './shopify.js';
+import { summarizeOrder } from './map-order.js';
+import { labelsDir } from './paths.js';
+import { processOrder } from './fulfill.js';
+import { processAllUnfulfilled } from './batch.js';
+import { verifyShopifyWebhook, parseWebhookOrder, shouldAutoFulfillOrder } from './webhook.js';
+import { buildLabelPrintHtml } from './packing-slip.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const labelsDir = resolve(__dirname, '../labels');
 mkdirSync(labelsDir, { recursive: true });
 
 function json(res, status, body) {
@@ -28,43 +32,16 @@ function unauthorized(req, res) {
   return false;
 }
 
-async function readBody(req) {
+async function readRawBody(req) {
   const chunks = [];
   for await (const chunk of req) chunks.push(chunk);
-  const text = Buffer.concat(chunks).toString('utf8');
-  return text ? JSON.parse(text) : {};
+  return Buffer.concat(chunks);
 }
 
-export async function processOrder(orderIdOrName, { notifyCustomer = true, dryRun = false } = {}) {
-  assertBlueDartConfig();
-  assertShopifyConfig();
-
-  const order = await getOrder(orderIdOrName);
-  const payload = shopifyOrderToWaybill(order);
-
-  if (dryRun) {
-    return { order: summarizeOrder(order), payload, dryRun: true };
-  }
-
-  const waybill = await generateWaybill(payload);
-  if (!waybill.awb) {
-    throw new Error('Waybill created but AWB number missing in response');
-  }
-
-  if (waybill.pdfBase64) {
-    const labelPath = resolve(labelsDir, `${waybill.awb}.pdf`);
-    writeFileSync(labelPath, Buffer.from(waybill.pdfBase64, 'base64'));
-  }
-
-  const fulfillment = await fulfillOrderWithAwb(order, waybill.awb, { notifyCustomer });
-
-  return {
-    order: summarizeOrder(order),
-    awb: waybill.awb,
-    trackingUrl: trackingUrl(waybill.awb),
-    fulfillmentId: fulfillment.id,
-    labelSaved: Boolean(waybill.pdfBase64),
-  };
+async function readJsonBody(req) {
+  const raw = await readRawBody(req);
+  const text = raw.toString('utf8');
+  return { raw, data: text ? JSON.parse(text) : {} };
 }
 
 function serveStatic(res, filePath, contentType) {
@@ -74,6 +51,32 @@ function serveStatic(res, filePath, contentType) {
   }
   res.writeHead(200, { 'Content-Type': contentType });
   res.end(readFileSync(filePath));
+}
+
+function startAutoFulfillCron() {
+  const mode = config.autoFulfillMode;
+  const minutes = config.autoFulfillCronMinutes;
+  if (!minutes || minutes < 1) return;
+  if (mode !== 'batch' && mode !== 'all') return;
+
+  const run = async () => {
+    try {
+      console.log('[auto-fulfill] Running batch…');
+      const result = await processAllUnfulfilled({
+        limit: config.autoFulfillBatchLimit,
+        notifyCustomer: config.autoFulfillNotifyCustomer,
+      });
+      console.log(
+        `[auto-fulfill] Done: ${result.success}/${result.processed} succeeded, ${result.failed} failed`
+      );
+    } catch (err) {
+      console.error('[auto-fulfill] Error:', err.message || err);
+    }
+  };
+
+  run();
+  setInterval(run, minutes * 60 * 1000);
+  console.log(`[auto-fulfill] Batch every ${minutes} minutes (mode: ${mode})`);
 }
 
 export function startServer() {
@@ -89,7 +92,81 @@ export function startServer() {
       }
 
       if (req.method === 'GET' && url.pathname === '/health') {
-        json(res, 200, { ok: true, shop: config.shopify.shop });
+        json(res, 200, {
+          ok: true,
+          shop: config.shopify.shop,
+          autoFulfillMode: config.autoFulfillMode,
+        });
+        return;
+      }
+
+      // Shopify webhook — verified by HMAC, not API secret
+      if (req.method === 'POST' && url.pathname === '/webhooks/shopify/orders-paid') {
+        const raw = await readRawBody(req);
+        const hmac = req.headers['x-shopify-hmac-sha256'];
+        if (!verifyShopifyWebhook(raw.toString('utf8'), hmac)) {
+          json(res, 401, { error: 'Invalid webhook signature' });
+          return;
+        }
+
+        const mode = config.autoFulfillMode;
+        if (mode !== 'webhook' && mode !== 'all') {
+          json(res, 200, { skipped: true, reason: 'AUTO_FULFILL_MODE is not webhook/all' });
+          return;
+        }
+
+        const webhookOrder = parseWebhookOrder(raw.toString('utf8'));
+        if (!shouldAutoFulfillOrder(webhookOrder)) {
+          json(res, 200, { skipped: true, order: webhookOrder.name });
+          return;
+        }
+
+        const result = await processOrder(webhookOrder.id, {
+          notifyCustomer: config.autoFulfillNotifyCustomer,
+        });
+        json(res, 200, result);
+        return;
+      }
+
+      if (req.method === 'GET' && url.pathname.startsWith('/api/labels/')) {
+        const awb = url.pathname.replace('/api/labels/', '').replace(/\.pdf$/i, '');
+        if (!/^\d+$/.test(awb)) {
+          json(res, 400, { error: 'Invalid AWB' });
+          return;
+        }
+        const labelPath = resolve(labelsDir, `${awb}.pdf`);
+        if (!existsSync(labelPath)) {
+          json(res, 404, { error: 'Label not found' });
+          return;
+        }
+        res.writeHead(200, { 'Content-Type': 'application/pdf' });
+        res.end(readFileSync(labelPath));
+        return;
+      }
+
+      if (req.method === 'GET' && url.pathname.startsWith('/api/packing-slip/')) {
+        const awb = url.pathname.replace('/api/packing-slip/', '').replace(/\.html$/i, '');
+        if (!/^\d+$/.test(awb)) {
+          json(res, 400, { error: 'Invalid AWB' });
+          return;
+        }
+        const slipPath = resolve(labelsDir, `${awb}-packing-slip.html`);
+        if (existsSync(slipPath)) {
+          serveStatic(res, slipPath, 'text/html; charset=utf-8');
+          return;
+        }
+        json(res, 404, { error: 'Packing slip not found — re-fulfill order or run regenerate script' });
+        return;
+      }
+
+      if (req.method === 'GET' && url.pathname.startsWith('/api/print-label/')) {
+        const awb = url.pathname.replace('/api/print-label/', '');
+        if (!/^\d+$/.test(awb)) {
+          json(res, 400, { error: 'Invalid AWB' });
+          return;
+        }
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(buildLabelPrintHtml(awb));
         return;
       }
 
@@ -128,8 +205,18 @@ export function startServer() {
         return;
       }
 
+      if (req.method === 'POST' && url.pathname === '/api/fulfill/batch') {
+        const { data: body } = await readJsonBody(req);
+        const result = await processAllUnfulfilled({
+          limit: Number(body.limit || config.autoFulfillBatchLimit),
+          notifyCustomer: body.notifyCustomer !== false,
+        });
+        json(res, 200, result);
+        return;
+      }
+
       if (req.method === 'POST' && url.pathname === '/api/fulfill') {
-        const body = await readBody(req);
+        const { data: body } = await readJsonBody(req);
         const orderId = body.orderId || body.order || url.searchParams.get('order');
         if (!orderId) {
           json(res, 400, { error: 'orderId required' });
@@ -152,8 +239,15 @@ export function startServer() {
   server.listen(config.port, () => {
     console.log(`Grosyhub Blue Dart fulfillment: http://localhost:${config.port}`);
     console.log('Shiprocket checkout is unchanged — this only runs after orders are placed.');
+    if (config.publicUrl) {
+      console.log(`Public URL: ${config.publicUrl}`);
+      console.log(`Webhook: ${config.publicUrl}/webhooks/shopify/orders-paid`);
+    }
+    startAutoFulfillCron();
   });
 }
+
+export { processOrder };
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
   startServer();

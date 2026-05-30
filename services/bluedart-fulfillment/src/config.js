@@ -52,6 +52,14 @@ const bluedartAccount = normalizeBlueDartAccount(
 export const config = {
   port: Number(optional('PORT', '8787')),
   apiSecret: optional('API_SECRET', ''),
+  publicUrl: optional('PUBLIC_URL', ''),
+
+  /** manual | webhook | batch | all */
+  autoFulfillMode: optional('AUTO_FULFILL_MODE', 'manual').toLowerCase(),
+  /** When mode is batch or all, run every N minutes (0 = off) */
+  autoFulfillCronMinutes: Number(optional('AUTO_FULFILL_CRON_MINUTES', '0')),
+  autoFulfillBatchLimit: Number(optional('AUTO_FULFILL_BATCH_LIMIT', '25')),
+  autoFulfillNotifyCustomer: optional('AUTO_FULFILL_NOTIFY_CUSTOMER', 'true') !== 'false',
 
   bluedart: {
     loginId: optional('BLUEDART_LOGIN_ID'),
@@ -80,6 +88,7 @@ export const config = {
     accessToken: optional('SHOPIFY_ACCESS_TOKEN'),
     clientId: optional('SHOPIFY_CLIENT_ID'),
     clientSecret: optional('SHOPIFY_CLIENT_SECRET'),
+    webhookSecret: optional('SHOPIFY_WEBHOOK_SECRET'),
     apiVersion: optional('SHOPIFY_API_VERSION', '2025-04'),
   },
 };

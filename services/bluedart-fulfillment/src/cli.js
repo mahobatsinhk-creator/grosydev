@@ -1,4 +1,6 @@
-import { processOrder, startServer } from './index.js';
+import { startServer } from './index.js';
+import { processOrder } from './fulfill.js';
+import { processAllUnfulfilled } from './batch.js';
 import { getShippingJwt, checkPincodeServiceability } from './bluedart.js';
 import { assertBlueDartAuthConfig } from './config.js';
 
@@ -33,10 +35,17 @@ async function main() {
     return;
   }
 
+  if (command === 'fulfill-all') {
+    const result = await processAllUnfulfilled({ limit: Number(arg || 25) });
+    console.log(JSON.stringify(result, null, 2));
+    return;
+  }
+
   console.log(`Usage:
   node src/cli.js serve
   node src/cli.js test-auth
   node src/cli.js fulfill <order-name-or-id>
+  node src/cli.js fulfill-all [limit]
   node src/cli.js dry-run <order-name-or-id>`);
   process.exit(1);
 }
