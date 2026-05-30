@@ -6,7 +6,7 @@ import { readFileSync, existsSync } from 'node:fs';
 
 import { config, assertBlueDartConfig, assertBlueDartAuthConfig, assertShopifyConfig } from './config.js';
 import { getShippingJwt, checkPincodeServiceability } from './bluedart.js';
-import { listUnfulfilledOrders, testShopifyConnection, getOrder } from './shopify.js';
+import { testShopifyConnection, getOrder, listUnfulfilledOrdersPage } from './shopify.js';
 import { summarizeOrder } from './map-order.js';
 import { labelsDir } from './paths.js';
 import { processOrder } from './fulfill.js';
@@ -192,14 +192,20 @@ export function startServer() {
 
       if (req.method === 'GET' && url.pathname === '/api/orders/unfulfilled') {
         assertShopifyConfig();
-        const orders = await listUnfulfilledOrders(Number(url.searchParams.get('limit') || 25));
-        json(res, 200, { orders: orders.map(summarizeOrder) });
+        const limit = Math.min(Number(url.searchParams.get('limit') || 25), 250);
+        const pageInfo = url.searchParams.get('page_info') || '';
+        const result = await listUnfulfilledOrdersPage({ limit, pageInfo });
+        json(res, 200, {
+          orders: result.orders.map(summarizeOrder),
+          pagination: result.pagination,
+        });
         return;
       }
 
       if (req.method === 'GET' && url.pathname === '/api/orders/generated') {
         const data = listGeneratedOrders({
-          limit: Number(url.searchParams.get('limit') || 100),
+          limit: Number(url.searchParams.get('limit') || 25),
+          page: Number(url.searchParams.get('page') || 1),
           search: url.searchParams.get('search') || '',
         });
         json(res, 200, data);

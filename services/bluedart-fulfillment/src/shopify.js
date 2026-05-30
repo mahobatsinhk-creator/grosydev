@@ -55,7 +55,27 @@ async function getAccessToken() {
   return cachedAccessToken;
 }
 
-async function shopifyFetch(path, options = {}) {
+function parseLinkHeader(linkHeader) {
+  const result = { next: null, previous: null };
+  if (!linkHeader) return result;
+
+  for (const part of linkHeader.split(',')) {
+    const match = part.trim().match(/<([^>]+)>;\s*rel="(\w+)"/);
+    if (!match) continue;
+    try {
+      const url = new URL(match[1]);
+      const pageInfo = url.searchParams.get('page_info');
+      if (match[2] === 'next') result.next = pageInfo;
+      if (match[2] === 'previous') result.previous = pageInfo;
+    } catch {
+      // ignore malformed link entries
+    }
+  }
+
+  return result;
+}
+
+async function shopifyFetchMeta(path, options = {}) {
   const token = await getAccessToken();
   const res = await fetch(adminUrl(path), {
     ...options,
@@ -81,6 +101,11 @@ async function shopifyFetch(path, options = {}) {
     throw new Error(`Shopify ${res.status}: ${JSON.stringify(msg)}`);
   }
 
+  return { data, link: parseLinkHeader(res.headers.get('link')) };
+}
+
+async function shopifyFetch(path, options = {}) {
+  const { data } = await shopifyFetchMeta(path, options);
   return data;
 }
 
@@ -104,11 +129,29 @@ export async function getOrder(orderIdOrName) {
   return order;
 }
 
+export async function listUnfulfilledOrdersPage({ limit = 25, pageInfo = '' } = {}) {
+  const capped = Math.min(Math.max(1, Number(limit) || 25), 250);
+  const path = pageInfo
+    ? `/orders.json?limit=${capped}&page_info=${encodeURIComponent(pageInfo)}`
+    : `/orders.json?status=open&fulfillment_status=unfulfilled,partial&limit=${capped}`;
+
+  const { data, link } = await shopifyFetchMeta(path);
+
+  return {
+    orders: data.orders || [],
+    pagination: {
+      limit: capped,
+      nextPageInfo: link.next,
+      prevPageInfo: link.previous,
+      hasNext: Boolean(link.next),
+      hasPrevious: Boolean(link.previous),
+    },
+  };
+}
+
 export async function listUnfulfilledOrders(limit = 25) {
-  const data = await shopifyFetch(
-    `/orders.json?status=open&fulfillment_status=unfulfilled,partial&limit=${limit}`
-  );
-  return data.orders || [];
+  const { orders } = await listUnfulfilledOrdersPage({ limit });
+  return orders;
 }
 
 export async function getFulfillmentOrders(orderId) {

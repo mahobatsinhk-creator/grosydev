@@ -125,13 +125,16 @@ export function recordGeneratedOrder({
   return entry;
 }
 
-export function listGeneratedOrders({ limit = 100, search = '' } = {}) {
+export function listGeneratedOrders({ limit = 25, page = 1, search = '' } = {}) {
   syncGeneratedFromDisk();
 
   const q = String(search || '')
     .trim()
     .toLowerCase()
     .replace(/^#/, '');
+
+  const pageSize = Math.min(Math.max(1, Number(limit) || 25), 100);
+  const pageNum = Math.max(1, Number(page) || 1);
 
   let orders = readManifest().orders.filter((o) => hasLabelPdf(o.awb) || hasPackingSlip(o.awb));
 
@@ -150,10 +153,19 @@ export function listGeneratedOrders({ limit = 100, search = '' } = {}) {
     return orderNameSortKey(b.orderName) - orderNameSortKey(a.orderName);
   });
 
-  const slice = orders.slice(0, Math.min(Number(limit) || 100, 500));
+  const total = orders.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const safePage = Math.min(pageNum, totalPages);
+  const start = (safePage - 1) * pageSize;
+  const slice = orders.slice(start, start + pageSize);
 
   return {
-    total: orders.length,
+    total,
+    page: safePage,
+    pageSize,
+    totalPages,
+    hasNext: safePage < totalPages,
+    hasPrevious: safePage > 1,
     orders: slice.map((o) => ({
       ...o,
       ...toPrintUrls(o.awb, o.orderName && o.orderName !== '—' ? o.orderName : ''),
