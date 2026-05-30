@@ -128,6 +128,7 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
   const serviceFooter = isCod ? `${packingSlip.serviceLabel} · COD` : packingSlip.serviceLabel;
   const printW = `${packingSlip.printWidthMm}mm`;
   const printH = `${packingSlip.printHeightMm}mm`;
+  const marginH = `${packingSlip.printMarginHorizontalMm}mm`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -140,7 +141,7 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
     @page {
       size: ${printW} ${printH} portrait;
       size: ${pageW} ${pageH} portrait;
-      margin: 0;
+      margin: 0 ${marginH};
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html {
@@ -151,7 +152,7 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
       width: ${printW};
       height: ${printH};
       margin: 0;
-      padding: 0;
+      padding: 0 ${marginH};
       overflow: hidden;
       font-family: Arial, Helvetica, sans-serif;
       font-size: 6pt;
@@ -161,8 +162,8 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
       print-color-adjust: exact;
     }
     .sheet {
-      width: ${printW};
-      height: ${printH};
+      width: 100%;
+      height: 100%;
       border: 1px solid #000;
       overflow: hidden;
       display: flex;
@@ -171,7 +172,7 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
     .row { display: flex; border-bottom: 1px solid #000; }
     .row:last-child { border-bottom: none; }
     .cell {
-      padding: 2px 3px;
+      padding: 2px 4px;
       border-right: 1px solid #000;
       vertical-align: top;
     }
@@ -232,7 +233,7 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
     }
     .items th, .items td {
       border: 1px solid #000;
-      padding: 1px 2px;
+      padding: 1px 3px;
       text-align: left;
       vertical-align: top;
       word-wrap: break-word;
@@ -264,11 +265,11 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
         width: ${printW} !important;
         height: ${printH} !important;
         margin: 0 !important;
-        padding: 0 !important;
+        padding: 0 ${marginH} !important;
       }
       .sheet {
-        width: ${printW} !important;
-        height: ${printH} !important;
+        width: 100% !important;
+        height: 100% !important;
         border: none;
       }
       .no-print { display: none !important; }
@@ -281,7 +282,8 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
     <p style="margin-top:8px;color:#333;font-size:12px;line-height:1.5">
       <strong>Printer setup (required):</strong><br>
       Paper size: <strong>4 × 6 inch</strong> (101 × 152 mm) — not A4, not 10×10 cm<br>
-      Margins: <strong>None</strong> · Scale: <strong>100%</strong> (turn off “Fit to page”)<br>
+      Margins: <strong>None</strong> in print dialog (slip has built-in left/right space)<br>
+      Scale: <strong>100%</strong> (turn off “Fit to page”)<br>
       Orientation: <strong>Portrait</strong>
     </p>
     <p style="margin-top:6px;color:#888;font-size:11px">Label on printer: 4×6 / 101×152 / 100×150 mm thermal</p>

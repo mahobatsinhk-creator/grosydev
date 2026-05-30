@@ -116,6 +116,8 @@ export const config = {
     pageHeight: optional('PACKING_SLIP_PAGE_HEIGHT', '6in'),
     printWidthMm: optional('PACKING_SLIP_PRINT_WIDTH_MM', '101.6'),
     printHeightMm: optional('PACKING_SLIP_PRINT_HEIGHT_MM', '152.4'),
+    /** Left + right inset on slip (mm each side) */
+    printMarginHorizontalMm: optional('PACKING_SLIP_MARGIN_H_MM', '3'),
   },
 
   shopify: {
