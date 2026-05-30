@@ -312,9 +312,16 @@ export function startServer() {
     }
   });
 
-  server.listen(config.port, '0.0.0.0', () => {
-    const local = `http://localhost:${config.port}`;
+  server.on('error', (err) => {
+    console.error('[fatal] Server failed to start:', err.message || err);
+    process.exit(1);
+  });
+
+  const port = Number(process.env.PORT) || config.port || 3000;
+  server.listen(port, '0.0.0.0', () => {
+    const local = `http://localhost:${port}`;
     console.log(`Grosyhub Blue Dart fulfillment: ${local}`);
+    console.log(`Health check: ${local}/health`);
     if (config.publicUrl) {
       console.log(`Live dashboard: ${config.publicUrl}`);
       console.log(`Webhook: ${config.publicUrl}/webhooks/shopify/orders-paid`);

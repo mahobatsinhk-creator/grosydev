@@ -15,7 +15,8 @@ $include = @(
   "server.js",
   "package.json",
   "public",
-  "src"
+  "src",
+  "labels"
 )
 
 foreach ($item in $include) {
@@ -43,5 +44,6 @@ Write-Host "  Root directory: (leave empty)"
 Write-Host "  Entry file:     server.js"
 Write-Host "  Build command:  (leave empty / None)"
 Write-Host "  Output dir:     (leave empty)"
-Write-Host "  Node.js:        22.x"
+Write-Host "  Node.js:        20.x or 22.x (18+ OK)"
 Write-Host "  PORT env:       3000"
+Write-Host "  PUBLIC_URL:     https://your-subdomain.hostingersite.com"
