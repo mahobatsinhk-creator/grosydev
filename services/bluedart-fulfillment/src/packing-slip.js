@@ -82,102 +82,57 @@ function productQty(order) {
   return (order.line_items || []).reduce((s, i) => s + (i.quantity || 1), 0);
 }
 
-/** 4×6 inch portrait — GROSYHUB branded packing slip */
-export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
+function buildSlipData(order, awb, waybillMeta = {}) {
   const ship = order.shipping_address || {};
   const { bluedart, packingSlip } = config;
-  const weightKg = orderWeightKg(order);
-  const isCod = isCodOrder(order);
-  const pageW = packingSlip.pageWidth;
-  const pageH = packingSlip.pageHeight;
-  const marginHIn = `${(Number(packingSlip.printMarginHorizontalMm) / 25.4).toFixed(3)}in`;
+  return {
+    awb: String(awb),
+    order,
+    waybillMeta,
+    packingSlip,
+    bluedart,
+    weightKg: orderWeightKg(order),
+    isCod: isCodOrder(order),
+    pageW: packingSlip.pageWidth,
+    pageH: packingSlip.pageHeight,
+    marginHIn: `${(Number(packingSlip.printMarginHorizontalMm) / 25.4).toFixed(3)}in`,
+    printWmm: packingSlip.printWidthMm,
+    printHmm: packingSlip.printHeightMm,
+    shipToName: ship.name || `${ship.first_name || ''} ${ship.last_name || ''}`.trim(),
+    customerPhone: formatPhone(ship.phone || order.phone),
+    shipAddr: uniqueAddressParts([
+      ship.address1,
+      ship.address2,
+      ship.city,
+      ship.province,
+      ship.country || 'India',
+      ship.zip,
+    ]).join(', '),
+    returnAddr: uniqueAddressParts([
+      bluedart.shipper.address1,
+      bluedart.shipper.address2,
+      bluedart.shipper.address3,
+      `${bluedart.shipper.pincode}, India`,
+    ]).join(', '),
+    orderNum: String(order.name || '').replace('#', ''),
+    route: routingCode(waybillMeta),
+    qrUrl: `/api/qr?size=64&data=${encodeURIComponent(trackingUrl(awb))}`,
+    serviceFooter: isCodOrder(order)
+      ? `${packingSlip.serviceLabel} - COD`
+      : packingSlip.serviceLabel,
+    supportPh: packingSlip.supportPhone || bluedart.shipper.mobile,
+    payAmount: isCodOrder(order) ? `₹${Number(order.total_price || 0).toFixed(2)}` : '₹0.00',
+  };
+}
 
-  const shipToName = ship.name || `${ship.first_name || ''} ${ship.last_name || ''}`.trim();
-  const customerPhone = formatPhone(ship.phone || order.phone);
-  const shipAddr = uniqueAddressParts([
-    ship.address1,
-    ship.address2,
-    ship.city,
-    ship.province,
-    ship.country || 'India',
-    ship.zip,
-  ]).join(', ');
-
-  const returnAddr = uniqueAddressParts([
-    bluedart.shipper.address1,
-    bluedart.shipper.address2,
-    bluedart.shipper.address3,
-    `${bluedart.shipper.pincode}, India`,
-  ]).join(', ');
-
-  const orderNum = String(order.name || '').replace('#', '');
-  const route = routingCode(waybillMeta);
-  const trackUrl = trackingUrl(awb);
-  const qrUrl = `/api/qr?size=64&data=${encodeURIComponent(trackUrl)}`;
-  const serviceFooter = isCod ? `${packingSlip.serviceLabel} - COD` : packingSlip.serviceLabel;
-  const supportPh = packingSlip.supportPhone || bluedart.shipper.mobile;
-  const payAmount = isCod ? `₹${Number(order.total_price || 0).toFixed(2)}` : '₹0.00';
-
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=${packingSlip.printWidthMm}, height=${packingSlip.printHeightMm}" />
-  <title>Packing slip ${esc(order.name)} — ${esc(awb)}</title>
-  <style>
+function slipSheetCss(d) {
+  return `
     @page {
-      size: ${pageW} ${pageH};
+      size: ${d.pageW} ${d.pageH};
+      size: ${d.printWmm}mm ${d.printHmm}mm;
       margin: 0;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html { background: #e8e8e8; }
-    body {
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 5pt;
-      line-height: 1.12;
-      color: #000;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-    }
-    .print-hint {
-      max-width: 420px;
-      margin: 10px auto;
-      padding: 10px 14px;
-      background: #fff;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-family: system-ui, sans-serif;
-      font-size: 13px;
-      line-height: 1.45;
-      text-align: center;
-    }
-    .print-hint strong { color: #111; }
-    .print-hint button {
-      margin-top: 8px;
-      padding: 8px 18px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      border: 0;
-      border-radius: 6px;
-      background: #b89774;
-      color: #fff;
-    }
-    .print-hint .print-note {
-      margin-top: 8px;
-      font-size: 11px;
-      color: #666;
-      text-align: left;
-    }
-    .label-page {
-      width: ${pageW};
-      height: ${pageH};
-      margin: 0 auto 12px;
-      padding: 0.04in ${marginHIn};
-      overflow: hidden;
-      background: #fff;
-      box-shadow: 0 0 8px rgba(0,0,0,.18);
-    }
     .sheet {
       width: 100%;
       height: 100%;
@@ -202,20 +157,8 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
     }
     .sec-body { padding: 2px 4px; overflow: hidden; }
     .head-brand { padding: 3px 4px; vertical-align: middle; }
-    .brand-name {
-      font-size: 9pt;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      color: #b8860b;
-      line-height: 1;
-    }
-    .brand-web {
-      font-size: 5pt;
-      color: #333;
-      margin-top: 2px;
-      border-top: 1px solid #ccc;
-      padding-top: 2px;
-    }
+    .brand-name { font-size: 9pt; font-weight: 800; letter-spacing: 0.5px; color: #b8860b; line-height: 1; }
+    .brand-web { font-size: 5pt; color: #333; margin-top: 2px; border-top: 1px solid #ccc; padding-top: 2px; }
     .head-carrier { padding: 3px 4px; text-align: right; vertical-align: middle; }
     .carrier-partner { font-size: 4.5pt; font-weight: 600; }
     .carrier-name { font-size: 8pt; font-weight: 800; color: #0054a6; line-height: 1.05; }
@@ -237,105 +180,22 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
     .pay-cell { padding: 0; vertical-align: top; }
     .pay-body { text-align: center; padding: 3px 2px; }
     .pay-big { font-size: 12pt; font-weight: 800; line-height: 1; margin: 3px 0; }
-    .pay-amt-lbl {
-      background: #000;
-      color: #fff;
-      font-size: 4.5pt;
-      font-weight: 700;
-      padding: 1.5px 4px;
-      text-transform: uppercase;
-    }
+    .pay-amt-lbl { background: #000; color: #fff; font-size: 4.5pt; font-weight: 700; padding: 1.5px 4px; text-transform: uppercase; }
     .pay-amt { font-size: 8pt; font-weight: 800; padding: 2px 4px 3px; }
-    .icons-h {
-      text-align: center;
-      font-size: 4.5pt;
-      font-weight: 700;
-      text-transform: uppercase;
-      padding: 2px 4px;
-      border-bottom: 1px solid #000;
-    }
-    .icons {
-      display: flex;
-      justify-content: space-around;
-      align-items: flex-start;
-      padding: 3px 2px 4px;
-      font-size: 4pt;
-      font-weight: 700;
-      text-align: center;
-      line-height: 1.1;
-    }
+    .icons-h { text-align: center; font-size: 4.5pt; font-weight: 700; text-transform: uppercase; padding: 2px 4px; border-bottom: 1px solid #000; }
+    .icons { display: flex; justify-content: space-around; align-items: flex-start; padding: 3px 2px 4px; font-size: 4pt; font-weight: 700; text-align: center; line-height: 1.1; }
     .icons span { max-width: 32%; }
-    .tear {
-      border-top: 1px dashed #000;
-      text-align: center;
-      font-size: 4pt;
-      font-weight: 700;
-      padding: 1px 4px;
-    }
-    .footer-bar {
-      background: #000;
-      color: #fff;
-      text-align: center;
-      font-weight: 800;
-      font-size: 6.5pt;
-      padding: 2px 4px;
-      letter-spacing: 0.3px;
-    }
-    .footer-thanks {
-      text-align: center;
-      font-size: 5pt;
-      font-weight: 700;
-      padding: 1px 4px;
-    }
-    .footer-contact {
-      text-align: center;
-      font-size: 4pt;
-      padding: 1px 4px 2px;
-      border-top: 1px solid #000;
-      line-height: 1.2;
-    }
-    @media print {
-      html, body {
-        width: ${pageW} !important;
-        height: ${pageH} !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        overflow: hidden !important;
-        background: #fff !important;
-      }
-      .no-print { display: none !important; }
-      .label-page {
-        width: ${pageW} !important;
-        height: ${pageH} !important;
-        margin: 0 !important;
-        padding: 0.04in ${marginHIn} !important;
-        box-shadow: none !important;
-        page-break-after: avoid;
-        page-break-inside: avoid;
-      }
-      .sheet { width: 100% !important; height: 100% !important; }
-    }
-  </style>
-</head>
-<body>
-  <div class="print-hint no-print">
-    <strong>Print 4×6 packing slip</strong><br>
-    Sharp text — prints directly from HTML (not a stretched image).
-    <br>
-    <button type="button" id="btn-print">Print 4×6 label</button>
-    <p class="print-note">
-      <strong>Print dialog settings:</strong><br>
-      · Paper size: <strong>4 × 6 in</strong> (100×150 mm)<br>
-      · Scale: <strong>100%</strong> (not “Fit to page”)<br>
-      · Margins: <strong>None</strong><br>
-      · To save PDF: choose <strong>Save as PDF</strong> as destination, same paper size
-    </p>
-  </div>
+    .tear { border-top: 1px dashed #000; text-align: center; font-size: 4pt; font-weight: 700; padding: 1px 4px; }
+    .footer-bar { background: #000; color: #fff; text-align: center; font-weight: 800; font-size: 6.5pt; padding: 2px 4px; letter-spacing: 0.3px; }
+    .footer-thanks { text-align: center; font-size: 5pt; font-weight: 700; padding: 1px 4px; }
+    .footer-contact { text-align: center; font-size: 4pt; padding: 1px 4px 2px; border-top: 1px solid #000; line-height: 1.2; }
+  `;
+}
 
-  <div class="label-page">
-  <table class="sheet" cellspacing="0" cellpadding="0">
+function renderSlipTable(d) {
+  const { packingSlip, bluedart, order, awb, isCod } = d;
+  return `<table class="sheet" cellspacing="0" cellpadding="0">
     <colgroup><col style="width:50%" /><col style="width:50%" /></colgroup>
-
     <tr style="height:8%">
       <td class="head-brand">
         <div class="brand-name">${esc(packingSlip.logoText.toUpperCase())}</div>
@@ -347,46 +207,43 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
         <div class="carrier-sub">${esc(packingSlip.serviceLabel)}</div>
       </td>
     </tr>
-
     <tr style="height:20%">
       <td>
         <div class="sec-h">Ship To</div>
         <div class="sec-body txt">
-          <strong>${esc(shipToName)}</strong><br>
-          ${esc(customerPhone)}<br>
-          <span class="clamp">${esc(shipAddr)}</span>
+          <strong>${esc(d.shipToName)}</strong><br>
+          ${esc(d.customerPhone)}<br>
+          <span class="clamp">${esc(d.shipAddr)}</span>
         </div>
       </td>
       <td class="awb-cell">
         <div class="sec-h">AWB No.</div>
         <div class="awb-num">${esc(awb)}</div>
         <div class="barcode-wrap"><img id="awb-barcode" alt="" /></div>
-        <div class="route">Routing Code: ${esc(route)}</div>
+        <div class="route">Routing Code: ${esc(d.route)}</div>
       </td>
     </tr>
-
     <tr style="height:14%">
       <td>
         <div class="sec-h">Order Details</div>
         <div class="sec-body kv">
-          <div><strong>Order ID:</strong> #${esc(orderNum)}</div>
+          <div><strong>Order ID:</strong> #${esc(d.orderNum)}</div>
           <div><strong>Invoice No.:</strong> ${esc(invoiceNo(order))}</div>
           <div><strong>Order Date:</strong> ${esc(formatOrderDate(order.created_at))}</div>
         </div>
       </td>
       <td class="qr-cell">
-        <img src="${qrUrl}" alt="Track QR" width="42" height="42" crossorigin="anonymous" />
+        <img src="${d.qrUrl}" alt="Track QR" width="42" height="42" />
         <div class="qr-hint">Track your shipment<br>Scan QR code or visit<br>www.bluedart.com</div>
       </td>
     </tr>
-
     <tr style="height:15%">
       <td>
         <div class="sec-h">Product Details</div>
         <div class="sec-body kv">
           <div><strong>Item:</strong> ${esc(productSummary(order))}</div>
           <div><strong>Qty:</strong> ${productQty(order)}</div>
-          <div><strong>Weight:</strong> ${weightKg} KG</div>
+          <div><strong>Weight:</strong> ${d.weightKg} KG</div>
           <div><strong>Dimensions:</strong> ${esc(packingSlip.dimensions)}</div>
         </div>
       </td>
@@ -394,18 +251,17 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
         <div class="sec-h">Payment Mode</div>
         <div class="pay-body">
           <div class="pay-big">${isCod ? 'COD' : 'PREPAID'}</div>
-          ${isCod ? `<div class="pay-amt-lbl">COD Amount</div><div class="pay-amt">${esc(payAmount)}</div>` : ''}
+          ${isCod ? `<div class="pay-amt-lbl">COD Amount</div><div class="pay-amt">${esc(d.payAmount)}</div>` : ''}
         </div>
       </td>
     </tr>
-
     <tr style="height:18%">
       <td>
         <div class="sec-h">Shipper / Return Address</div>
         <div class="sec-body txt">
           <strong>${esc(bluedart.shipper.name)}</strong><br>
-          <span class="clamp">${esc(returnAddr)}</span><br>
-          ${esc(formatPhone(supportPh))}
+          <span class="clamp">${esc(d.returnAddr)}</span><br>
+          ${esc(formatPhone(d.supportPh))}
         </div>
       </td>
       <td style="padding:0">
@@ -417,55 +273,158 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
         </div>
       </td>
     </tr>
-
     <tr style="height:13%">
       <td colspan="2" style="padding:0;vertical-align:top;overflow:hidden">
         <div class="tear">✂ — DO NOT ACCEPT IF SEAL IS BROKEN — ✂</div>
-        <div class="footer-bar">${esc(serviceFooter)}</div>
+        <div class="footer-bar">${esc(d.serviceFooter)}</div>
         <div class="footer-thanks">THANK YOU FOR SHOPPING WITH ${esc(packingSlip.logoText.toUpperCase())}!</div>
         <div class="footer-contact">
-          📞 ${esc(formatPhone(supportPh))} &nbsp;|&nbsp; ✉ ${esc(packingSlip.supportEmail)} &nbsp;|&nbsp; 🌐 ${esc(packingSlip.websiteUrl)}
+          📞 ${esc(formatPhone(d.supportPh))} &nbsp;|&nbsp; ✉ ${esc(packingSlip.supportEmail)} &nbsp;|&nbsp; 🌐 ${esc(packingSlip.websiteUrl)}
         </div>
       </td>
     </tr>
-  </table>
-  </div>
+  </table>`;
+}
 
-  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script>
+function slipBarcodeScript(awb, autoPrint = false) {
+  const auto = autoPrint
+    ? `function goPrint(){setTimeout(function(){window.focus();window.print();},400);}
+       var imgs=document.querySelectorAll("img");
+       var w=0; imgs.forEach(function(i){if(!i.complete)w++;});
+       if(!w) goPrint(); else imgs.forEach(function(i){if(!i.complete){i.onload=i.onerror=goPrint;}});`
+    : '';
+  return `<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script>
   <script>
     JsBarcode("#awb-barcode", ${JSON.stringify(String(awb))}, {
       format: "CODE128", width: 1.1, height: 28, displayValue: false, margin: 0
     });
+    ${auto}
+  <\/script>`;
+}
 
-    function printLabel() {
-      window.print();
+/** Print-only page — exact 4×6 in, no preview chrome */
+export function buildPackingSlipPrintHtml(order, awb, waybillMeta = {}) {
+  const d = buildSlipData(order, awb, waybillMeta);
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Print ${esc(order.name)} — ${esc(awb)}</title>
+  <style>
+    ${slipSheetCss(d)}
+    html, body {
+      width: ${d.pageW};
+      height: ${d.pageH};
+      margin: 0;
+      padding: 0.04in ${d.marginHIn};
+      overflow: hidden;
+      background: #fff;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 5pt;
+      line-height: 1.12;
+      color: #000;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
-
-    function whenLabelReady(fn) {
-      var imgs = document.querySelectorAll(".label-page img");
-      var waiting = 0;
-      imgs.forEach(function (img) {
-        if (!img.complete) waiting++;
-      });
-      if (!waiting) {
-        setTimeout(fn, 300);
-        return;
+    @media print {
+      html, body {
+        width: ${d.pageW} !important;
+        height: ${d.pageH} !important;
+        margin: 0 !important;
+        padding: 0.04in ${d.marginHIn} !important;
+        overflow: hidden !important;
       }
-      imgs.forEach(function (img) {
-        if (!img.complete) {
-          img.onload = img.onerror = function () {
-            waiting--;
-            if (waiting <= 0) setTimeout(fn, 300);
-          };
-        }
-      });
+      .sheet { width: 100% !important; height: 100% !important; }
     }
+  </style>
+</head>
+<body>
+  ${renderSlipTable(d)}
+  ${slipBarcodeScript(awb, true)}
+</body>
+</html>`;
+}
 
-    document.getElementById("btn-print").addEventListener("click", printLabel);
-
-    if (/[?&]print=1(?:&|$)/.test(location.search)) {
-      whenLabelReady(printLabel);
+/** Preview page with print button */
+export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
+  const d = buildSlipData(order, awb, waybillMeta);
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=${d.printWmm}, height=${d.printHmm}" />
+  <title>Packing slip ${esc(order.name)} — ${esc(awb)}</title>
+  <style>
+    ${slipSheetCss(d)}
+    html { background: #e8e8e8; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 5pt;
+      line-height: 1.12;
+      color: #000;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
+    .print-hint {
+      max-width: 440px;
+      margin: 10px auto;
+      padding: 10px 14px;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-family: system-ui, sans-serif;
+      font-size: 13px;
+      line-height: 1.45;
+      text-align: center;
+    }
+    .print-hint button {
+      margin-top: 8px;
+      padding: 8px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 0;
+      border-radius: 6px;
+      background: #b89774;
+      color: #fff;
+    }
+    .print-hint .print-note { margin-top: 8px; font-size: 11px; color: #666; text-align: left; }
+    .label-page {
+      width: ${d.pageW};
+      height: ${d.pageH};
+      margin: 0 auto 12px;
+      padding: 0.04in ${d.marginHIn};
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 0 8px rgba(0,0,0,.18);
+    }
+  </style>
+</head>
+<body>
+  <div class="print-hint">
+    <strong>Print 4×6 packing slip</strong><br>
+    Opens a print page sized exactly <strong>4 × 6 inch</strong> (sharp text, not an image).
+    <br>
+    <button type="button" id="btn-print">Print 4×6 label</button>
+    <p class="print-note">
+      In print dialog set:<br>
+      · Paper: <strong>4 × 6 in</strong> (100×150 mm)<br>
+      · Scale: <strong>100%</strong> · Margins: <strong>None</strong><br>
+      · Use your <strong>thermal label printer</strong> (not A4)
+    </p>
+  </div>
+
+  <div class="label-page">
+  ${renderSlipTable(d)}
+  </div>
+
+  ${slipBarcodeScript(awb, false)}
+  <script>
+    document.getElementById("btn-print").addEventListener("click", function () {
+      var u = new URL(location.href);
+      u.searchParams.set("print", "1");
+      window.open(u.toString(), "_blank");
+    });
   <\/script>
 </body>
 </html>`;

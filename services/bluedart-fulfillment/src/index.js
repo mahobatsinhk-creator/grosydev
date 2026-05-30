@@ -14,7 +14,12 @@ import { processAllUnfulfilled } from './batch.js';
 import { listGeneratedOrders, findGeneratedByAwb } from './generated-orders.js';
 import { lookupOrder } from './order-lookup.js';
 import { verifyShopifyWebhook, parseWebhookOrder, shouldAutoFulfillOrder } from './webhook.js';
-import { buildLabelPrintHtml, buildPackingSlipHtml, savePackingSlip } from './packing-slip.js';
+import {
+  buildLabelPrintHtml,
+  buildPackingSlipHtml,
+  buildPackingSlipPrintHtml,
+  savePackingSlip,
+} from './packing-slip.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 mkdirSync(labelsDir, { recursive: true });
@@ -194,8 +199,9 @@ export function startServer() {
           assertShopifyConfig();
           const order = await getOrder(orderRef);
           savePackingSlip(order, awb);
+          const printMode = url.searchParams.get('print') === '1';
           res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-          res.end(buildPackingSlipHtml(order, awb));
+          res.end(printMode ? buildPackingSlipPrintHtml(order, awb) : buildPackingSlipHtml(order, awb));
           return;
         }
 
