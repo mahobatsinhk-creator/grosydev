@@ -78,6 +78,8 @@ export const config = {
   shopify: {
     shop: optional('SHOPIFY_SHOP', 'igh9a1-1h.myshopify.com'),
     accessToken: optional('SHOPIFY_ACCESS_TOKEN'),
+    clientId: optional('SHOPIFY_CLIENT_ID'),
+    clientSecret: optional('SHOPIFY_CLIENT_SECRET'),
     apiVersion: optional('SHOPIFY_API_VERSION', '2025-04'),
   },
 };
@@ -96,5 +98,13 @@ export function assertBlueDartConfig() {
 }
 
 export function assertShopifyConfig() {
-  required('SHOPIFY_ACCESS_TOKEN');
+  const hasToken = Boolean(process.env.SHOPIFY_ACCESS_TOKEN?.trim());
+  const hasClientCreds =
+    Boolean(process.env.SHOPIFY_CLIENT_ID?.trim()) &&
+    Boolean(process.env.SHOPIFY_CLIENT_SECRET?.trim());
+  if (!hasToken && !hasClientCreds) {
+    throw new Error(
+      'Set SHOPIFY_ACCESS_TOKEN or SHOPIFY_CLIENT_ID + SHOPIFY_CLIENT_SECRET in .env'
+    );
+  }
 }

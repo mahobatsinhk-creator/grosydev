@@ -1,16 +1,67 @@
 import { config } from './config.js';
 
+let cachedAccessToken = null;
+let tokenExpiresAt = 0;
+
+function shopDomain() {
+  return config.shopify.shop.replace(/^https?:\/\//, '').replace(/\/$/, '');
+}
+
 function adminUrl(path) {
-  const shop = config.shopify.shop.replace(/^https?:\/\//, '').replace(/\/$/, '');
-  return `https://${shop}/admin/api/${config.shopify.apiVersion}${path}`;
+  return `https://${shopDomain()}/admin/api/${config.shopify.apiVersion}${path}`;
+}
+
+async function getAccessToken() {
+  const now = Date.now();
+
+  if (config.shopify.accessToken) {
+    return config.shopify.accessToken;
+  }
+
+  if (!config.shopify.clientId || !config.shopify.clientSecret) {
+    throw new Error('Shopify credentials missing in .env');
+  }
+
+  if (cachedAccessToken && now < tokenExpiresAt - 60_000) {
+    return cachedAccessToken;
+  }
+
+  const body = new URLSearchParams({
+    grant_type: 'client_credentials',
+    client_id: config.shopify.clientId,
+    client_secret: config.shopify.clientSecret,
+  });
+
+  const res = await fetch(`https://${shopDomain()}/admin/oauth/access_token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body,
+  });
+
+  const text = await res.text();
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error(`Shopify token error (${res.status}): ${text.slice(0, 300)}`);
+  }
+
+  if (!res.ok || !data.access_token) {
+    throw new Error(`Shopify token error (${res.status}): ${JSON.stringify(data)}`);
+  }
+
+  cachedAccessToken = data.access_token;
+  tokenExpiresAt = now + (data.expires_in || 86_400) * 1000;
+  return cachedAccessToken;
 }
 
 async function shopifyFetch(path, options = {}) {
+  const token = await getAccessToken();
   const res = await fetch(adminUrl(path), {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      'X-Shopify-Access-Token': config.shopify.accessToken,
+      'X-Shopify-Access-Token': token,
       ...options.headers,
     },
   });
@@ -119,4 +170,9 @@ export async function fulfillOrderWithAwb(order, awb, { notifyCustomer = true } 
   }
 
   return fulfillment;
+}
+
+export async function testShopifyConnection() {
+  const data = await shopifyFetch('/shop.json');
+  return { name: data.shop?.name, domain: data.shop?.domain };
 }

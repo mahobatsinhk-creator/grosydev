@@ -6,7 +6,7 @@ import { readFileSync, existsSync } from 'node:fs';
 
 import { config, assertBlueDartConfig, assertBlueDartAuthConfig, assertShopifyConfig } from './config.js';
 import { getShippingJwt, generateWaybill, checkPincodeServiceability, trackingUrl } from './bluedart.js';
-import { getOrder, listUnfulfilledOrders, fulfillOrderWithAwb } from './shopify.js';
+import { getOrder, listUnfulfilledOrders, fulfillOrderWithAwb, testShopifyConnection } from './shopify.js';
 import { shopifyOrderToWaybill, summarizeOrder } from './map-order.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -94,6 +94,13 @@ export function startServer() {
       }
 
       if (unauthorized(req, res)) return;
+
+      if (req.method === 'GET' && url.pathname === '/api/shopify/test') {
+        assertShopifyConfig();
+        const shop = await testShopifyConnection();
+        json(res, 200, { ok: true, shop });
+        return;
+      }
 
       if (req.method === 'GET' && url.pathname === '/api/orders/unfulfilled') {
         assertShopifyConfig();
