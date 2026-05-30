@@ -96,26 +96,36 @@ export async function checkPincodeServiceability(pincode) {
   return data?.GetServicesforPincodeResult ?? data;
 }
 
+/** Blue Dart ItemID max length is 15 characters */
+function blueDartItemId(value, index) {
+  const raw = String(value || '').trim();
+  if (raw && raw.length <= 15) return raw;
+  if (raw) return raw.slice(0, 15);
+  return `GH${String(index + 1).padStart(3, '0')}`.slice(0, 15);
+}
+
 export function buildWaybillPayload({ orderRef, consignee, weightKg, declaredValue, codAmount = 0, lineItems = [] }) {
   const { bluedart } = config;
   const pickupDate = dotnetDate(new Date(Date.now() + 24 * 60 * 60 * 1000));
 
   const itemdtl =
     lineItems.length > 0
-      ? lineItems.map((item) => ({
-          ItemID: item.sku || item.title?.slice(0, 20) || 'ITEM',
-          ItemName: item.title?.slice(0, 50) || 'Product',
+      ? lineItems.map((item, index) => ({
+          ItemID: blueDartItemId(item.sku || item.id, index),
+          ItemName: (item.title || 'Product').slice(0, 50),
           Itemquantity: item.quantity || 1,
           ItemValue: item.price || 0,
         }))
       : [
           {
-            ItemID: orderRef,
+            ItemID: blueDartItemId(orderRef, 0),
             ItemName: 'Grosyhub Order',
             Itemquantity: 1,
             ItemValue: declaredValue,
           },
         ];
+
+  const creditRef = String(orderRef).replace('#', '').slice(0, 20);
 
   return {
     Request: {
@@ -136,7 +146,7 @@ export function buildWaybillPayload({ orderRef, consignee, weightKg, declaredVal
       },
       Services: {
         ActualWeight: String(Math.max(0.1, weightKg).toFixed(2)),
-        CreditReferenceNo: orderRef,
+        CreditReferenceNo: creditRef,
         DeclaredValue: declaredValue,
         CollectableAmount: codAmount,
         Dimensions: [{ Length: 10, Breadth: 10, Height: 10, Count: 1 }],

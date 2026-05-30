@@ -46,11 +46,13 @@ export function shopifyOrderToWaybill(order) {
 
   const codAmount = isCod ? declaredValue : 0;
 
-  const lineItems = (order.line_items || []).map((item) => ({
+  const lineItems = (order.line_items || []).map((item, index) => ({
+    id: item.id,
     sku: item.sku,
     title: item.title,
     quantity: item.quantity,
     price: Number(item.price),
+    index,
   }));
 
   const orderRef = String(order.name || order.id).replace('#', '');
