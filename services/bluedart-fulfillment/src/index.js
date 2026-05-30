@@ -248,8 +248,4 @@ export function startServer() {
   });
 }
 
-export { processOrder };
-
-if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
-  startServer();
-}
+export { processOrder, startServer };
