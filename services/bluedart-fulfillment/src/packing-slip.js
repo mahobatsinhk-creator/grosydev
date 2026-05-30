@@ -35,11 +35,6 @@ function clusterCode(waybillMeta = {}) {
   );
 }
 
-function truncate(s, max = 42) {
-  const t = String(s || '');
-  return t.length <= max ? t : `${t.slice(0, max - 1)}…`;
-}
-
 function formatOrderDate(iso) {
   if (!iso) return '';
   const d = new Date(iso);
@@ -57,9 +52,13 @@ function formatPhone(phone) {
 function productSummary(order) {
   const items = order.line_items || [];
   if (!items.length) return '—';
-  const first = truncate(items[0].title, 38);
+  const first = items[0].title || '—';
   if (items.length === 1) return first;
   return `${first} +${items.length - 1} more`;
+}
+
+function addressLines(parts) {
+  return parts.filter(Boolean).join(', ');
 }
 
 function productQty(order) {
@@ -79,25 +78,21 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
   const marginH = `${packingSlip.printMarginHorizontalMm}mm`;
 
   const shipToName = ship.name || `${ship.first_name || ''} ${ship.last_name || ''}`.trim();
-  const shipToAddr = [
+  const shipToAddr = addressLines([
     ship.address1,
     ship.address2,
     ship.city,
     ship.province,
     ship.country || 'India',
     ship.zip,
-  ]
-    .filter(Boolean)
-    .join(', ');
+  ]);
 
-  const returnAddr = [
+  const returnAddr = addressLines([
     bluedart.shipper.address1,
     bluedart.shipper.address2,
     bluedart.shipper.address3,
-    bluedart.shipper.pincode,
-  ]
-    .filter(Boolean)
-    .join(', ');
+    `${bluedart.shipper.pincode}, India`,
+  ]);
 
   const orderNum = String(order.name || '').replace('#', '');
   const route = clusterCode(waybillMeta);
@@ -117,7 +112,7 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
     @page {
       size: ${printW} ${printH} portrait;
       size: ${pageW} ${pageH} portrait;
-      margin: 0 ${marginH};
+      margin: 0;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html { width: ${printW}; height: ${printH}; }
@@ -125,11 +120,11 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
       width: ${printW};
       height: ${printH};
       margin: 0;
-      padding: 0 ${marginH};
+      padding: 1.5mm ${marginH} 1.5mm;
       overflow: hidden;
       font-family: Arial, Helvetica, sans-serif;
-      font-size: 5.5pt;
-      line-height: 1.15;
+      font-size: 6pt;
+      line-height: 1.2;
       color: #000;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
@@ -137,96 +132,141 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
     .sheet {
       width: 100%;
       height: 100%;
-      border: 1.5px solid #000;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
+      border: 1.2px solid #000;
+      border-collapse: collapse;
+      table-layout: fixed;
     }
-    .row { display: flex; border-bottom: 1px solid #000; min-height: 0; }
-    .col {
-      flex: 1;
-      padding: 2px 4px;
-      border-right: 1px solid #000;
+    .sheet td {
+      border: 1px solid #000;
       vertical-align: top;
+      padding: 0;
     }
-    .col:last-child { border-right: none; }
-    .head {
-      align-items: center;
-      padding: 3px 4px;
+    .half { width: 50%; }
+    .sec-h {
+      background: #000;
+      color: #fff;
+      font-size: 5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      padding: 1.5px 4px;
+      line-height: 1.2;
+    }
+    .sec-body { padding: 3px 4px; }
+    .head-brand {
+      padding: 4px;
+      vertical-align: middle;
     }
     .brand-name {
-      font-size: 9pt;
+      font-size: 10pt;
       font-weight: 800;
       letter-spacing: 0.5px;
       color: #b8860b;
       line-height: 1;
     }
-    .brand-web { font-size: 5pt; color: #333; margin-top: 1px; }
-    .carrier-box { text-align: right; line-height: 1.1; }
+    .brand-web {
+      font-size: 5.5pt;
+      color: #333;
+      margin-top: 2px;
+      border-top: 1px solid #ccc;
+      padding-top: 2px;
+    }
+    .head-carrier {
+      padding: 4px;
+      text-align: right;
+      vertical-align: middle;
+    }
+    .carrier-partner { font-size: 5pt; font-weight: 600; }
     .carrier-name {
-      font-size: 8pt;
+      font-size: 9pt;
       font-weight: 800;
       color: #0054a6;
-      letter-spacing: 0.3px;
+      line-height: 1.05;
     }
     .carrier-name span { color: #2e8b57; }
-    .carrier-sub { font-size: 5.5pt; font-weight: 700; }
-    .lbl {
+    .carrier-sub { font-size: 6pt; font-weight: 700; margin-top: 1px; }
+    .ship-name { font-size: 6.5pt; font-weight: 800; margin-bottom: 1px; }
+    .ship-line { font-size: 5.5pt; line-height: 1.15; word-wrap: break-word; overflow-wrap: anywhere; }
+    .awb-cell { text-align: center; vertical-align: middle; }
+    .awb-num {
+      font-size: 9pt;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      padding: 2px 4px 0;
+    }
+    .barcode-wrap { padding: 1px 6px 0; }
+    .barcode-wrap svg { width: 100%; max-width: 100%; height: 22px; }
+    .route {
       font-size: 5pt;
       font-weight: 700;
+      padding: 2px 4px 3px;
       text-transform: uppercase;
-      letter-spacing: 0.2px;
-      margin-bottom: 1px;
     }
-    .txt { font-size: 5.5pt; line-height: 1.12; }
-    .txt strong { font-size: 6pt; }
-    .barcode-wrap { text-align: center; padding: 1px 0; }
-    .barcode-wrap svg { max-width: 100%; height: 20px; }
-    .awb-num { text-align: center; font-weight: 800; font-size: 7pt; }
-    .route { text-align: center; font-size: 5pt; font-weight: 700; }
-    .qr-wrap { text-align: center; padding: 2px 0; }
-    .qr-wrap img { width: 52px; height: 52px; }
-    .qr-hint { font-size: 4.5pt; text-align: center; line-height: 1.1; color: #333; }
-    .kv { font-size: 5.5pt; line-height: 1.2; }
-    .kv div { margin-bottom: 1px; }
-    .cod-box {
-      background: #000;
-      color: #fff;
+    .kv { font-size: 5.5pt; line-height: 1.25; }
+    .kv div + div { margin-top: 1px; }
+    .qr-cell { text-align: center; vertical-align: middle; padding: 3px 4px; }
+    .qr-cell img { width: 48px; height: 48px; display: block; margin: 0 auto 2px; }
+    .qr-hint { font-size: 4.5pt; line-height: 1.15; color: #222; }
+    .prod-item { font-size: 5.5pt; line-height: 1.15; word-wrap: break-word; overflow-wrap: anywhere; margin-bottom: 3px; }
+    .prod-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 5.5pt;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+    .pay-cell { padding: 0; vertical-align: top; }
+    .pay-body {
       text-align: center;
-      padding: 4px 3px;
-      margin: 2px 0;
-      height: calc(100% - 4px);
+      padding: 4px 3px 2px;
+      min-height: 52px;
       display: flex;
       flex-direction: column;
       justify-content: center;
     }
-    .cod-box .big { font-size: 11pt; font-weight: 800; letter-spacing: 1px; }
-    .cod-box .amt { font-size: 8pt; font-weight: 700; margin-top: 2px; }
+    .pay-big { font-size: 14pt; font-weight: 800; letter-spacing: 1px; line-height: 1; }
+    .pay-amt-lbl {
+      background: #000;
+      color: #fff;
+      font-size: 5pt;
+      font-weight: 700;
+      padding: 1.5px 4px;
+      margin-top: 4px;
+      text-transform: uppercase;
+    }
+    .pay-amt { font-size: 9pt; font-weight: 800; padding: 3px 4px 4px; }
+    .icons-h {
+      text-align: center;
+      font-size: 5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 4px;
+      border-bottom: 1px solid #000;
+    }
     .icons {
       display: flex;
       justify-content: space-around;
-      align-items: center;
-      font-size: 5pt;
+      align-items: flex-start;
+      padding: 4px 2px 5px;
+      font-size: 4.5pt;
       font-weight: 700;
       text-align: center;
-      padding: 4px 2px;
-      height: 100%;
+      line-height: 1.1;
     }
-    .icons span { max-width: 30%; line-height: 1.1; }
+    .icons span { max-width: 32%; }
     .tear {
       border-top: 1px dashed #000;
       text-align: center;
       font-size: 4.5pt;
       font-weight: 700;
       padding: 2px 4px;
-      letter-spacing: 0.2px;
     }
     .footer-bar {
       background: #000;
       color: #fff;
       text-align: center;
       font-weight: 800;
-      font-size: 6.5pt;
+      font-size: 7pt;
       padding: 3px 4px;
       letter-spacing: 0.3px;
     }
@@ -241,7 +281,7 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
       font-size: 4.5pt;
       padding: 2px 4px 3px;
       border-top: 1px solid #000;
-      line-height: 1.25;
+      line-height: 1.3;
     }
     @media screen {
       html { margin: 0 auto; }
@@ -253,9 +293,9 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
         width: ${printW} !important;
         height: ${printH} !important;
         margin: 0 !important;
-        padding: 0 ${marginH} !important;
+        padding: 1.5mm ${marginH} 1.5mm !important;
       }
-      .sheet { width: 100% !important; height: 100% !important; border: 1.5px solid #000; }
+      .sheet { width: 100% !important; height: 100% !important; }
       .no-print { display: none !important; }
     }
   </style>
@@ -268,89 +308,99 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
     </p>
   </div>
 
-  <div class="sheet">
-    <div class="row head">
-      <div class="col">
+  <table class="sheet" cellspacing="0" cellpadding="0">
+    <colgroup>
+      <col class="half" /><col class="half" />
+    </colgroup>
+    <tr style="height:9%">
+      <td class="head-brand">
         <div class="brand-name">${esc(packingSlip.logoText.toUpperCase())}</div>
         <div class="brand-web">${esc(packingSlip.websiteUrl)}</div>
-      </div>
-      <div class="col carrier-box">
+      </td>
+      <td class="head-carrier">
+        <div class="carrier-partner">Courier Partner</div>
         <div class="carrier-name">BLUE<span>DART</span></div>
         <div class="carrier-sub">${esc(packingSlip.serviceLabel)}</div>
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="col">
-        <div class="lbl">Ship To</div>
-        <div class="txt"><strong>${esc(shipToName)}</strong><br>
-        ${esc(formatPhone(ship.phone || order.phone))}<br>
-        ${esc(truncate(shipToAddr, 95))}</div>
-      </div>
-      <div class="col">
-        <div class="lbl">AWB No.</div>
-        <div class="barcode-wrap"><svg id="awb-barcode"></svg></div>
+      </td>
+    </tr>
+    <tr style="height:21%">
+      <td>
+        <div class="sec-h">Ship To</div>
+        <div class="sec-body">
+          <div class="ship-name">${esc(shipToName)}</div>
+          <div class="ship-line">${esc(formatPhone(ship.phone || order.phone))}</div>
+          <div class="ship-line">${esc(shipToAddr)}</div>
+        </div>
+      </td>
+      <td class="awb-cell">
+        <div class="sec-h">AWB No.</div>
         <div class="awb-num">${esc(awb)}</div>
+        <div class="barcode-wrap"><svg id="awb-barcode"></svg></div>
         <div class="route">Routing Code: ${esc(route)}</div>
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="col">
-        <div class="lbl">Order Details</div>
-        <div class="kv">
+      </td>
+    </tr>
+    <tr style="height:16%">
+      <td>
+        <div class="sec-h">Order Details</div>
+        <div class="sec-body kv">
           <div><strong>Order ID:</strong> #${esc(orderNum)}</div>
           <div><strong>Invoice No.:</strong> ${esc(invoiceNo(order))}</div>
           <div><strong>Order Date:</strong> ${esc(formatOrderDate(order.created_at))}</div>
         </div>
-      </div>
-      <div class="col">
-        <div class="qr-wrap"><img src="${qrUrl}" alt="Track QR" width="52" height="52" /></div>
-        <div class="qr-hint">Scan QR code or visit<br>www.bluedart.com</div>
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="col">
-        <div class="lbl">Product Details</div>
-        <div class="kv">
-          <div><strong>Item:</strong> ${esc(productSummary(order))}</div>
-          <div><strong>Qty:</strong> ${productQty(order)}</div>
-          <div><strong>Weight:</strong> ${weightKg} KG</div>
+      </td>
+      <td class="qr-cell">
+        <img src="${qrUrl}" alt="Track QR" width="48" height="48" />
+        <div class="qr-hint">Track your shipment<br>Scan QR code or visit<br>www.bluedart.com</div>
+      </td>
+    </tr>
+    <tr style="height:17%">
+      <td>
+        <div class="sec-h">Product Details</div>
+        <div class="sec-body">
+          <div class="prod-item"><strong>Item:</strong> ${esc(productSummary(order))}</div>
+          <div class="prod-meta">
+            <span>Qty: ${productQty(order)}</span>
+            <span>Weight: ${weightKg} KG</span>
+          </div>
         </div>
-      </div>
-      <div class="col">
-        <div class="lbl">Payment Mode</div>
-        <div class="cod-box">
-          <div class="big">${isCod ? 'COD' : 'PREPAID'}</div>
-          ${isCod ? `<div class="amt">COD AMOUNT<br>${esc(payAmount)}</div>` : ''}
+      </td>
+      <td class="pay-cell">
+        <div class="sec-h">Payment Mode</div>
+        <div class="pay-body">
+          <div class="pay-big">${isCod ? 'COD' : 'PREPAID'}</div>
+          ${isCod ? `<div class="pay-amt-lbl">COD Amount</div><div class="pay-amt">${esc(payAmount)}</div>` : ''}
         </div>
-      </div>
-    </div>
-
-    <div class="row" style="flex:1">
-      <div class="col">
-        <div class="lbl">Shipper / Return Address</div>
-        <div class="txt"><strong>${esc(bluedart.shipper.name)}</strong><br>
-        ${esc(truncate(returnAddr, 72))}<br>
-        Ph: ${esc(supportPh)}</div>
-      </div>
-      <div class="col">
+      </td>
+    </tr>
+    <tr style="height:21%">
+      <td>
+        <div class="sec-h">Shipper / Return Address</div>
+        <div class="sec-body">
+          <div class="ship-name">${esc(bluedart.shipper.name)}</div>
+          <div class="ship-line">${esc(returnAddr)}</div>
+          <div class="ship-line">${esc(formatPhone(supportPh))}</div>
+        </div>
+      </td>
+      <td style="padding:0">
+        <div class="icons-h">Handle With Care</div>
         <div class="icons">
           <span>📦<br>Handle<br>With Care</span>
           <span>☔<br>Keep<br>Dry</span>
           <span>⬆<br>This<br>Side Up</span>
         </div>
-      </div>
-    </div>
-
-    <div class="tear">✂ — DO NOT ACCEPT IF SEAL IS BROKEN — ✂</div>
-    <div class="footer-bar">${esc(serviceFooter)}</div>
-    <div class="footer-thanks">THANK YOU FOR SHOPPING WITH ${esc(packingSlip.logoText.toUpperCase())}!</div>
-    <div class="footer-contact">
-      📞 ${esc(formatPhone(supportPh))} &nbsp;|&nbsp; ✉ ${esc(packingSlip.supportEmail)} &nbsp;|&nbsp; 🌐 ${esc(packingSlip.websiteUrl)}
-    </div>
-  </div>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2" style="padding:0;vertical-align:top">
+        <div class="tear">✂ — DO NOT ACCEPT IF SEAL IS BROKEN — ✂</div>
+        <div class="footer-bar">${esc(serviceFooter)}</div>
+        <div class="footer-thanks">THANK YOU FOR SHOPPING WITH ${esc(packingSlip.logoText.toUpperCase())}!</div>
+        <div class="footer-contact">
+          📞 ${esc(formatPhone(supportPh))} &nbsp;|&nbsp; ✉ ${esc(packingSlip.supportEmail)} &nbsp;|&nbsp; 🌐 ${esc(packingSlip.websiteUrl)}
+        </div>
+      </td>
+    </tr>
+  </table>
 
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script>
   <script>
