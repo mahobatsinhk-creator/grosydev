@@ -118,6 +118,9 @@ export const config = {
     printHeightMm: optional('PACKING_SLIP_PRINT_HEIGHT_MM', '152.4'),
     /** Left + right inset on slip (mm each side) */
     printMarginHorizontalMm: optional('PACKING_SLIP_MARGIN_H_MM', '3'),
+    websiteUrl: optional('PACKING_SLIP_WEBSITE', 'www.grosyhub.com'),
+    supportPhone: optional('PACKING_SLIP_SUPPORT_PHONE', optional('BLUEDART_SHIPPER_MOBILE', '')),
+    supportEmail: optional('PACKING_SLIP_SUPPORT_EMAIL', optional('BLUEDART_SHIPPER_EMAIL', 'support@grosyhub.com')),
   },
 
   shopify: {
