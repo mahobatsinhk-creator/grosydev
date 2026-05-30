@@ -54,7 +54,7 @@ export async function processOrder(orderIdOrName, { notifyCustomer = true, dryRu
     trackingUrl: trackingUrl(waybill.awb),
     fulfillmentId: fulfillment.id,
     labelSaved: Boolean(waybill.pdfBase64),
-    packingSlipUrl: `/api/packing-slip/${waybill.awb}?order=${encodeURIComponent(order.name)}&print=1`,
+    packingSlipUrl: `/api/packing-slip/${waybill.awb}?order=${encodeURIComponent(order.name)}`,
     labelPrintUrl: `/api/print-label/${waybill.awb}`,
   };
 }

@@ -103,6 +103,9 @@ export function shopifyOrderToWaybill(order) {
 
 export function summarizeOrder(order) {
   const s = order.shipping_address || {};
+  const digits = String(s.phone || order.phone || '').replace(/\D/g, '');
+  const phone =
+    digits.length >= 10 ? `+91 ${digits.slice(-10)}` : digits ? `+91 ${digits}` : '';
   return {
     id: order.id,
     name: order.name,
@@ -111,6 +114,7 @@ export function summarizeOrder(order) {
     fulfillmentStatus: order.fulfillment_status,
     total: order.total_price,
     customer: s.name || order.email,
+    phone,
     pincode: s.zip,
     city: s.city,
     itemCount: order.line_items?.length || 0,

@@ -181,10 +181,8 @@
     }
 
     function packingSlipUrl(awb, orderName) {
-      const params = new URLSearchParams();
-      if (orderName) params.set('order', orderName);
-      params.set('print', '1');
-      return `/api/packing-slip/${awb}?${params.toString()}`;
+      const q = orderName ? `?order=${encodeURIComponent(orderName)}` : '';
+      return `/api/packing-slip/${awb}${q}`;
     }
 
     function pagerHtml(pagination, page, totalLabel) {
@@ -303,7 +301,7 @@
         const data = await api('/api/orders/lookup?order=' + encodeURIComponent(orderRef));
         const o = data.order;
         let html = `<div class="msg ${data.inUnfulfilledList ? 'ok' : ''}" style="margin-bottom:12px">
-          <strong>${o.name}</strong> · ${o.customer || '—'} · ₹${o.total}<br>
+          <strong>${o.name}</strong> · ${o.customer || '—'} · ${o.phone || 'no phone'} · ₹${o.total}<br>
           <small>Fulfillment: <strong>${o.fulfillmentStatus || '—'}</strong> · Payment: ${o.financialStatus || '—'}</small><br>
           ${data.reason}`;
 
@@ -403,12 +401,13 @@
 
       ordersEl.innerHTML = `<div class="table-wrap"><table>
         <thead><tr>
-          <th>Order</th><th>Customer</th><th>Pincode</th><th>Total</th><th>Actions</th>
+          <th>Order</th><th>Customer</th><th>Phone</th><th>Pincode</th><th>Total</th><th>Actions</th>
         </tr></thead>
         <tbody>${data.orders.map((o) => `
           <tr data-row="${o.id}">
             <td><strong>${o.name}</strong></td>
             <td>${o.customer || '—'}</td>
+            <td>${o.phone || '—'}</td>
             <td>${o.pincode || '—'}</td>
             <td>₹${o.total}</td>
             <td class="actions">
