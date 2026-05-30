@@ -181,8 +181,10 @@
     }
 
     function packingSlipUrl(awb, orderName) {
-      const q = orderName ? `?order=${encodeURIComponent(orderName)}` : '';
-      return `/api/packing-slip/${awb}${q}`;
+      const params = new URLSearchParams();
+      if (orderName) params.set('order', orderName);
+      params.set('print', '1');
+      return `/api/packing-slip/${awb}?${params.toString()}`;
     }
 
     function pagerHtml(pagination, page, totalLabel) {

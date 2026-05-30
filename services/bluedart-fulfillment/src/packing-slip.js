@@ -88,9 +88,9 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
   const { bluedart, packingSlip } = config;
   const weightKg = orderWeightKg(order);
   const isCod = isCodOrder(order);
-  const printW = `${packingSlip.printWidthMm}mm`;
-  const printH = `${packingSlip.printHeightMm}mm`;
-  const marginH = `${packingSlip.printMarginHorizontalMm}mm`;
+  const pageW = packingSlip.pageWidth;
+  const pageH = packingSlip.pageHeight;
+  const marginHIn = `${(Number(packingSlip.printMarginHorizontalMm) / 25.4).toFixed(3)}in`;
 
   const shipToName = ship.name || `${ship.first_name || ''} ${ship.last_name || ''}`.trim();
   const customerPhone = formatPhone(ship.phone || order.phone);
@@ -126,26 +126,51 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
   <title>Packing slip ${esc(order.name)} — ${esc(awb)}</title>
   <style>
     @page {
-      size: ${printW} ${printH} portrait;
-      size: ${packingSlip.pageWidth} ${packingSlip.pageHeight} portrait;
+      size: ${pageW} ${pageH};
       margin: 0;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body {
-      width: ${printW};
-      height: ${printH};
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-    }
+    html { background: #e8e8e8; }
     body {
-      padding: 1mm ${marginH};
       font-family: Arial, Helvetica, sans-serif;
       font-size: 5pt;
       line-height: 1.12;
       color: #000;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
+    }
+    .print-hint {
+      max-width: 420px;
+      margin: 10px auto;
+      padding: 10px 14px;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-family: system-ui, sans-serif;
+      font-size: 13px;
+      line-height: 1.45;
+      text-align: center;
+    }
+    .print-hint strong { color: #111; }
+    .print-hint button {
+      margin-top: 8px;
+      padding: 8px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 0;
+      border-radius: 6px;
+      background: #b89774;
+      color: #fff;
+    }
+    .label-page {
+      width: ${pageW};
+      height: ${pageH};
+      margin: 0 auto 12px;
+      padding: 0.04in ${marginHIn};
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 0 8px rgba(0,0,0,.18);
     }
     .sheet {
       width: 100%;
@@ -263,23 +288,37 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
       border-top: 1px solid #000;
       line-height: 1.2;
     }
-    @media screen {
-      html { background: #e8e8e8; }
-      body { margin: 8px auto; box-shadow: 0 0 6px rgba(0,0,0,.2); }
-    }
     @media print {
       html, body {
-        width: ${printW} !important;
-        height: ${printH} !important;
+        width: ${pageW} !important;
+        height: ${pageH} !important;
         margin: 0 !important;
-        padding: 1mm ${marginH} !important;
+        padding: 0 !important;
         overflow: hidden !important;
+        background: #fff !important;
+      }
+      .no-print { display: none !important; }
+      .label-page {
+        width: ${pageW} !important;
+        height: ${pageH} !important;
+        margin: 0 !important;
+        padding: 0.04in ${marginHIn} !important;
+        box-shadow: none !important;
+        page-break-after: avoid;
+        page-break-inside: avoid;
       }
       .sheet { width: 100% !important; height: 100% !important; }
     }
   </style>
 </head>
 <body>
+  <div class="print-hint no-print">
+    <strong>Print on 4×6 inch label</strong><br>
+    Paper size: <strong>4 × 6 in</strong> (100×150 mm) · Portrait · Margins: <strong>None</strong> · Scale: <strong>100%</strong>
+    <br><button type="button" onclick="window.print()">Print now</button>
+  </div>
+
+  <div class="label-page">
   <table class="sheet" cellspacing="0" cellpadding="0">
     <colgroup><col style="width:50%" /><col style="width:50%" /></colgroup>
 
@@ -376,10 +415,14 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
       </td>
     </tr>
   </table>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script>
   <script>
     JsBarcode("#awb-barcode", ${JSON.stringify(String(awb))}, { format: "CODE128", width: 0.85, height: 17, displayValue: false, margin: 0 });
+    if (/[?&]print=1(?:&|$)/.test(location.search)) {
+      window.addEventListener("load", () => setTimeout(() => window.print(), 400));
+    }
   <\/script>
 </body>
 </html>`;

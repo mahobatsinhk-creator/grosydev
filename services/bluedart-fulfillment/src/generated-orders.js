@@ -25,7 +25,9 @@ function orderNameSortKey(name = '') {
 }
 
 function toPrintUrls(awb, orderName) {
-  const orderQuery = orderName ? `?order=${encodeURIComponent(orderName)}` : '';
+  const params = new URLSearchParams({ print: '1' });
+  if (orderName) params.set('order', orderName);
+  const orderQuery = `?${params.toString()}`;
   return {
     awb: String(awb),
     packingSlipUrl: `/api/packing-slip/${awb}${orderQuery}`,
