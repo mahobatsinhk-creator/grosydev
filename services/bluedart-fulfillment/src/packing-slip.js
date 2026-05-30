@@ -117,6 +117,8 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
   const serviceFooter = isCod ? `${packingSlip.serviceLabel} - COD` : packingSlip.serviceLabel;
   const supportPh = packingSlip.supportPhone || bluedart.shipper.mobile;
   const payAmount = isCod ? `₹${Number(order.total_price || 0).toFixed(2)}` : '₹0.00';
+  const labelWpx = Math.round((Number(packingSlip.printWidthMm) / 25.4) * 96);
+  const labelHpx = Math.round((Number(packingSlip.printHeightMm) / 25.4) * 96);
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -173,10 +175,10 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
       color: #666;
     }
     .label-page {
-      width: ${pageW};
-      height: ${pageH};
+      width: ${labelWpx}px;
+      height: ${labelHpx}px;
       margin: 0 auto 12px;
-      padding: 0.04in ${marginHIn};
+      padding: 4px 12px;
       overflow: hidden;
       background: #fff;
       box-shadow: 0 0 8px rgba(0,0,0,.18);
@@ -230,7 +232,7 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
     .awb-cell { text-align: center; vertical-align: top; }
     .awb-num { font-size: 8pt; font-weight: 800; padding: 2px 4px 0; }
     .barcode-wrap { padding: 1px 5px 0; }
-    .barcode-wrap svg { width: 100%; height: 17px; }
+    .barcode-wrap img { width: 100%; height: 17px; object-fit: contain; display: block; }
     .route { font-size: 4.5pt; font-weight: 700; padding: 2px 4px 3px; text-transform: uppercase; }
     .kv { font-size: 5pt; line-height: 1.2; }
     .kv div + div { margin-top: 1px; }
@@ -358,7 +360,7 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
       <td class="awb-cell">
         <div class="sec-h">AWB No.</div>
         <div class="awb-num">${esc(awb)}</div>
-        <div class="barcode-wrap"><svg id="awb-barcode"></svg></div>
+        <div class="barcode-wrap"><img id="awb-barcode" alt="" /></div>
         <div class="route">Routing Code: ${esc(route)}</div>
       </td>
     </tr>
@@ -430,32 +432,68 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>
   <script>
-    JsBarcode("#awb-barcode", ${JSON.stringify(String(awb))}, { format: "CODE128", width: 0.85, height: 17, displayValue: false, margin: 0 });
+    var LABEL_W = ${labelWpx};
+    var LABEL_H = ${labelHpx};
 
-    function pdfOptions() {
-      var el = document.querySelector(".label-page");
-      return {
-        margin: 0,
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: {
-          scale: 4,
-          useCORS: true,
-          backgroundColor: "#ffffff",
-          width: el.offsetWidth,
-          height: el.offsetHeight,
-          scrollX: 0,
-          scrollY: -window.scrollY,
-        },
-        jsPDF: { unit: "in", format: [4, 6], orientation: "portrait" },
-        pagebreak: { mode: ["avoid-all"] },
-      };
+    JsBarcode("#awb-barcode", ${JSON.stringify(String(awb))}, {
+      format: "CODE128", width: 1.1, height: 28, displayValue: false, margin: 0
+    });
+
+    function waitImages(root) {
+      var imgs = root.querySelectorAll("img");
+      return Promise.all(Array.prototype.map.call(imgs, function (img) {
+        if (img.complete && img.naturalWidth) return Promise.resolve();
+        return new Promise(function (resolve) {
+          img.onload = resolve;
+          img.onerror = resolve;
+        });
+      }));
     }
 
     function buildPdf() {
+      if (typeof html2canvas !== "function" || !window.jspdf) {
+        return Promise.reject(new Error("PDF libraries failed to load — check internet and refresh"));
+      }
       var el = document.querySelector(".label-page");
-      return html2pdf().set(pdfOptions()).from(el).toPdf().get("pdf");
+      return waitImages(el).then(function () {
+        return html2canvas(el, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: false,
+          backgroundColor: "#ffffff",
+          width: LABEL_W,
+          height: LABEL_H,
+          windowWidth: LABEL_W,
+          windowHeight: LABEL_H,
+          scrollX: 0,
+          scrollY: 0,
+          onclone: function (doc) {
+            var clone = doc.querySelector(".label-page");
+            if (clone) {
+              clone.style.width = LABEL_W + "px";
+              clone.style.height = LABEL_H + "px";
+              clone.style.overflow = "visible";
+              clone.style.boxShadow = "none";
+            }
+          },
+        });
+      }).then(function (canvas) {
+        if (!canvas || canvas.width < 10 || canvas.height < 10) {
+          throw new Error("Label capture failed — try Download PDF or refresh the page");
+        }
+        var pdf = new window.jspdf.jsPDF({
+          unit: "in",
+          format: [4, 6],
+          orientation: "portrait",
+          compress: true,
+        });
+        var img = canvas.toDataURL("image/jpeg", 0.95);
+        pdf.addImage(img, "JPEG", 0, 0, 4, 6);
+        return pdf;
+      });
     }
 
     function printPdf() {
@@ -463,19 +501,18 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
       if (btn) { btn.disabled = true; btn.textContent = "Preparing…"; }
       return buildPdf().then(function (pdf) {
         var url = pdf.output("bloburl");
-        var iframe = document.createElement("iframe");
-        iframe.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0";
-        iframe.src = url;
-        document.body.appendChild(iframe);
-        iframe.onload = function () {
-          setTimeout(function () {
-            iframe.contentWindow.focus();
-            iframe.contentWindow.print();
-            if (btn) { btn.disabled = false; btn.textContent = "Print 4×6 PDF"; }
-          }, 400);
-        };
+        var w = window.open(url, "_blank");
+        if (!w) {
+          pdf.save("packing-slip-${esc(awb)}.pdf");
+          alert("Popup blocked — PDF downloaded. Open the file and print it.");
+          return;
+        }
+        setTimeout(function () {
+          try { w.focus(); w.print(); } catch (e) { /* PDF viewer handles print */ }
+        }, 700);
       }).catch(function (err) {
         alert("Print failed: " + (err && err.message ? err.message : err));
+      }).finally(function () {
         if (btn) { btn.disabled = false; btn.textContent = "Print 4×6 PDF"; }
       });
     }
@@ -485,19 +522,19 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
       if (btn) btn.disabled = true;
       buildPdf().then(function (pdf) {
         pdf.save("packing-slip-${esc(awb)}.pdf");
-        if (btn) btn.disabled = false;
       }).catch(function (err) {
         alert("Download failed: " + (err && err.message ? err.message : err));
+      }).finally(function () {
         if (btn) btn.disabled = false;
       });
     }
 
     function whenLabelReady(fn) {
-      var img = document.querySelector(".qr-cell img");
-      var done = function () { setTimeout(fn, 250); };
-      if (!img || img.complete) return done();
-      img.onload = done;
-      img.onerror = done;
+      setTimeout(function () {
+        waitImages(document.querySelector(".label-page")).then(function () {
+          setTimeout(fn, 300);
+        });
+      }, 200);
     }
 
     document.getElementById("btn-print-pdf").addEventListener("click", printPdf);
