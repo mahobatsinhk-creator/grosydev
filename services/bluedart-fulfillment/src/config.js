@@ -120,6 +120,10 @@ export const config = {
     printMarginHorizontalMm: optional('PACKING_SLIP_MARGIN_H_MM', '3'),
     websiteUrl: optional('PACKING_SLIP_WEBSITE', 'www.grosyhub.com'),
     supportPhone: optional('PACKING_SLIP_SUPPORT_PHONE', optional('BLUEDART_SHIPPER_MOBILE', '')),
+    legalNote: optional(
+      'PACKING_SLIP_LEGAL_NOTE',
+      "All disputes are subject to Gujarat jurisdiction only. Goods once sold will only be taken back or exchanged as per the store's exchange/return policy."
+    ),
     supportEmail: optional('PACKING_SLIP_SUPPORT_EMAIL', optional('BLUEDART_SHIPPER_EMAIL', 'support@grosyhub.com')),
   },
 
