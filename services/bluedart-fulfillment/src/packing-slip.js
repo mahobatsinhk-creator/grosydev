@@ -117,8 +117,6 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
   const serviceFooter = isCod ? `${packingSlip.serviceLabel} - COD` : packingSlip.serviceLabel;
   const supportPh = packingSlip.supportPhone || bluedart.shipper.mobile;
   const payAmount = isCod ? `₹${Number(order.total_price || 0).toFixed(2)}` : '₹0.00';
-  const labelWpx = Math.round((Number(packingSlip.printWidthMm) / 25.4) * 96);
-  const labelHpx = Math.round((Number(packingSlip.printHeightMm) / 25.4) * 96);
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -165,20 +163,17 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
       background: #b89774;
       color: #fff;
     }
-    .print-hint .btn-dl {
-      background: #666;
-      margin-left: 6px;
-    }
     .print-hint .print-note {
       margin-top: 8px;
       font-size: 11px;
       color: #666;
+      text-align: left;
     }
     .label-page {
-      width: ${labelWpx}px;
-      height: ${labelHpx}px;
+      width: ${pageW};
+      height: ${pageH};
       margin: 0 auto 12px;
-      padding: 4px 12px;
+      padding: 0.04in ${marginHIn};
       overflow: hidden;
       background: #fff;
       box-shadow: 0 0 8px rgba(0,0,0,.18);
@@ -241,7 +236,7 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
     .qr-hint { font-size: 4pt; line-height: 1.1; color: #222; }
     .pay-cell { padding: 0; vertical-align: top; }
     .pay-body { text-align: center; padding: 3px 2px; }
-    .pay-big { font-size: 12pt; font-weight: 800; letter-spacing: 1px; line-height: 1; margin: 3px 0; }
+    .pay-big { font-size: 12pt; font-weight: 800; line-height: 1; margin: 3px 0; }
     .pay-amt-lbl {
       background: #000;
       color: #fff;
@@ -325,11 +320,16 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
 <body>
   <div class="print-hint no-print">
     <strong>Print 4×6 packing slip</strong><br>
-    Use your <strong>thermal label printer</strong> (not A4 / Print to PDF for testing).
+    Sharp text — prints directly from HTML (not a stretched image).
     <br>
-    <button type="button" id="btn-print-pdf">Print 4×6 label</button>
-    <button type="button" id="btn-dl-pdf" class="btn-dl">Download PDF</button>
-    <p class="print-note">In print dialog: Paper <strong>4×6 in</strong> · Scale <strong>100%</strong> · Margins <strong>None</strong></p>
+    <button type="button" id="btn-print">Print 4×6 label</button>
+    <p class="print-note">
+      <strong>Print dialog settings:</strong><br>
+      · Paper size: <strong>4 × 6 in</strong> (100×150 mm)<br>
+      · Scale: <strong>100%</strong> (not “Fit to page”)<br>
+      · Margins: <strong>None</strong><br>
+      · To save PDF: choose <strong>Save as PDF</strong> as destination, same paper size
+    </p>
   </div>
 
   <div class="label-page">
@@ -432,132 +432,36 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>
   <script>
-    var LABEL_W = ${labelWpx};
-    var LABEL_H = ${labelHpx};
-
     JsBarcode("#awb-barcode", ${JSON.stringify(String(awb))}, {
       format: "CODE128", width: 1.1, height: 28, displayValue: false, margin: 0
     });
 
-    function waitImages(root) {
-      var imgs = root.querySelectorAll("img");
-      return Promise.all(Array.prototype.map.call(imgs, function (img) {
-        if (img.complete && img.naturalWidth) return Promise.resolve();
-        return new Promise(function (resolve) {
-          img.onload = resolve;
-          img.onerror = resolve;
-        });
-      }));
-    }
-
-    function captureLabel() {
-      if (typeof html2canvas !== "function") {
-        return Promise.reject(new Error("Print library failed to load — refresh the page"));
-      }
-      var el = document.querySelector(".label-page");
-      return waitImages(el).then(function () {
-        return html2canvas(el, {
-          scale: 2,
-          useCORS: true,
-          allowTaint: false,
-          backgroundColor: "#ffffff",
-          width: LABEL_W,
-          height: LABEL_H,
-          windowWidth: LABEL_W,
-          windowHeight: LABEL_H,
-          scrollX: 0,
-          scrollY: 0,
-          onclone: function (doc) {
-            var clone = doc.querySelector(".label-page");
-            if (clone) {
-              clone.style.width = LABEL_W + "px";
-              clone.style.height = LABEL_H + "px";
-              clone.style.overflow = "visible";
-              clone.style.boxShadow = "none";
-            }
-          },
-        });
-      }).then(function (canvas) {
-        if (!canvas || canvas.width < 10 || canvas.height < 10) {
-          throw new Error("Label capture failed — refresh and try again");
-        }
-        return canvas;
-      });
-    }
-
-    function buildPdf() {
-      if (!window.jspdf) {
-        return Promise.reject(new Error("PDF library failed to load — refresh the page"));
-      }
-      return captureLabel().then(function (canvas) {
-        var pdf = new window.jspdf.jsPDF({
-          unit: "in",
-          format: [4, 6],
-          orientation: "portrait",
-          compress: true,
-        });
-        pdf.addImage(canvas.toDataURL("image/jpeg", 0.95), "JPEG", 0, 0, 4, 6);
-        return pdf;
-      });
-    }
-
     function printLabel() {
-      var btn = document.getElementById("btn-print-pdf");
-      if (btn) { btn.disabled = true; btn.textContent = "Preparing…"; }
-      return captureLabel().then(function (canvas) {
-        var imgUrl = canvas.toDataURL("image/jpeg", 0.95);
-        var win = window.open("", "_blank");
-        if (!win) {
-          throw new Error("Allow popups for this site, then click Print again");
-        }
-        win.document.open();
-        win.document.write(
-          "<!DOCTYPE html><html><head><meta charset=\\"utf-8\\"><title>Print 4x6 slip</title>" +
-          "<style>" +
-          "@page { size: 4in 6in; margin: 0; }" +
-          "html, body { margin: 0; padding: 0; width: 4in; height: 6in; overflow: hidden; background: #fff; }" +
-          "img { width: 4in; height: 6in; display: block; }" +
-          ".tip { font: 12px Arial, sans-serif; padding: 8px; text-align: center; color: #333; }" +
-          "@media print { .tip { display: none !important; } }" +
-          "</style></head><body>" +
-          "<div class=\\"tip\\">Paper: <b>4×6 inch</b> · Scale: <b>100%</b> · Margins: <b>None</b> — then Ctrl+P</div>" +
-          "<img id=\\"slip\\" src=\\"" + imgUrl + "\\" alt=\\"Packing slip\\" />" +
-          "<script>var img=document.getElementById('slip');function go(){setTimeout(function(){window.focus();window.print();},350);}if(img.complete)go();else img.onload=go;<\\/script>" +
-          "</body></html>"
-        );
-        win.document.close();
-      }).catch(function (err) {
-        alert("Print failed: " + (err && err.message ? err.message : err));
-      }).finally(function () {
-        if (btn) { btn.disabled = false; btn.textContent = "Print 4×6 label"; }
-      });
-    }
-
-    function downloadPdf() {
-      var btn = document.getElementById("btn-dl-pdf");
-      if (btn) btn.disabled = true;
-      buildPdf().then(function (pdf) {
-        pdf.save("packing-slip-${esc(awb)}.pdf");
-      }).catch(function (err) {
-        alert("Download failed: " + (err && err.message ? err.message : err));
-      }).finally(function () {
-        if (btn) btn.disabled = false;
-      });
+      window.print();
     }
 
     function whenLabelReady(fn) {
-      setTimeout(function () {
-        waitImages(document.querySelector(".label-page")).then(function () {
-          setTimeout(fn, 300);
-        });
-      }, 200);
+      var imgs = document.querySelectorAll(".label-page img");
+      var waiting = 0;
+      imgs.forEach(function (img) {
+        if (!img.complete) waiting++;
+      });
+      if (!waiting) {
+        setTimeout(fn, 300);
+        return;
+      }
+      imgs.forEach(function (img) {
+        if (!img.complete) {
+          img.onload = img.onerror = function () {
+            waiting--;
+            if (waiting <= 0) setTimeout(fn, 300);
+          };
+        }
+      });
     }
 
-    document.getElementById("btn-print-pdf").addEventListener("click", printLabel);
-    document.getElementById("btn-dl-pdf").addEventListener("click", downloadPdf);
+    document.getElementById("btn-print").addEventListener("click", printLabel);
 
     if (/[?&]print=1(?:&|$)/.test(location.search)) {
       whenLabelReady(printLabel);
