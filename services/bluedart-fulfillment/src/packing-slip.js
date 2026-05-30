@@ -325,11 +325,11 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
 <body>
   <div class="print-hint no-print">
     <strong>Print 4×6 packing slip</strong><br>
-    Click below — a <strong>4×6 inch PDF</strong> opens and prints full-page (works even if Chrome shows A4).
+    Use your <strong>thermal label printer</strong> (not A4 / Print to PDF for testing).
     <br>
-    <button type="button" id="btn-print-pdf">Print 4×6 PDF</button>
+    <button type="button" id="btn-print-pdf">Print 4×6 label</button>
     <button type="button" id="btn-dl-pdf" class="btn-dl">Download PDF</button>
-    <p class="print-note">Thermal printer: select your 4×6 label printer · Scale 100% · Margins None</p>
+    <p class="print-note">In print dialog: Paper <strong>4×6 in</strong> · Scale <strong>100%</strong> · Margins <strong>None</strong></p>
   </div>
 
   <div class="label-page">
@@ -453,9 +453,9 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
       }));
     }
 
-    function buildPdf() {
-      if (typeof html2canvas !== "function" || !window.jspdf) {
-        return Promise.reject(new Error("PDF libraries failed to load — check internet and refresh"));
+    function captureLabel() {
+      if (typeof html2canvas !== "function") {
+        return Promise.reject(new Error("Print library failed to load — refresh the page"));
       }
       var el = document.querySelector(".label-page");
       return waitImages(el).then(function () {
@@ -482,38 +482,57 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
         });
       }).then(function (canvas) {
         if (!canvas || canvas.width < 10 || canvas.height < 10) {
-          throw new Error("Label capture failed — try Download PDF or refresh the page");
+          throw new Error("Label capture failed — refresh and try again");
         }
+        return canvas;
+      });
+    }
+
+    function buildPdf() {
+      if (!window.jspdf) {
+        return Promise.reject(new Error("PDF library failed to load — refresh the page"));
+      }
+      return captureLabel().then(function (canvas) {
         var pdf = new window.jspdf.jsPDF({
           unit: "in",
           format: [4, 6],
           orientation: "portrait",
           compress: true,
         });
-        var img = canvas.toDataURL("image/jpeg", 0.95);
-        pdf.addImage(img, "JPEG", 0, 0, 4, 6);
+        pdf.addImage(canvas.toDataURL("image/jpeg", 0.95), "JPEG", 0, 0, 4, 6);
         return pdf;
       });
     }
 
-    function printPdf() {
+    function printLabel() {
       var btn = document.getElementById("btn-print-pdf");
       if (btn) { btn.disabled = true; btn.textContent = "Preparing…"; }
-      return buildPdf().then(function (pdf) {
-        var url = pdf.output("bloburl");
-        var w = window.open(url, "_blank");
-        if (!w) {
-          pdf.save("packing-slip-${esc(awb)}.pdf");
-          alert("Popup blocked — PDF downloaded. Open the file and print it.");
-          return;
+      return captureLabel().then(function (canvas) {
+        var imgUrl = canvas.toDataURL("image/jpeg", 0.95);
+        var win = window.open("", "_blank");
+        if (!win) {
+          throw new Error("Allow popups for this site, then click Print again");
         }
-        setTimeout(function () {
-          try { w.focus(); w.print(); } catch (e) { /* PDF viewer handles print */ }
-        }, 700);
+        win.document.open();
+        win.document.write(
+          "<!DOCTYPE html><html><head><meta charset=\\"utf-8\\"><title>Print 4x6 slip</title>" +
+          "<style>" +
+          "@page { size: 4in 6in; margin: 0; }" +
+          "html, body { margin: 0; padding: 0; width: 4in; height: 6in; overflow: hidden; background: #fff; }" +
+          "img { width: 4in; height: 6in; display: block; }" +
+          ".tip { font: 12px Arial, sans-serif; padding: 8px; text-align: center; color: #333; }" +
+          "@media print { .tip { display: none !important; } }" +
+          "</style></head><body>" +
+          "<div class=\\"tip\\">Paper: <b>4×6 inch</b> · Scale: <b>100%</b> · Margins: <b>None</b> — then Ctrl+P</div>" +
+          "<img id=\\"slip\\" src=\\"" + imgUrl + "\\" alt=\\"Packing slip\\" />" +
+          "<script>var img=document.getElementById('slip');function go(){setTimeout(function(){window.focus();window.print();},350);}if(img.complete)go();else img.onload=go;<\\/script>" +
+          "</body></html>"
+        );
+        win.document.close();
       }).catch(function (err) {
         alert("Print failed: " + (err && err.message ? err.message : err));
       }).finally(function () {
-        if (btn) { btn.disabled = false; btn.textContent = "Print 4×6 PDF"; }
+        if (btn) { btn.disabled = false; btn.textContent = "Print 4×6 label"; }
       });
     }
 
@@ -537,11 +556,11 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
       }, 200);
     }
 
-    document.getElementById("btn-print-pdf").addEventListener("click", printPdf);
+    document.getElementById("btn-print-pdf").addEventListener("click", printLabel);
     document.getElementById("btn-dl-pdf").addEventListener("click", downloadPdf);
 
     if (/[?&]print=1(?:&|$)/.test(location.search)) {
-      whenLabelReady(printPdf);
+      whenLabelReady(printLabel);
     }
   <\/script>
 </body>
