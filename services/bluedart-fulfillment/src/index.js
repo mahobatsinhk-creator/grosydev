@@ -130,6 +130,29 @@ export function startServer() {
         return;
       }
 
+      if (req.method === 'GET' && url.pathname === '/api/qr') {
+        const data = url.searchParams.get('data') || '';
+        const size = Math.min(Math.max(Number(url.searchParams.get('size')) || 128, 32), 512);
+        if (!data) {
+          json(res, 400, { error: 'Missing data' });
+          return;
+        }
+        const qrRes = await fetch(
+          `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&margin=0&data=${encodeURIComponent(data)}`
+        );
+        if (!qrRes.ok) {
+          json(res, 502, { error: 'QR generation failed' });
+          return;
+        }
+        const buf = Buffer.from(await qrRes.arrayBuffer());
+        res.writeHead(200, {
+          'Content-Type': 'image/png',
+          'Cache-Control': 'public, max-age=86400',
+        });
+        res.end(buf);
+        return;
+      }
+
       if (req.method === 'GET' && url.pathname.startsWith('/api/labels/')) {
         const awb = url.pathname.replace('/api/labels/', '').replace(/\.pdf$/i, '');
         if (!/^\d+$/.test(awb)) {

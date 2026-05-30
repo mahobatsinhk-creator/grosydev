@@ -113,7 +113,7 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
   const orderNum = String(order.name || '').replace('#', '');
   const route = routingCode(waybillMeta);
   const trackUrl = trackingUrl(awb);
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=64x64&margin=0&data=${encodeURIComponent(trackUrl)}`;
+  const qrUrl = `/api/qr?size=64&data=${encodeURIComponent(trackUrl)}`;
   const serviceFooter = isCod ? `${packingSlip.serviceLabel} - COD` : packingSlip.serviceLabel;
   const supportPh = packingSlip.supportPhone || bluedart.shipper.mobile;
   const payAmount = isCod ? `₹${Number(order.total_price || 0).toFixed(2)}` : '₹0.00';
@@ -162,6 +162,15 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
       border-radius: 6px;
       background: #b89774;
       color: #fff;
+    }
+    .print-hint .btn-dl {
+      background: #666;
+      margin-left: 6px;
+    }
+    .print-hint .print-note {
+      margin-top: 8px;
+      font-size: 11px;
+      color: #666;
     }
     .label-page {
       width: ${pageW};
@@ -313,9 +322,12 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
 </head>
 <body>
   <div class="print-hint no-print">
-    <strong>Print on 4×6 inch label</strong><br>
-    Paper size: <strong>4 × 6 in</strong> (100×150 mm) · Portrait · Margins: <strong>None</strong> · Scale: <strong>100%</strong>
-    <br><button type="button" onclick="window.print()">Print now</button>
+    <strong>Print 4×6 packing slip</strong><br>
+    Click below — a <strong>4×6 inch PDF</strong> opens and prints full-page (works even if Chrome shows A4).
+    <br>
+    <button type="button" id="btn-print-pdf">Print 4×6 PDF</button>
+    <button type="button" id="btn-dl-pdf" class="btn-dl">Download PDF</button>
+    <p class="print-note">Thermal printer: select your 4×6 label printer · Scale 100% · Margins None</p>
   </div>
 
   <div class="label-page">
@@ -361,7 +373,7 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
         </div>
       </td>
       <td class="qr-cell">
-        <img src="${qrUrl}" alt="Track QR" width="42" height="42" />
+        <img src="${qrUrl}" alt="Track QR" width="42" height="42" crossorigin="anonymous" />
         <div class="qr-hint">Track your shipment<br>Scan QR code or visit<br>www.bluedart.com</div>
       </td>
     </tr>
@@ -418,10 +430,81 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
   <script>
     JsBarcode("#awb-barcode", ${JSON.stringify(String(awb))}, { format: "CODE128", width: 0.85, height: 17, displayValue: false, margin: 0 });
+
+    function pdfOptions() {
+      var el = document.querySelector(".label-page");
+      return {
+        margin: 0,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: {
+          scale: 4,
+          useCORS: true,
+          backgroundColor: "#ffffff",
+          width: el.offsetWidth,
+          height: el.offsetHeight,
+          scrollX: 0,
+          scrollY: -window.scrollY,
+        },
+        jsPDF: { unit: "in", format: [4, 6], orientation: "portrait" },
+        pagebreak: { mode: ["avoid-all"] },
+      };
+    }
+
+    function buildPdf() {
+      var el = document.querySelector(".label-page");
+      return html2pdf().set(pdfOptions()).from(el).toPdf().get("pdf");
+    }
+
+    function printPdf() {
+      var btn = document.getElementById("btn-print-pdf");
+      if (btn) { btn.disabled = true; btn.textContent = "Preparing…"; }
+      return buildPdf().then(function (pdf) {
+        var url = pdf.output("bloburl");
+        var iframe = document.createElement("iframe");
+        iframe.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0";
+        iframe.src = url;
+        document.body.appendChild(iframe);
+        iframe.onload = function () {
+          setTimeout(function () {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+            if (btn) { btn.disabled = false; btn.textContent = "Print 4×6 PDF"; }
+          }, 400);
+        };
+      }).catch(function (err) {
+        alert("Print failed: " + (err && err.message ? err.message : err));
+        if (btn) { btn.disabled = false; btn.textContent = "Print 4×6 PDF"; }
+      });
+    }
+
+    function downloadPdf() {
+      var btn = document.getElementById("btn-dl-pdf");
+      if (btn) btn.disabled = true;
+      buildPdf().then(function (pdf) {
+        pdf.save("packing-slip-${esc(awb)}.pdf");
+        if (btn) btn.disabled = false;
+      }).catch(function (err) {
+        alert("Download failed: " + (err && err.message ? err.message : err));
+        if (btn) btn.disabled = false;
+      });
+    }
+
+    function whenLabelReady(fn) {
+      var img = document.querySelector(".qr-cell img");
+      var done = function () { setTimeout(fn, 250); };
+      if (!img || img.complete) return done();
+      img.onload = done;
+      img.onerror = done;
+    }
+
+    document.getElementById("btn-print-pdf").addEventListener("click", printPdf);
+    document.getElementById("btn-dl-pdf").addEventListener("click", downloadPdf);
+
     if (/[?&]print=1(?:&|$)/.test(location.search)) {
-      window.addEventListener("load", () => setTimeout(() => window.print(), 400));
+      whenLabelReady(printPdf);
     }
   <\/script>
 </body>
