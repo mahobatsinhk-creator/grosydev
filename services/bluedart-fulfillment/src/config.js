@@ -99,7 +99,7 @@ export const config = {
       address2: optional('BLUEDART_SHIPPER_ADDRESS2', 'Palanpur'),
       address3: optional('BLUEDART_SHIPPER_ADDRESS3', 'Gujarat, India'),
       pincode: optional('BLUEDART_SHIPPER_PINCODE', '385001'),
-      mobile: optional('BLUEDART_SHIPPER_MOBILE'),
+      mobile: optional('BLUEDART_SHIPPER_MOBILE', '9574965893'),
       email: optional('BLUEDART_SHIPPER_EMAIL', 'support@grosyhub.com'),
       gstin: optional('BLUEDART_SHIPPER_GSTIN', ''),
     },
@@ -119,11 +119,11 @@ export const config = {
     /** Left + right inset on slip (mm each side) */
     printMarginHorizontalMm: optional('PACKING_SLIP_MARGIN_H_MM', '3'),
     /** Extra top inset — avoids thermal printer clipping the header */
-    printMarginTopMm: optional('PACKING_SLIP_MARGIN_TOP_MM', '5'),
+    printMarginTopMm: optional('PACKING_SLIP_MARGIN_TOP_MM', '6'),
     /** QR image pixel size (displayed smaller via CSS for sharp print) */
     qrPixelSize: optional('PACKING_SLIP_QR_PIXEL_SIZE', '140'),
     websiteUrl: optional('PACKING_SLIP_WEBSITE', 'www.grosyhub.com'),
-    supportPhone: optional('PACKING_SLIP_SUPPORT_PHONE', optional('BLUEDART_SHIPPER_MOBILE', '')),
+    supportPhone: optional('PACKING_SLIP_SUPPORT_PHONE', optional('BLUEDART_SHIPPER_MOBILE', '9574965893')),
     legalNote: optional(
       'PACKING_SLIP_LEGAL_NOTE',
       "All disputes are subject to Gujarat jurisdiction only. Goods once sold will only be taken back or exchanged as per the store's exchange/return policy."

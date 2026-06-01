@@ -84,12 +84,17 @@ function productQty(order) {
 
 /** Dimensions from Shopify metafields (custom.item_dimensions / custom.dimensions) */
 function orderDimensions(order, fallback) {
-  const fromItems = (order.line_items || [])
-    .map((i) => i.packing_slip_dimensions)
+  const items = order.line_items || [];
+  const parts = items
+    .map((item) => {
+      const dim = item.packing_slip_dimensions;
+      if (!dim) return null;
+      if (items.length === 1) return dim;
+      const name = (item.title || 'Item').slice(0, 28);
+      return `${name}: ${dim}`;
+    })
     .filter(Boolean);
-  const unique = [...new Set(fromItems)];
-  if (unique.length === 1) return unique[0];
-  if (unique.length > 1) return unique.join('; ');
+  if (parts.length) return parts.join('; ');
   return fallback;
 }
 
@@ -109,12 +114,16 @@ function buildSlipData(order, awb, waybillMeta = {}) {
     pageH: packingSlip.pageHeight,
     marginHIn: `${(Number(packingSlip.printMarginHorizontalMm) / 25.4).toFixed(3)}in`,
     marginTopIn: `${(Number(packingSlip.printMarginTopMm) / 25.4).toFixed(3)}in`,
-    marginBottomIn: '0.03in',
+    marginBottomIn: '1.5mm',
+    padTopMm: packingSlip.printMarginTopMm,
+    padSideMm: packingSlip.printMarginHorizontalMm,
     printWmm: packingSlip.printWidthMm,
     printHmm: packingSlip.printHeightMm,
     dimensionsText: orderDimensions(order, packingSlip.dimensions),
     qrPx,
-    qrDisplayPx: 56,
+    qrDisplayPx: 52,
+    barcodeHeightPx: 34,
+    barcodeBarWidth: 1.35,
     shipToName: ship.name || `${ship.first_name || ''} ${ship.last_name || ''}`.trim(),
     customerPhone: formatPhone(ship.phone || order.phone),
     shipAddr: uniqueAddressParts([
@@ -145,15 +154,21 @@ function buildSlipData(order, awb, waybillMeta = {}) {
 function slipSheetCss(d) {
   return `
     @page {
-      size: ${d.pageW} ${d.pageH};
       size: ${d.printWmm}mm ${d.printHmm}mm;
-      margin: ${d.marginTopIn} 0 ${d.marginBottomIn} 0;
+      margin: 0;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    .slip-frame {
+      width: 100%;
+      height: 100%;
+      max-height: 100%;
+      overflow: hidden;
+    }
     .sheet {
       width: 100%;
       height: 100%;
-      border: 1.2px solid #000;
+      max-height: 100%;
+      border: 1px solid #000;
       border-collapse: collapse;
       table-layout: fixed;
     }
@@ -166,30 +181,38 @@ function slipSheetCss(d) {
     .sec-h {
       background: #000;
       color: #fff;
-      font-size: 4.5pt;
+      font-size: 5pt;
       font-weight: 700;
       text-transform: uppercase;
       padding: 1.5px 4px;
       line-height: 1.15;
     }
     .sec-body { padding: 2px 4px; overflow: hidden; }
-    .head-brand { padding: 4px 4px 3px; vertical-align: middle; }
+    .head-brand { padding: 5px 4px 3px; vertical-align: middle; }
     .brand-name { font-size: 9pt; font-weight: 800; letter-spacing: 0.5px; color: #b8860b; line-height: 1; }
-    .brand-web { font-size: 5pt; color: #333; margin-top: 2px; border-top: 1px solid #ccc; padding-top: 2px; }
+    .brand-web { font-size: 5.5pt; color: #333; margin-top: 2px; border-top: 1px solid #ccc; padding-top: 2px; }
     .head-carrier { padding: 3px 4px; text-align: right; vertical-align: middle; }
     .carrier-partner { font-size: 4.5pt; font-weight: 600; }
     .carrier-name { font-size: 8pt; font-weight: 800; color: #0054a6; line-height: 1.05; }
     .carrier-name span { color: #2e8b57; }
     .carrier-sub { font-size: 5.5pt; font-weight: 700; margin-top: 1px; }
-    .txt { font-size: 5pt; line-height: 1.12; word-wrap: break-word; overflow-wrap: anywhere; }
-    .txt strong { font-size: 5.5pt; }
+    .txt { font-size: 5.5pt; line-height: 1.12; word-wrap: break-word; overflow-wrap: anywhere; }
+    .txt strong { font-size: 6pt; }
     .txt.clamp { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
     .awb-cell { text-align: center; vertical-align: top; }
     .awb-num { font-size: 8pt; font-weight: 800; padding: 2px 4px 0; }
-    .barcode-wrap { padding: 1px 5px 0; }
-    .barcode-wrap img { width: 100%; height: 17px; object-fit: contain; display: block; }
+    .barcode-wrap { padding: 2px 4px 0; }
+    .barcode-wrap img {
+      width: 100%;
+      height: ${d.barcodeHeightPx}px;
+      max-height: ${d.barcodeHeightPx}px;
+      object-fit: fill;
+      display: block;
+    }
     .route { font-size: 4.5pt; font-weight: 700; padding: 2px 4px 3px; text-transform: uppercase; }
-    .kv { font-size: 5pt; line-height: 1.2; }
+    .kv { font-size: 5.5pt; line-height: 1.18; }
+    .kv strong { font-size: 6pt; }
+    .kv-dim { font-size: 6pt; font-weight: 700; line-height: 1.2; margin-top: 2px !important; }
     .kv div + div { margin-top: 1px; }
     .qr-cell { text-align: center; vertical-align: middle; padding: 2px 3px; }
     .qr-cell img {
@@ -207,20 +230,20 @@ function slipSheetCss(d) {
     .pay-amt-lbl { background: #000; color: #fff; font-size: 4.5pt; font-weight: 700; padding: 1.5px 4px; text-transform: uppercase; }
     .pay-amt { font-size: 8pt; font-weight: 800; padding: 2px 4px 3px; }
     .icons-h { text-align: center; font-size: 4.5pt; font-weight: 700; text-transform: uppercase; padding: 2px 4px; border-bottom: 1px solid #000; }
-    .icons { display: flex; justify-content: space-around; align-items: flex-start; padding: 3px 2px 4px; font-size: 4pt; font-weight: 700; text-align: center; line-height: 1.1; }
+    .icons { display: flex; justify-content: space-around; align-items: flex-start; padding: 2px 2px 3px; font-size: 3.8pt; font-weight: 700; text-align: center; line-height: 1.05; }
     .icons span { max-width: 32%; }
-    .tear { border-top: 1px dashed #000; text-align: center; font-size: 4pt; font-weight: 700; padding: 1px 4px; }
-    .footer-bar { background: #000; color: #fff; text-align: center; font-weight: 800; font-size: 6.5pt; padding: 2px 4px; letter-spacing: 0.3px; }
-    .footer-thanks { text-align: center; font-size: 5pt; font-weight: 700; padding: 1px 4px; }
-    .footer-contact { text-align: center; font-size: 4pt; padding: 1px 4px 2px; border-top: 1px solid #000; line-height: 1.2; }
+    .tear { border-top: 1px dashed #000; text-align: center; font-size: 3.8pt; font-weight: 700; padding: 0 3px; line-height: 1.1; }
+    .footer-bar { background: #000; color: #fff; text-align: center; font-weight: 800; font-size: 6pt; padding: 1.5px 4px; letter-spacing: 0.3px; }
+    .footer-thanks { text-align: center; font-size: 4.8pt; font-weight: 700; padding: 1px 4px; line-height: 1.1; }
+    .footer-contact { text-align: center; font-size: 3.8pt; padding: 1px 3px 2px; border-top: 1px solid #000; line-height: 1.15; }
   `;
 }
 
 function renderSlipTable(d) {
   const { packingSlip, bluedart, order, awb, isCod } = d;
-  return `<table class="sheet" cellspacing="0" cellpadding="0">
+  return `<div class="slip-frame"><table class="sheet" cellspacing="0" cellpadding="0">
     <colgroup><col style="width:50%" /><col style="width:50%" /></colgroup>
-    <tr style="height:7.5%">
+    <tr style="height:8%">
       <td class="head-brand">
         <div class="brand-name">${esc(packingSlip.logoText.toUpperCase())}</div>
         <div class="brand-web">${esc(packingSlip.websiteUrl)}</div>
@@ -231,7 +254,7 @@ function renderSlipTable(d) {
         <div class="carrier-sub">${esc(packingSlip.serviceLabel)}</div>
       </td>
     </tr>
-    <tr style="height:20%">
+    <tr style="height:19%">
       <td>
         <div class="sec-h">Ship To</div>
         <div class="sec-body txt">
@@ -247,7 +270,7 @@ function renderSlipTable(d) {
         <div class="route">Routing Code: ${esc(d.route)}</div>
       </td>
     </tr>
-    <tr style="height:15.5%">
+    <tr style="height:14.5%">
       <td>
         <div class="sec-h">Order Details</div>
         <div class="sec-body kv">
@@ -261,14 +284,14 @@ function renderSlipTable(d) {
         <div class="qr-hint">Track your shipment<br>Scan QR code or visit<br>www.bluedart.com</div>
       </td>
     </tr>
-    <tr style="height:15%">
+    <tr style="height:14%">
       <td>
         <div class="sec-h">Product Details</div>
         <div class="sec-body kv">
           <div><strong>Item:</strong> ${esc(productSummary(order))}</div>
           <div><strong>Qty:</strong> ${productQty(order)}</div>
           <div><strong>Weight:</strong> ${d.weightKg} KG</div>
-          <div><strong>Dimensions:</strong> ${esc(d.dimensionsText)}</div>
+          <div class="kv-dim"><strong>Dimensions:</strong> ${esc(d.dimensionsText)}</div>
         </div>
       </td>
       <td class="pay-cell">
@@ -279,7 +302,7 @@ function renderSlipTable(d) {
         </div>
       </td>
     </tr>
-    <tr style="height:18%">
+    <tr style="height:16.5%">
       <td>
         <div class="sec-h">Shipper / Return Address</div>
         <div class="sec-body txt">
@@ -297,7 +320,7 @@ function renderSlipTable(d) {
         </div>
       </td>
     </tr>
-    <tr style="height:12%">
+    <tr style="height:11%">
       <td colspan="2" style="padding:0;vertical-align:top;overflow:hidden">
         <div class="tear">✂ — DO NOT ACCEPT IF SEAL IS BROKEN — ✂</div>
         <div class="footer-bar">${esc(d.serviceFooter)}</div>
@@ -307,10 +330,12 @@ function renderSlipTable(d) {
         </div>
       </td>
     </tr>
-  </table>`;
+  </table></div>`;
 }
 
-function slipBarcodeScript(awb, autoPrint = false) {
+function slipBarcodeScript(awb, autoPrint = false, barcodeOpts = {}) {
+  const barH = Number(barcodeOpts.height) || 34;
+  const barW = Number(barcodeOpts.width) || 1.35;
   const auto = autoPrint
     ? `function goPrint(){setTimeout(function(){window.focus();window.print();},400);}
        var imgs=document.querySelectorAll("img");
@@ -320,7 +345,7 @@ function slipBarcodeScript(awb, autoPrint = false) {
   return `<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script>
   <script>
     JsBarcode("#awb-barcode", ${JSON.stringify(String(awb))}, {
-      format: "CODE128", width: 1.1, height: 28, displayValue: false, margin: 0
+      format: "CODE128", width: ${barW}, height: ${barH}, displayValue: false, margin: 0
     });
     ${auto}
   <\/script>`;
@@ -337,36 +362,42 @@ export function buildPackingSlipPrintHtml(order, awb, waybillMeta = {}) {
   <style>
     ${slipSheetCss(d)}
     html, body {
-      width: ${d.pageW};
-      height: ${d.pageH};
+      width: ${d.printWmm}mm;
+      height: ${d.printHmm}mm;
+      max-width: ${d.printWmm}mm;
+      max-height: ${d.printHmm}mm;
       margin: 0;
-      padding: ${d.marginTopIn} ${d.marginHIn} ${d.marginBottomIn} ${d.marginHIn};
+      padding: ${d.padTopMm}mm ${d.padSideMm}mm 1.5mm ${d.padSideMm}mm;
       overflow: hidden;
       box-sizing: border-box;
       background: #fff;
       font-family: Arial, Helvetica, sans-serif;
-      font-size: 5pt;
+      font-size: 5.5pt;
       line-height: 1.12;
       color: #000;
+      page-break-after: avoid;
+      break-after: avoid;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
     @media print {
       html, body {
-        width: ${d.pageW} !important;
-        height: ${d.pageH} !important;
+        width: ${d.printWmm}mm !important;
+        height: ${d.printHmm}mm !important;
+        max-height: ${d.printHmm}mm !important;
         margin: 0 !important;
-        padding: ${d.marginTopIn} ${d.marginHIn} ${d.marginBottomIn} ${d.marginHIn} !important;
+        padding: ${d.padTopMm}mm ${d.padSideMm}mm 1.5mm ${d.padSideMm}mm !important;
         overflow: hidden !important;
         box-sizing: border-box !important;
+        page-break-after: avoid !important;
       }
-      .sheet { width: 100% !important; height: 100% !important; }
+      .slip-frame, .sheet { width: 100% !important; height: 100% !important; max-height: 100% !important; }
     }
   </style>
 </head>
 <body>
   ${renderSlipTable(d)}
-  ${slipBarcodeScript(awb, true)}
+  ${slipBarcodeScript(awb, true, { height: d.barcodeHeightPx, width: d.barcodeBarWidth })}
 </body>
 </html>`;
 }
@@ -445,7 +476,7 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
   ${renderSlipTable(d)}
   </div>
 
-  ${slipBarcodeScript(awb, false)}
+  ${slipBarcodeScript(awb, false, { height: d.barcodeHeightPx, width: d.barcodeBarWidth })}
   <script>
     document.getElementById("btn-print").addEventListener("click", function () {
       var u = new URL(location.href);

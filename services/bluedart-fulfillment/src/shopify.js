@@ -125,32 +125,89 @@ function dimensionsFromLineItem(item) {
   return prop?.value ? String(prop.value).trim() : null;
 }
 
-function parseMetafieldValue(raw) {
-  if (raw == null || raw === '') return null;
-  if (typeof raw === 'object') {
-    try {
-      return JSON.stringify(raw);
-    } catch {
-      return String(raw);
+const DIMENSION_METAFIELD_KEYS = [
+  'item_dimensions',
+  'dimensions',
+  'item_dimension',
+  'product_dimensions',
+  'package_dimensions',
+];
+
+function normalizeUnit(unit) {
+  return String(unit || 'cm')
+    .toLowerCase()
+    .replace('centimeters', 'cm')
+    .replace('centimetres', 'cm')
+    .replace('inches', 'in')
+    .replace('millimeters', 'mm');
+}
+
+/** Shopify dimension metafield JSON → readable L × W × H */
+export function formatDimensionMetafieldValue(value, type = '') {
+  if (value == null || value === '') return null;
+  const t = String(type || '').toLowerCase();
+
+  if (typeof value === 'object' && value !== null) {
+    const block = value.value && typeof value.value === 'object' ? value.value : value;
+    const len = block.length ?? block.l;
+    const wid = block.width ?? block.w;
+    const hei = block.height ?? block.h;
+    if (len != null && wid != null && hei != null) {
+      return `${len} × ${wid} × ${hei} (${normalizeUnit(block.unit || value.unit)})`;
     }
   }
-  return String(raw).trim();
+
+  const raw = String(value).trim();
+  if (!raw) return null;
+
+  if (t.includes('dimension') || raw.startsWith('{') || raw.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        const parts = parsed.map((entry) => formatDimensionMetafieldValue(entry, 'dimension')).filter(Boolean);
+        if (parts.length) return parts.join('; ');
+      }
+      const block = parsed?.value && typeof parsed.value === 'object' ? parsed.value : parsed;
+      const len = block?.length ?? block?.l;
+      const wid = block?.width ?? block?.w;
+      const hei = block?.height ?? block?.h;
+      if (len != null && wid != null && hei != null) {
+        return `${len} × ${wid} × ${hei} (${normalizeUnit(block.unit || parsed.unit)})`;
+      }
+    } catch {
+      // plain text value
+    }
+  }
+
+  return raw;
 }
 
-async function getProductMetafieldValue(productId, key) {
-  if (!productId) return null;
-  const data = await shopifyFetch(
-    `/products/${productId}/metafields.json?namespace=custom&key=${encodeURIComponent(key)}&limit=1`
-  );
-  return parseMetafieldValue(data.metafields?.[0]?.value);
+function pickDimensionsFromMetafields(metafields = []) {
+  for (const key of DIMENSION_METAFIELD_KEYS) {
+    const mf = metafields.find((m) => m.key === key);
+    if (mf) {
+      const text = formatDimensionMetafieldValue(mf.value, mf.type);
+      if (text) return text;
+    }
+  }
+  const fuzzy = metafields.find((m) => /dimension|package.?size/i.test(String(m.key || '')));
+  if (fuzzy) {
+    const text = formatDimensionMetafieldValue(fuzzy.value, fuzzy.type);
+    if (text) return text;
+  }
+  return null;
 }
 
-async function getVariantMetafieldValue(variantId, key) {
-  if (!variantId) return null;
-  const data = await shopifyFetch(
-    `/variants/${variantId}/metafields.json?namespace=custom&key=${encodeURIComponent(key)}&limit=1`
-  );
-  return parseMetafieldValue(data.metafields?.[0]?.value);
+async function listProductMetafields(productId) {
+  if (!productId) return [];
+  const data = await shopifyFetch(`/products/${productId}/metafields.json?limit=100`);
+  return data.metafields || [];
+}
+
+async function listVariantMetafields(variantId) {
+  if (!variantId) return [];
+  const data = await shopifyFetch(`/variants/${variantId}/metafields.json?limit=100`);
+  return data.metafields || [];
 }
 
 async function loadMetafieldDimensions(order) {
@@ -160,9 +217,8 @@ async function loadMetafieldDimensions(order) {
   const productIds = [...new Set(items.map((i) => i.product_id).filter(Boolean))];
   await Promise.all(
     productIds.map(async (productId) => {
-      const dim =
-        (await getProductMetafieldValue(productId, 'item_dimensions')) ||
-        (await getProductMetafieldValue(productId, 'dimensions'));
+      const mfs = await listProductMetafields(productId);
+      const dim = pickDimensionsFromMetafields(mfs);
       if (dim) dimByProduct[productId] = dim;
     })
   );
@@ -173,9 +229,8 @@ async function loadMetafieldDimensions(order) {
       let dim = dimensionsFromLineItem(item);
       if (!dim && item.product_id) dim = dimByProduct[item.product_id] || null;
       if (!dim && item.variant_id) {
-        dim =
-          (await getVariantMetafieldValue(item.variant_id, 'item_dimensions')) ||
-          (await getVariantMetafieldValue(item.variant_id, 'dimensions'));
+        const vMfs = await listVariantMetafields(item.variant_id);
+        dim = pickDimensionsFromMetafields(vMfs);
       }
       return dim ? { ...item, packing_slip_dimensions: dim } : item;
     })
