@@ -90,13 +90,14 @@
     <div class="row" style="align-items:center;margin-bottom:12px">
       <div style="flex:2">
         <h2 style="margin:0;font-size:1.1rem">Generated labels — all orders</h2>
-        <p class="sub" style="margin:4px 0 0">4×6 packing slip only — click order # to open &amp; print (not the Blue Dart courier PDF)</p>
+        <p class="sub" style="margin:4px 0 0">4×6 packing slip — print one order or <strong>Print all 25 on this page</strong> in one dialog (one label per sheet)</p>
       </div>
       <div style="flex:1;min-width:140px">
         <label for="generatedSearch">Search order / AWB</label>
         <input id="generatedSearch" placeholder="e.g. 1496" />
       </div>
-      <div style="flex:0">
+      <div style="flex:0;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+        <button type="button" class="btn-print" id="batchPrintBtn" style="margin-top:18px">Print all 25 on this page</button>
         <button type="button" class="secondary" id="loadGeneratedBtn" style="margin-top:18px">Refresh list</button>
       </div>
     </div>
@@ -183,6 +184,13 @@
     function packingSlipUrl(awb, orderName) {
       const q = orderName ? `?order=${encodeURIComponent(orderName)}` : '';
       return `/api/packing-slip/${awb}${q}`;
+    }
+
+    function batchPrintUrl(page = generatedPage) {
+      const q = generatedSearchEl.value.trim();
+      let url = `/api/packing-slip/batch/print?limit=${PAGE_SIZE}&page=${page}`;
+      if (q) url += '&search=' + encodeURIComponent(q);
+      return url;
     }
 
     function pagerHtml(pagination, page, totalLabel) {
@@ -484,6 +492,9 @@
       loadGeneratedOrders(1);
     };
     document.getElementById('loadGeneratedBtn').onclick = () => loadGeneratedOrders(1);
+    document.getElementById('batchPrintBtn').onclick = () => {
+      window.open(batchPrintUrl(), '_blank', 'noopener');
+    };
     generatedSearchEl.addEventListener('input', () => {
       clearTimeout(generatedSearchTimer);
       generatedSearchTimer = setTimeout(() => loadGeneratedOrders(1), 300);

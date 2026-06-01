@@ -25,6 +25,7 @@ import {
   buildPackingSlipPrintHtml,
   savePackingSlip,
 } from './packing-slip.js';
+import { buildBatchPrintPayload } from './batch-packing-slip.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 mkdirSync(labelsDir, { recursive: true });
@@ -177,6 +178,34 @@ export function startServer() {
         res.writeHead(200, { 'Content-Type': 'application/pdf' });
         res.end(readFileSync(labelPath));
         return;
+      }
+
+      if (req.method === 'GET' && url.pathname === '/api/packing-slip/batch/print') {
+        try {
+          const payload = await buildBatchPrintPayload({
+            limit: url.searchParams.get('limit') || 25,
+            page: url.searchParams.get('page') || 1,
+            search: url.searchParams.get('search') || '',
+            awbs: url.searchParams.get('awbs') || '',
+          });
+          if (!payload.html) {
+            json(res, 404, {
+              error: 'No packing slips found for this page',
+              skipped: payload.skipped,
+            });
+            return;
+          }
+          res.writeHead(200, {
+            'Content-Type': 'text/html; charset=utf-8',
+            'X-Batch-Count': String(payload.count),
+            'X-Batch-Skipped': String(payload.skipped.length),
+          });
+          res.end(payload.html);
+          return;
+        } catch (err) {
+          json(res, 500, { error: err.message });
+          return;
+        }
       }
 
       if (

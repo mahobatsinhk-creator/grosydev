@@ -288,8 +288,9 @@ function slipSheetCss(d) {
   `;
 }
 
-function renderSlipTable(d) {
+function renderSlipTable(d, opts = {}) {
   const { packingSlip, bluedart, order, awb, isCod } = d;
+  const barcodeId = opts.barcodeId || 'awb-barcode';
   return `<div class="slip-frame"><table class="sheet" cellspacing="0" cellpadding="0">
     <colgroup><col style="width:50%" /><col style="width:50%" /></colgroup>
     <tr class="r-head" style="height:8%">
@@ -316,7 +317,7 @@ function renderSlipTable(d) {
       <td colspan="2" class="awb-row">
         <div class="sec-h">AWB No.</div>
         <div class="awb-num">${esc(awb)}</div>
-        <div class="barcode-wrap"><img id="awb-barcode" alt="" /></div>
+        <div class="barcode-wrap"><img id="${esc(barcodeId)}" class="awb-barcode-img" alt="" /></div>
         <div class="route">Routing Code: ${esc(d.route)}</div>
       </td>
     </tr>
@@ -379,31 +380,197 @@ function renderSlipTable(d) {
   </table></div>`;
 }
 
-function slipBarcodeScript(awb, autoPrint = false, barcodeOpts = {}) {
-  const barH = Number(barcodeOpts.height) || 54;
-  const barW = Number(barcodeOpts.width) || 1.75;
-  const auto = autoPrint
-    ? `function goPrint(){setTimeout(function(){window.focus();window.print();},400);}
-       var imgs=document.querySelectorAll("img");
-       var w=0; imgs.forEach(function(i){if(!i.complete)w++;});
-       if(!w) goPrint(); else imgs.forEach(function(i){if(!i.complete){i.onload=i.onerror=goPrint;}});`
-    : '';
-  return `<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script>
-  <script>
-    JsBarcode("#awb-barcode", ${JSON.stringify(String(awb))}, {
-      format: "CODE128", width: ${barW}, height: ${barH}, displayValue: false, margin: 4
-    });
-    (function () {
-      var el = document.getElementById("awb-barcode");
+function styleBarcodeEl(barcodeId, barH) {
+  return `(function () {
+      var el = document.getElementById(${JSON.stringify(barcodeId)});
       if (!el) return;
       el.style.width = "100%";
       el.style.maxWidth = "100%";
       el.style.height = "${barH}px";
       el.style.maxHeight = "${barH}px";
       el.style.objectFit = "fill";
-    })();
+    })();`;
+}
+
+function slipBarcodeScript(awb, autoPrint = false, barcodeOpts = {}, barcodeId = 'awb-barcode') {
+  const barH = Number(barcodeOpts.height) || 54;
+  const barW = Number(barcodeOpts.width) || 1.75;
+  const auto = autoPrint
+    ? `function goPrint(){setTimeout(function(){window.focus();window.print();},600);}
+       var imgs=document.querySelectorAll("img");
+       var w=0; imgs.forEach(function(i){if(!i.complete)w++;});
+       if(!w) goPrint(); else imgs.forEach(function(i){if(!i.complete){i.onload=i.onerror=goPrint;}});`
+    : '';
+  return `<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script>
+  <script>
+    JsBarcode(${JSON.stringify('#' + barcodeId)}, ${JSON.stringify(String(awb))}, {
+      format: "CODE128", width: ${barW}, height: ${barH}, displayValue: false, margin: 4
+    });
+    ${styleBarcodeEl(barcodeId, barH)}
     ${auto}
   <\/script>`;
+}
+
+function slipBatchBarcodeScript(items, autoPrint = false, barcodeOpts = {}) {
+  const barH = Number(barcodeOpts.height) || 54;
+  const barW = Number(barcodeOpts.width) || 1.75;
+  const inits = items
+    .map(
+      ({ awb, barcodeId }) => `
+    JsBarcode(${JSON.stringify('#' + barcodeId)}, ${JSON.stringify(String(awb))}, {
+      format: "CODE128", width: ${barW}, height: ${barH}, displayValue: false, margin: 4
+    });
+    ${styleBarcodeEl(barcodeId, barH)}`
+    )
+    .join('\n');
+
+  const rebarcodeCached = items
+    .filter((i) => i.rebarcode)
+    .map(
+      ({ awb, barcodeId }) => `
+    (function(){
+      var el = document.getElementById(${JSON.stringify(barcodeId)});
+      if (!el || el.tagName !== "IMG") return;
+      JsBarcode(${JSON.stringify('#' + barcodeId)}, ${JSON.stringify(String(awb))}, {
+        format: "CODE128", width: ${barW}, height: ${barH}, displayValue: false, margin: 4
+      });
+      ${styleBarcodeEl(barcodeId, barH)}
+    })();`
+    )
+    .join('\n');
+
+  const auto = autoPrint
+    ? `function goPrint(){setTimeout(function(){window.focus();window.print();},800);}
+       var imgs=document.querySelectorAll("img");
+       var pending=0;
+       imgs.forEach(function(i){if(!i.complete)pending++;});
+       if(!pending) goPrint();
+       else imgs.forEach(function(i){if(!i.complete){i.onload=i.onerror=goPrint;}});`
+    : '';
+
+  return `<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script>
+  <script>
+    ${inits}
+    ${rebarcodeCached}
+    ${auto}
+  <\/script>`;
+}
+
+/** Multiple 4×6 packing slips — one label per printed page */
+export function buildBatchPackingSlipPrintHtml(slips) {
+  if (!slips?.length) {
+    throw new Error('No packing slips to print');
+  }
+
+  const live = [];
+  const cached = [];
+  const barcodeItems = [];
+
+  slips.forEach((s, i) => {
+    const barcodeId = `awb-barcode-${i}`;
+    if (s.cachedHtml) {
+      let html = s.cachedHtml.replace(/id="awb-barcode"/g, `id="${barcodeId}"`);
+      cached.push({ html, awb: s.awb, barcodeId });
+      barcodeItems.push({ awb: s.awb, barcodeId, rebarcode: true });
+    } else if (s.order) {
+      live.push({ d: buildSlipData(s.order, s.awb, s.waybillMeta || {}), awb: s.awb, barcodeId });
+      barcodeItems.push({ awb: s.awb, barcodeId });
+    }
+  });
+
+  const d0 = live[0]?.d || buildSlipData({ name: '#0', line_items: [] }, cached[0]?.awb || '0');
+  const css = slipSheetCss(d0);
+
+  const pages = [
+    ...live.map(
+      ({ d, barcodeId }) =>
+        `<div class="batch-page">${renderSlipTable(d, { barcodeId })}</div>`
+    ),
+    ...cached.map(({ html }) => `<div class="batch-page">${html}</div>`),
+  ].join('\n');
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Batch print ${slips.length} packing slips</title>
+  <style>
+    ${css}
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #fff;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 7pt;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .batch-page {
+      width: ${d0.printWmm}mm;
+      height: ${d0.printHmm}mm;
+      max-width: ${d0.printWmm}mm;
+      max-height: ${d0.printHmm}mm;
+      margin: 0 auto 8px;
+      padding: ${d0.padMm}mm;
+      overflow: hidden;
+      background: #fff;
+      page-break-after: always;
+      break-after: page;
+    }
+    .batch-page:last-child {
+      page-break-after: avoid;
+      break-after: avoid;
+      margin-bottom: 0;
+    }
+    .batch-page .slip-frame,
+    .batch-page .sheet {
+      width: 100% !important;
+      height: ${d0.innerHmm}mm !important;
+      max-height: ${d0.innerHmm}mm !important;
+    }
+    .batch-toolbar {
+      position: fixed;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9;
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 10px 16px;
+      font-family: system-ui, sans-serif;
+      font-size: 14px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.12);
+    }
+    @media print {
+      .batch-toolbar { display: none !important; }
+      html, body { margin: 0 !important; padding: 0 !important; }
+      .batch-page {
+        margin: 0 !important;
+        page-break-after: always !important;
+        break-after: page !important;
+      }
+      .batch-page:last-child {
+        page-break-after: avoid !important;
+        break-after: avoid !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="batch-toolbar no-print">
+    <strong>${slips.length}</strong> labels ready —
+    <button type="button" onclick="window.print()">Print all (${slips.length}× 4×6)</button>
+    <span style="font-size:12px;color:#555;margin-left:8px">Paper 4×6 · Scale 100% · Margins None</span>
+  </div>
+  ${pages}
+  ${slipBatchBarcodeScript(barcodeItems, true, {
+    height: d0.barcodeHeightPx,
+    width: d0.barcodeBarWidth,
+  })}
+</body>
+</html>`;
 }
 
 /** Print-only page — exact 4×6 in, no preview chrome */
