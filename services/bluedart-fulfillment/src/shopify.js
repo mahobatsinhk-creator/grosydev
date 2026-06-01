@@ -109,6 +109,71 @@ async function shopifyFetch(path, options = {}) {
   return data;
 }
 
+async function getProductMetafieldValue(productId, key) {
+  if (!productId) return null;
+  const data = await shopifyFetch(
+    `/products/${productId}/metafields.json?namespace=custom&key=${encodeURIComponent(key)}&limit=1`
+  );
+  const raw = data.metafields?.[0]?.value;
+  if (raw == null || raw === '') return null;
+  if (typeof raw === 'object') {
+    try {
+      return JSON.stringify(raw);
+    } catch {
+      return String(raw);
+    }
+  }
+  return String(raw).trim();
+}
+
+async function getVariantMetafieldValue(variantId, key) {
+  if (!variantId) return null;
+  const data = await shopifyFetch(
+    `/variants/${variantId}/metafields.json?namespace=custom&key=${encodeURIComponent(key)}&limit=1`
+  );
+  const raw = data.metafields?.[0]?.value;
+  if (raw == null || raw === '') return null;
+  return String(raw).trim();
+}
+
+/** Load product/variant dimensions metafields for packing slip line items */
+export async function enrichOrderForPackingSlip(order) {
+  const items = order.line_items || [];
+  if (!items.length) return order;
+
+  const productIds = [...new Set(items.map((i) => i.product_id).filter(Boolean))];
+  const dimByProduct = {};
+
+  await Promise.all(
+    productIds.map(async (productId) => {
+      let dim =
+        (await getProductMetafieldValue(productId, 'item_dimensions')) ||
+        (await getProductMetafieldValue(productId, 'dimensions'));
+      if (dim) dimByProduct[productId] = dim;
+    })
+  );
+
+  const line_items = await Promise.all(
+    items.map(async (item) => {
+      let dim = item.product_id ? dimByProduct[item.product_id] : null;
+      if (!dim && item.variant_id) {
+        dim =
+          (await getVariantMetafieldValue(item.variant_id, 'item_dimensions')) ||
+          (await getVariantMetafieldValue(item.variant_id, 'dimensions'));
+      }
+      if (!dim) {
+        const prop = (item.properties || []).find((p) =>
+          /dimension|size|measure/i.test(String(p.name || ''))
+        );
+        if (prop?.value) dim = String(prop.value).trim();
+      }
+      return dim ? { ...item, packing_slip_dimensions: dim } : item;
+    })
+  );
+
+  return { ...order, line_items };
+}
+
 export async function getOrder(orderIdOrName) {
   const raw = String(orderIdOrName).trim();
   const withoutHash = raw.replace(/^#/, '');

@@ -82,9 +82,21 @@ function productQty(order) {
   return (order.line_items || []).reduce((s, i) => s + (i.quantity || 1), 0);
 }
 
+/** Dimensions from Shopify metafields (custom.item_dimensions / custom.dimensions) */
+function orderDimensions(order, fallback) {
+  const fromItems = (order.line_items || [])
+    .map((i) => i.packing_slip_dimensions)
+    .filter(Boolean);
+  const unique = [...new Set(fromItems)];
+  if (unique.length === 1) return unique[0];
+  if (unique.length > 1) return unique.join('; ');
+  return fallback;
+}
+
 function buildSlipData(order, awb, waybillMeta = {}) {
   const ship = order.shipping_address || {};
   const { bluedart, packingSlip } = config;
+  const qrPx = Math.min(Math.max(Number(packingSlip.qrPixelSize) || 140, 80), 256);
   return {
     awb: String(awb),
     order,
@@ -96,8 +108,13 @@ function buildSlipData(order, awb, waybillMeta = {}) {
     pageW: packingSlip.pageWidth,
     pageH: packingSlip.pageHeight,
     marginHIn: `${(Number(packingSlip.printMarginHorizontalMm) / 25.4).toFixed(3)}in`,
+    marginTopIn: `${(Number(packingSlip.printMarginTopMm) / 25.4).toFixed(3)}in`,
+    marginBottomIn: '0.03in',
     printWmm: packingSlip.printWidthMm,
     printHmm: packingSlip.printHeightMm,
+    dimensionsText: orderDimensions(order, packingSlip.dimensions),
+    qrPx,
+    qrDisplayPx: 56,
     shipToName: ship.name || `${ship.first_name || ''} ${ship.last_name || ''}`.trim(),
     customerPhone: formatPhone(ship.phone || order.phone),
     shipAddr: uniqueAddressParts([
@@ -116,7 +133,7 @@ function buildSlipData(order, awb, waybillMeta = {}) {
     ]).join(', '),
     orderNum: String(order.name || '').replace('#', ''),
     route: routingCode(waybillMeta),
-    qrUrl: `/api/qr?size=64&data=${encodeURIComponent(trackingUrl(awb))}`,
+    qrUrl: `/api/qr?size=${qrPx}&data=${encodeURIComponent(trackingUrl(awb))}`,
     serviceFooter: isCodOrder(order)
       ? `${packingSlip.serviceLabel} - COD`
       : packingSlip.serviceLabel,
@@ -130,7 +147,7 @@ function slipSheetCss(d) {
     @page {
       size: ${d.pageW} ${d.pageH};
       size: ${d.printWmm}mm ${d.printHmm}mm;
-      margin: 0;
+      margin: ${d.marginTopIn} 0 ${d.marginBottomIn} 0;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     .sheet {
@@ -156,7 +173,7 @@ function slipSheetCss(d) {
       line-height: 1.15;
     }
     .sec-body { padding: 2px 4px; overflow: hidden; }
-    .head-brand { padding: 3px 4px; vertical-align: middle; }
+    .head-brand { padding: 4px 4px 3px; vertical-align: middle; }
     .brand-name { font-size: 9pt; font-weight: 800; letter-spacing: 0.5px; color: #b8860b; line-height: 1; }
     .brand-web { font-size: 5pt; color: #333; margin-top: 2px; border-top: 1px solid #ccc; padding-top: 2px; }
     .head-carrier { padding: 3px 4px; text-align: right; vertical-align: middle; }
@@ -174,9 +191,16 @@ function slipSheetCss(d) {
     .route { font-size: 4.5pt; font-weight: 700; padding: 2px 4px 3px; text-transform: uppercase; }
     .kv { font-size: 5pt; line-height: 1.2; }
     .kv div + div { margin-top: 1px; }
-    .qr-cell { text-align: center; vertical-align: middle; padding: 2px 4px; }
-    .qr-cell img { width: 42px; height: 42px; display: block; margin: 0 auto 1px; }
-    .qr-hint { font-size: 4pt; line-height: 1.1; color: #222; }
+    .qr-cell { text-align: center; vertical-align: middle; padding: 2px 3px; }
+    .qr-cell img {
+      width: ${d.qrDisplayPx}px;
+      height: ${d.qrDisplayPx}px;
+      display: block;
+      margin: 0 auto 2px;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+    .qr-hint { font-size: 3.8pt; line-height: 1.08; color: #222; }
     .pay-cell { padding: 0; vertical-align: top; }
     .pay-body { text-align: center; padding: 3px 2px; }
     .pay-big { font-size: 12pt; font-weight: 800; line-height: 1; margin: 3px 0; }
@@ -196,7 +220,7 @@ function renderSlipTable(d) {
   const { packingSlip, bluedart, order, awb, isCod } = d;
   return `<table class="sheet" cellspacing="0" cellpadding="0">
     <colgroup><col style="width:50%" /><col style="width:50%" /></colgroup>
-    <tr style="height:8%">
+    <tr style="height:7.5%">
       <td class="head-brand">
         <div class="brand-name">${esc(packingSlip.logoText.toUpperCase())}</div>
         <div class="brand-web">${esc(packingSlip.websiteUrl)}</div>
@@ -223,7 +247,7 @@ function renderSlipTable(d) {
         <div class="route">Routing Code: ${esc(d.route)}</div>
       </td>
     </tr>
-    <tr style="height:14%">
+    <tr style="height:15.5%">
       <td>
         <div class="sec-h">Order Details</div>
         <div class="sec-body kv">
@@ -233,7 +257,7 @@ function renderSlipTable(d) {
         </div>
       </td>
       <td class="qr-cell">
-        <img src="${d.qrUrl}" alt="Track QR" width="42" height="42" />
+        <img src="${d.qrUrl}" alt="Track QR" width="${d.qrDisplayPx}" height="${d.qrDisplayPx}" />
         <div class="qr-hint">Track your shipment<br>Scan QR code or visit<br>www.bluedart.com</div>
       </td>
     </tr>
@@ -244,7 +268,7 @@ function renderSlipTable(d) {
           <div><strong>Item:</strong> ${esc(productSummary(order))}</div>
           <div><strong>Qty:</strong> ${productQty(order)}</div>
           <div><strong>Weight:</strong> ${d.weightKg} KG</div>
-          <div><strong>Dimensions:</strong> ${esc(packingSlip.dimensions)}</div>
+          <div><strong>Dimensions:</strong> ${esc(d.dimensionsText)}</div>
         </div>
       </td>
       <td class="pay-cell">
@@ -273,7 +297,7 @@ function renderSlipTable(d) {
         </div>
       </td>
     </tr>
-    <tr style="height:13%">
+    <tr style="height:12%">
       <td colspan="2" style="padding:0;vertical-align:top;overflow:hidden">
         <div class="tear">✂ — DO NOT ACCEPT IF SEAL IS BROKEN — ✂</div>
         <div class="footer-bar">${esc(d.serviceFooter)}</div>
@@ -316,8 +340,9 @@ export function buildPackingSlipPrintHtml(order, awb, waybillMeta = {}) {
       width: ${d.pageW};
       height: ${d.pageH};
       margin: 0;
-      padding: 0.04in ${d.marginHIn};
+      padding: ${d.marginTopIn} ${d.marginHIn} ${d.marginBottomIn} ${d.marginHIn};
       overflow: hidden;
+      box-sizing: border-box;
       background: #fff;
       font-family: Arial, Helvetica, sans-serif;
       font-size: 5pt;
@@ -331,8 +356,9 @@ export function buildPackingSlipPrintHtml(order, awb, waybillMeta = {}) {
         width: ${d.pageW} !important;
         height: ${d.pageH} !important;
         margin: 0 !important;
-        padding: 0.04in ${d.marginHIn} !important;
+        padding: ${d.marginTopIn} ${d.marginHIn} ${d.marginBottomIn} ${d.marginHIn} !important;
         overflow: hidden !important;
+        box-sizing: border-box !important;
       }
       .sheet { width: 100% !important; height: 100% !important; }
     }
@@ -393,10 +419,11 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
       width: ${d.pageW};
       height: ${d.pageH};
       margin: 0 auto 12px;
-      padding: 0.04in ${d.marginHIn};
+      padding: ${d.marginTopIn} ${d.marginHIn} ${d.marginBottomIn} ${d.marginHIn};
       overflow: hidden;
       background: #fff;
       box-shadow: 0 0 8px rgba(0,0,0,.18);
+      box-sizing: border-box;
     }
   </style>
 </head>

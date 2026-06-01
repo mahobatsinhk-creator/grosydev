@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 import { assertBlueDartConfig, assertShopifyConfig } from './config.js';
 import { generateWaybill, trackingUrl } from './bluedart.js';
-import { getOrder, fulfillOrderWithAwb } from './shopify.js';
+import { enrichOrderForPackingSlip, getOrder, fulfillOrderWithAwb } from './shopify.js';
 import { shopifyOrderToWaybill, summarizeOrder } from './map-order.js';
 import { savePackingSlip, saveLabelPrintPage } from './packing-slip.js';
 import { labelsDir } from './paths.js';
@@ -35,7 +35,8 @@ export async function processOrder(orderIdOrName, { notifyCustomer = true, dryRu
     saveLabelPrintPage(waybill.awb);
   }
 
-  savePackingSlip(order, waybill.awb, waybill.raw);
+  const orderForSlip = await enrichOrderForPackingSlip(order);
+  savePackingSlip(orderForSlip, waybill.awb, waybill.raw);
 
   const fulfillment = await fulfillOrderWithAwb(order, waybill.awb, { notifyCustomer });
 

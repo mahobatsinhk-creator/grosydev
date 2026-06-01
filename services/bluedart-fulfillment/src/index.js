@@ -6,7 +6,12 @@ import { readFileSync, existsSync } from 'node:fs';
 
 import { config, assertBlueDartConfig, assertBlueDartAuthConfig, assertShopifyConfig } from './config.js';
 import { getShippingJwt, checkPincodeServiceability } from './bluedart.js';
-import { testShopifyConnection, getOrder, listUnfulfilledOrdersPage } from './shopify.js';
+import {
+  enrichOrderForPackingSlip,
+  testShopifyConnection,
+  getOrder,
+  listUnfulfilledOrdersPage,
+} from './shopify.js';
 import { summarizeOrder } from './map-order.js';
 import { labelsDir } from './paths.js';
 import { processOrder } from './fulfill.js';
@@ -143,7 +148,7 @@ export function startServer() {
           return;
         }
         const qrRes = await fetch(
-          `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&margin=0&data=${encodeURIComponent(data)}`
+          `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&margin=1&ecc=M&data=${encodeURIComponent(data)}`
         );
         if (!qrRes.ok) {
           json(res, 502, { error: 'QR generation failed' });
@@ -197,7 +202,7 @@ export function startServer() {
 
         if (orderRef) {
           assertShopifyConfig();
-          const order = await getOrder(orderRef);
+          const order = await enrichOrderForPackingSlip(await getOrder(orderRef));
           savePackingSlip(order, awb);
           const printMode = url.searchParams.get('print') === '1';
           res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
