@@ -14,7 +14,17 @@ function esc(s) {
 }
 
 function orderWeightKg(order) {
-  const grams = (order.line_items || []).reduce(
+  const items = order.line_items || [];
+  const hasLocal = items.some((i) => i.packing_slip_weight_kg != null);
+  if (hasLocal) {
+    const kg = items.reduce(
+      (sum, item) =>
+        sum + Number(item.packing_slip_weight_kg || 0) * (item.quantity || 1),
+      0
+    );
+    return Math.max(0.2, kg).toFixed(2);
+  }
+  const grams = items.reduce(
     (sum, item) => sum + (item.grams || 200) * (item.quantity || 1),
     0
   );

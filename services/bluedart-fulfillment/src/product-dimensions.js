@@ -13,21 +13,58 @@ function catalogPath() {
   return resolve(__dirname, '..', rel);
 }
 
+/** @returns {{ dimensions: string, weightKg: number|null } | null} */
+function normalizeEntry(val) {
+  if (val == null || val === '') return null;
+  if (typeof val === 'string') {
+    const dimensions = val.trim();
+    return dimensions ? { dimensions, weightKg: null } : null;
+  }
+  if (typeof val === 'object') {
+    const dimensions = String(val.dimensions || '').trim();
+    const weightKg =
+      val.weightKg != null && val.weightKg !== ''
+        ? Number(val.weightKg)
+        : val.weightG != null && val.weightG !== ''
+          ? Number(val.weightG) / 1000
+          : null;
+    if (!dimensions && weightKg == null) return null;
+    return {
+      dimensions: dimensions || '',
+      weightKg: Number.isFinite(weightKg) ? weightKg : null,
+    };
+  }
+  return null;
+}
+
+function normalizeMap(rawMap = {}) {
+  const out = {};
+  for (const [key, val] of Object.entries(rawMap)) {
+    const entry = normalizeEntry(val);
+    if (entry && (entry.dimensions || entry.weightKg != null)) out[key] = entry;
+  }
+  return out;
+}
+
 function normalizeCatalog(raw) {
+  const defaultEntry =
+    normalizeEntry(raw?.default) ||
+    normalizeEntry({ dimensions: config.packingSlip.dimensions });
+
   const base = {
-    default: String(raw?.default || config.packingSlip.dimensions || '').trim(),
-    byProductId: { ...(raw?.byProductId || {}) },
-    bySku: { ...(raw?.bySku || {}) },
-    byTitleContains: { ...(raw?.byTitleContains || {}) },
+    default: defaultEntry,
+    byProductId: normalizeMap(raw?.byProductId),
+    bySku: normalizeMap(raw?.bySku),
+    byTitleContains: normalizeMap(raw?.byTitleContains),
   };
 
   for (const row of raw?.products || []) {
     if (!row || typeof row !== 'object') continue;
-    const dim = String(row.dimensions || '').trim();
-    if (!dim) continue;
-    if (row.productId) base.byProductId[String(row.productId)] = dim;
-    if (row.sku) base.bySku[String(row.sku).trim()] = dim;
-    if (row.titleContains) base.byTitleContains[String(row.titleContains).trim()] = dim;
+    const entry = normalizeEntry(row);
+    if (!entry) continue;
+    if (row.productId) base.byProductId[String(row.productId)] = entry;
+    if (row.sku) base.bySku[String(row.sku).trim()] = entry;
+    if (row.titleContains) base.byTitleContains[String(row.titleContains).trim()] = entry;
   }
 
   return base;
@@ -55,40 +92,54 @@ export function loadProductDimensionsCatalog(force = false) {
   return catalogCache;
 }
 
-/** Match line item to dimensions from local JSON (longest title match wins) */
-export function resolveLocalProductDimension(item, catalog = loadProductDimensionsCatalog()) {
+function matchFromMap(map, key) {
+  if (!key) return null;
+  return map[key] || null;
+}
+
+/** Match line item → { dimensions, weightKg } from local JSON */
+export function resolveLocalProductSpec(item, catalog = loadProductDimensionsCatalog()) {
   const productId = String(item.product_id || '').trim();
-  if (productId && catalog.byProductId[productId]) {
-    return catalog.byProductId[productId];
+  let spec = matchFromMap(catalog.byProductId, productId);
+
+  if (!spec) {
+    const sku = String(item.sku || '').trim();
+    spec = matchFromMap(catalog.bySku, sku);
   }
 
-  const sku = String(item.sku || '').trim();
-  if (sku && catalog.bySku[sku]) {
-    return catalog.bySku[sku];
-  }
-
-  const title = String(item.title || item.name || '').trim();
-  if (title) {
-    const titleLower = title.toLowerCase();
-    const needles = Object.keys(catalog.byTitleContains).sort(
-      (a, b) => b.length - a.length
-    );
-    for (const needle of needles) {
-      if (titleLower.includes(needle.toLowerCase())) {
-        return catalog.byTitleContains[needle];
+  if (!spec) {
+    const title = String(item.title || item.name || '').trim();
+    if (title) {
+      const titleLower = title.toLowerCase();
+      const needles = Object.keys(catalog.byTitleContains).sort(
+        (a, b) => b.length - a.length
+      );
+      for (const needle of needles) {
+        if (titleLower.includes(needle.toLowerCase())) {
+          spec = catalog.byTitleContains[needle];
+          break;
+        }
       }
     }
   }
 
-  return catalog.default || null;
+  return spec || catalog.default || null;
 }
 
-/** Apply local dimensions to all line items on an order */
+export function resolveLocalProductDimension(item, catalog = loadProductDimensionsCatalog()) {
+  return resolveLocalProductSpec(item, catalog)?.dimensions || null;
+}
+
+/** Apply local dimensions + weight to all line items */
 export function applyLocalProductDimensions(order) {
   const catalog = loadProductDimensionsCatalog();
   const line_items = (order.line_items || []).map((item) => {
-    const dim = resolveLocalProductDimension(item, catalog);
-    return dim ? { ...item, packing_slip_dimensions: dim } : item;
+    const spec = resolveLocalProductSpec(item, catalog);
+    if (!spec) return item;
+    const next = { ...item };
+    if (spec.dimensions) next.packing_slip_dimensions = spec.dimensions;
+    if (spec.weightKg != null) next.packing_slip_weight_kg = spec.weightKg;
+    return next;
   });
   return { ...order, line_items };
 }

@@ -1,18 +1,80 @@
 {
-  "_comment": "Edit this file — packing slip uses these sizes (no Shopify API needed). Restart server after changes.",
-  "default": "16 × 37 × 8.4 (cm)",
+  "_comment": "Edit sizes/weight here. Restart server after changes. weightKg = product weight in kg (150g = 0.15).",
+  "default": {
+    "dimensions": "16 × 37 × 8.4 (cm)",
+    "weightKg": 0.945
+  },
   "byProductId": {
-    "15108637163565": "16 × 37 × 8.4 (cm)"
+    "15108637163565": {
+      "dimensions": "16 × 37 × 8.4 (cm)",
+      "weightKg": 0.945
+    },
+    "15108634411053": {
+      "dimensions": "6 × 5 × 2 (cm)",
+      "weightKg": 0.2
+    },
+    "15108602626093": {
+      "dimensions": "6 × 5 × 2 (cm)",
+      "weightKg": 0.15
+    }
   },
   "bySku": {},
   "byTitleContains": {
-    "Mini Air Cooler": "16 × 37 × 8.4 (cm)",
-    "Air Cooler": "16 × 37 × 8.4 (cm)",
-    "Water Purification": "6 × 5 × 2 (cm)",
-    "Purification Tablet": "6 × 5 × 2 (cm)",
-    "sealent": "30 × 5 × 5 (cm)",
-    "Sealant": "30 × 5 × 5 (cm)",
-    "hair": "6 × 5 × 2 (cm)"
+    "Foldable Black Ice Face Bowl": {
+      "dimensions": "6 × 5 × 2 (cm)",
+      "weightKg": 0.2
+    },
+    "Ice Face Bowl": {
+      "dimensions": "6 × 5 × 2 (cm)",
+      "weightKg": 0.2
+    },
+    "Mini Air Cooler": {
+      "dimensions": "16 × 37 × 8.4 (cm)",
+      "weightKg": 0.945
+    },
+    "Rechargeable Mini Air Cooler": {
+      "dimensions": "16 × 37 × 8.4 (cm)",
+      "weightKg": 0.945
+    },
+    "Air Cooler": {
+      "dimensions": "16 × 37 × 8.4 (cm)",
+      "weightKg": 0.945
+    },
+    "Water Purification Tablet": {
+      "dimensions": "6 × 5 × 2 (cm)",
+      "weightKg": 0.15
+    },
+    "Water Purification": {
+      "dimensions": "6 × 5 × 2 (cm)",
+      "weightKg": 0.15
+    },
+    "Purification Tablet": {
+      "dimensions": "6 × 5 × 2 (cm)",
+      "weightKg": 0.15
+    },
+    "sealent": {
+      "dimensions": "30 × 5 × 5 (cm)",
+      "weightKg": 0.003
+    },
+    "Sealant": {
+      "dimensions": "30 × 5 × 5 (cm)",
+      "weightKg": 0.003
+    },
+    "hair": {
+      "dimensions": "6 × 5 × 2 (cm)",
+      "weightKg": 0.2
+    }
   },
-  "products": []
+  "products": [
+    {
+      "titleContains": "Grosyhub Foldable Black Ice Face Bowl",
+      "dimensions": "6 × 5 × 2 (cm)",
+      "weightKg": 0.2
+    },
+    {
+      "titleContains": "Water Purifier Tablets",
+      "dimensions": "6 × 5 × 2 (cm)",
+      "weightKg": 0.15
+    }
+  ]
 }
