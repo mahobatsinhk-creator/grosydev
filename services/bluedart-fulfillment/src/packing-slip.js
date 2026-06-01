@@ -54,6 +54,17 @@ function formatOrderDate(iso) {
   return `${d.getDate()}-${months[d.getMonth()]}-${d.getFullYear()}`;
 }
 
+const SLIP_SUPPORT_PHONE = '9574965893';
+
+function resolveSupportPhone(packingSlip, bluedart) {
+  const raw = String(packingSlip.supportPhone || bluedart.shipper.mobile || '').trim();
+  const digits = raw.replace(/\D/g, '').slice(-10);
+  if (!digits || digits === '9999999999' || digits === '0000000000') {
+    return SLIP_SUPPORT_PHONE;
+  }
+  return digits;
+}
+
 function formatPhone(phone) {
   const digits = String(phone || '').replace(/\D/g, '');
   if (digits.length >= 10) return `+91 ${digits.slice(-10)}`;
@@ -122,8 +133,8 @@ function buildSlipData(order, awb, waybillMeta = {}) {
     dimensionsText: orderDimensions(order, packingSlip.dimensions),
     qrPx,
     qrDisplayPx: 52,
-    barcodeHeightPx: 34,
-    barcodeBarWidth: 1.35,
+    barcodeHeightPx: 30,
+    barcodeBarWidth: 1.15,
     shipToName: ship.name || `${ship.first_name || ''} ${ship.last_name || ''}`.trim(),
     customerPhone: formatPhone(ship.phone || order.phone),
     shipAddr: uniqueAddressParts([
@@ -146,7 +157,7 @@ function buildSlipData(order, awb, waybillMeta = {}) {
     serviceFooter: isCodOrder(order)
       ? `${packingSlip.serviceLabel} - COD`
       : packingSlip.serviceLabel,
-    supportPh: packingSlip.supportPhone || bluedart.shipper.mobile,
+    supportPh: resolveSupportPhone(packingSlip, bluedart),
     payAmount: isCodOrder(order) ? `₹${Number(order.total_price || 0).toFixed(2)}` : '₹0.00',
   };
 }
@@ -201,13 +212,21 @@ function slipSheetCss(d) {
     .txt.clamp { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
     .awb-cell { text-align: center; vertical-align: top; }
     .awb-num { font-size: 8pt; font-weight: 800; padding: 2px 4px 0; }
-    .barcode-wrap { padding: 2px 4px 0; }
-    .barcode-wrap img {
-      width: 100%;
-      height: ${d.barcodeHeightPx}px;
-      max-height: ${d.barcodeHeightPx}px;
-      object-fit: fill;
-      display: block;
+    .barcode-wrap {
+      padding: 2px 4px 0;
+      text-align: center;
+      line-height: 0;
+      overflow: hidden;
+    }
+    .barcode-wrap img,
+    .barcode-wrap svg {
+      width: auto !important;
+      max-width: 94%;
+      height: ${d.barcodeHeightPx}px !important;
+      max-height: ${d.barcodeHeightPx}px !important;
+      object-fit: contain !important;
+      display: inline-block;
+      margin: 0 auto;
     }
     .route { font-size: 4.5pt; font-weight: 700; padding: 2px 4px 3px; text-transform: uppercase; }
     .kv { font-size: 5.5pt; line-height: 1.18; }
@@ -345,8 +364,17 @@ function slipBarcodeScript(awb, autoPrint = false, barcodeOpts = {}) {
   return `<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script>
   <script>
     JsBarcode("#awb-barcode", ${JSON.stringify(String(awb))}, {
-      format: "CODE128", width: ${barW}, height: ${barH}, displayValue: false, margin: 0
+      format: "CODE128", width: ${barW}, height: ${barH}, displayValue: false, margin: 4
     });
+    (function () {
+      var el = document.getElementById("awb-barcode");
+      if (!el) return;
+      el.style.width = "auto";
+      el.style.maxWidth = "94%";
+      el.style.height = "${barH}px";
+      el.style.maxHeight = "${barH}px";
+      el.style.objectFit = "contain";
+    })();
     ${auto}
   <\/script>`;
 }

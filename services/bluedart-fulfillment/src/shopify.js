@@ -114,7 +114,96 @@ function isShopifyScopeError(err) {
   return (
     msg.includes('403') ||
     msg.includes('read_products') ||
+    msg.includes('read_inventory') ||
     msg.includes('merchant approval')
+  );
+}
+
+function formatMeasurementDimensions(dims) {
+  if (!dims || typeof dims !== 'object') return null;
+  const len = dims.length ?? dims.depth;
+  const wid = dims.width;
+  const hei = dims.height;
+  if (len == null || wid == null || hei == null) return null;
+  const unit = normalizeUnit(dims.unit);
+  const fmt = (n) => {
+    const num = Number(n);
+    return Number.isInteger(num) ? String(num) : String(Number(num.toFixed(2)));
+  };
+  return `${fmt(len)} × ${fmt(wid)} × ${fmt(hei)} (${unit})`;
+}
+
+async function shopifyGraphql(query, variables = {}) {
+  const token = await getAccessToken();
+  const res = await fetch(adminUrl('/graphql.json'), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Shopify-Access-Token': token,
+    },
+    body: JSON.stringify({ query, variables }),
+  });
+  const text = await res.text();
+  let payload;
+  try {
+    payload = JSON.parse(text);
+  } catch {
+    throw new Error(`Shopify GraphQL error (${res.status}): ${text.slice(0, 300)}`);
+  }
+  if (!res.ok || payload.errors?.length) {
+    throw new Error(`Shopify GraphQL: ${JSON.stringify(payload.errors || text.slice(0, 300))}`);
+  }
+  return payload.data;
+}
+
+async function getVariantDimensionsGraphQL(variantId) {
+  const data = await shopifyGraphql(
+    `query VariantDims($id: ID!) {
+      productVariant(id: $id) {
+        inventoryItem {
+          measurement {
+            dimensions { length width height unit }
+          }
+        }
+      }
+    }`,
+    { id: `gid://shopify/ProductVariant/${variantId}` }
+  );
+  return formatMeasurementDimensions(
+    data?.productVariant?.inventoryItem?.measurement?.dimensions
+  );
+}
+
+/** Shipping package size from variant → inventory item (Shopify admin “Package” field) */
+async function getVariantShippingDimensions(variantId) {
+  if (!variantId) return null;
+  try {
+    const vData = await shopifyFetch(`/variants/${variantId}.json`);
+    const invId = vData.variant?.inventory_item_id;
+    if (invId) {
+      const invData = await shopifyFetch(`/inventory_items/${invId}.json`);
+      const inv = invData.inventory_item || {};
+      const fromMeasurement = formatMeasurementDimensions(inv.measurement?.dimensions);
+      if (fromMeasurement) return fromMeasurement;
+      const legacy = formatMeasurementDimensions(inv.dimensions);
+      if (legacy) return legacy;
+    }
+    return await getVariantDimensionsGraphQL(variantId);
+  } catch (err) {
+    if (isShopifyScopeError(err)) return null;
+    throw err;
+  }
+}
+
+async function loadInventoryDimensions(order) {
+  const items = order.line_items || [];
+  return Promise.all(
+    items.map(async (item) => {
+      if (item.packing_slip_dimensions) return item;
+      if (!item.variant_id) return item;
+      const dim = await getVariantShippingDimensions(item.variant_id);
+      return dim ? { ...item, packing_slip_dimensions: dim } : item;
+    })
   );
 }
 
@@ -237,29 +326,31 @@ async function loadMetafieldDimensions(order) {
   );
 }
 
-/** Load dimensions for packing slip (properties first; product metafields when scope allows) */
+/** Load dimensions: line properties → metafields → inventory package (Shipping tab) */
 export async function enrichOrderForPackingSlip(order) {
   const items = order.line_items || [];
   if (!items.length) return order;
 
-  const fromProperties = items.map((item) => {
+  let line_items = items.map((item) => {
     const dim = dimensionsFromLineItem(item);
     return dim ? { ...item, packing_slip_dimensions: dim } : item;
   });
 
-  if (fromProperties.every((i) => i.packing_slip_dimensions)) {
-    return { ...order, line_items: fromProperties };
+  try {
+    line_items = await loadMetafieldDimensions({ ...order, line_items });
+  } catch (err) {
+    if (!isShopifyScopeError(err)) throw err;
   }
 
-  try {
-    const line_items = await loadMetafieldDimensions({ ...order, line_items: fromProperties });
-    return { ...order, line_items };
-  } catch (err) {
-    if (isShopifyScopeError(err)) {
-      return { ...order, line_items: fromProperties };
+  if (!line_items.every((i) => i.packing_slip_dimensions)) {
+    try {
+      line_items = await loadInventoryDimensions({ ...order, line_items });
+    } catch (err) {
+      if (!isShopifyScopeError(err)) throw err;
     }
-    throw err;
   }
+
+  return { ...order, line_items };
 }
 
 export async function getOrder(orderIdOrName) {
