@@ -35,7 +35,13 @@ export async function processOrder(orderIdOrName, { notifyCustomer = true, dryRu
     saveLabelPrintPage(waybill.awb);
   }
 
-  const orderForSlip = await enrichOrderForPackingSlip(order);
+  let orderForSlip = order;
+  try {
+    orderForSlip = await enrichOrderForPackingSlip(order);
+  } catch {
+    // AWB + fulfill must succeed even if dimension lookup fails
+    orderForSlip = order;
+  }
   savePackingSlip(orderForSlip, waybill.awb, waybill.raw);
 
   const fulfillment = await fulfillOrderWithAwb(order, waybill.awb, { notifyCustomer });

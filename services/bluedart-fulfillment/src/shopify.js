@@ -119,6 +119,11 @@ function isShopifyScopeError(err) {
   );
 }
 
+function isShopifyGraphqlFieldError(err) {
+  const msg = String(err?.message || err);
+  return msg.includes('GraphQL') || msg.includes("doesn't exist on type");
+}
+
 function formatMeasurementDimensions(dims) {
   if (!dims || typeof dims !== 'object') return null;
   const len = dims.length ?? dims.depth;
@@ -156,57 +161,66 @@ async function shopifyGraphql(query, variables = {}) {
   return payload.data;
 }
 
+function metafieldsFromGraphqlNodes(nodes = []) {
+  return nodes.map((n) => ({
+    key: n.key,
+    value: n.value,
+    type: n.type,
+    namespace: 'custom',
+  }));
+}
+
+/** GraphQL: custom.item_dimensions / custom.dimensions (measurement has weight only, no dimensions) */
 async function getVariantDimensionsGraphQL(variantId, productId = null) {
   const vid = `gid://shopify/ProductVariant/${variantId}`;
-  let data;
 
-  if (productId) {
-    data = await shopifyGraphql(
-      `query VariantDims($vid: ID!, $pid: ID!) {
-        productVariant(id: $vid) {
-          inventoryItem {
-            measurement {
-              dimensions { length width height unit }
+  try {
+    if (productId) {
+      const data = await shopifyGraphql(
+        `query VariantDims($vid: ID!, $pid: ID!) {
+          productVariant(id: $vid) {
+            metafields(first: 25, namespace: "custom") {
+              nodes { key value type }
             }
           }
-        }
-        product(id: $pid) {
-          metafields(first: 20, namespace: "custom") {
+          product(id: $pid) {
+            metafields(first: 25, namespace: "custom") {
+              nodes { key value type }
+            }
+          }
+        }`,
+        { vid, pid: `gid://shopify/Product/${productId}` }
+      );
+      const fromVariant = pickDimensionsFromMetafields(
+        metafieldsFromGraphqlNodes(data?.productVariant?.metafields?.nodes)
+      );
+      if (fromVariant) return fromVariant;
+      return pickDimensionsFromMetafields(
+        metafieldsFromGraphqlNodes(data?.product?.metafields?.nodes)
+      );
+    }
+
+    const data = await shopifyGraphql(
+      `query VariantDims($vid: ID!) {
+        productVariant(id: $vid) {
+          metafields(first: 25, namespace: "custom") {
             nodes { key value type }
           }
         }
       }`,
-      { vid, pid: `gid://shopify/Product/${productId}` }
+      { vid }
     );
-    const fromInv = formatMeasurementDimensions(
-      data?.productVariant?.inventoryItem?.measurement?.dimensions
-    );
-    if (fromInv) return fromInv;
-    const mfs = data?.product?.metafields?.nodes || [];
     return pickDimensionsFromMetafields(
-      mfs.map((n) => ({ key: n.key, value: n.value, type: n.type, namespace: 'custom' }))
+      metafieldsFromGraphqlNodes(data?.productVariant?.metafields?.nodes)
     );
+  } catch (err) {
+    if (isShopifyScopeError(err) || isShopifyGraphqlFieldError(err)) return null;
+    throw err;
   }
-
-  data = await shopifyGraphql(
-    `query VariantDims($vid: ID!) {
-      productVariant(id: $vid) {
-        inventoryItem {
-          measurement {
-            dimensions { length width height unit }
-          }
-        }
-      }
-    }`,
-    { vid }
-  );
-  return formatMeasurementDimensions(
-    data?.productVariant?.inventoryItem?.measurement?.dimensions
-  );
 }
 
-/** Shipping package size from variant → inventory item (Shopify admin “Package” field) */
-async function getVariantShippingDimensions(variantId) {
+/** Package size from REST inventory item (Shopify admin Shipping → Package) */
+async function getVariantShippingDimensions(variantId, productId = null) {
   if (!variantId) return null;
   try {
     const vData = await shopifyFetch(`/variants/${variantId}.json`);
@@ -219,9 +233,14 @@ async function getVariantShippingDimensions(variantId) {
       const legacy = formatMeasurementDimensions(inv.dimensions);
       if (legacy) return legacy;
     }
-    return await getVariantDimensionsGraphQL(variantId, null);
   } catch (err) {
-    if (isShopifyScopeError(err)) return null;
+    if (!isShopifyScopeError(err)) throw err;
+  }
+
+  try {
+    return await getVariantDimensionsGraphQL(variantId, productId);
+  } catch (err) {
+    if (isShopifyScopeError(err) || isShopifyGraphqlFieldError(err)) return null;
     throw err;
   }
 }
@@ -232,10 +251,7 @@ async function loadInventoryDimensions(order) {
     items.map(async (item) => {
       if (item.packing_slip_dimensions) return item;
       if (!item.variant_id) return item;
-      let dim = await getVariantShippingDimensions(item.variant_id);
-      if (!dim && item.product_id) {
-        dim = await getVariantDimensionsGraphQL(item.variant_id, item.product_id);
-      }
+      const dim = await getVariantShippingDimensions(item.variant_id, item.product_id);
       return dim ? { ...item, packing_slip_dimensions: dim } : item;
     })
   );
@@ -373,14 +389,14 @@ export async function enrichOrderForPackingSlip(order) {
   try {
     line_items = await loadMetafieldDimensions({ ...order, line_items });
   } catch (err) {
-    if (!isShopifyScopeError(err)) throw err;
+    if (!isShopifyScopeError(err) && !isShopifyGraphqlFieldError(err)) throw err;
   }
 
   if (!line_items.every((i) => i.packing_slip_dimensions)) {
     try {
       line_items = await loadInventoryDimensions({ ...order, line_items });
     } catch (err) {
-      if (!isShopifyScopeError(err)) throw err;
+      if (!isShopifyScopeError(err) && !isShopifyGraphqlFieldError(err)) throw err;
     }
   }
 
