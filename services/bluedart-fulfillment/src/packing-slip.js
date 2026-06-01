@@ -135,16 +135,21 @@ function buildSlipData(order, awb, waybillMeta = {}) {
     pageH: packingSlip.pageHeight,
     marginHIn: `${(Number(packingSlip.printMarginHorizontalMm) / 25.4).toFixed(3)}in`,
     marginTopIn: `${(Number(packingSlip.printMarginTopMm) / 25.4).toFixed(3)}in`,
-    marginBottomIn: '1.5mm',
+    marginBottomIn: '0.5mm',
     padTopMm: packingSlip.printMarginTopMm,
+    padBottomMm: 0.5,
     padSideMm: packingSlip.printMarginHorizontalMm,
+    innerHmm:
+      Number(packingSlip.printHeightMm) -
+      Number(packingSlip.printMarginTopMm) -
+      0.5,
     printWmm: packingSlip.printWidthMm,
     printHmm: packingSlip.printHeightMm,
     dimensionsText: orderDimensions(order, packingSlip.dimensions),
     qrPx,
-    qrDisplayPx: 52,
-    barcodeHeightPx: 30,
-    barcodeBarWidth: 1.15,
+    qrDisplayPx: 56,
+    barcodeHeightPx: 48,
+    barcodeBarWidth: 1.65,
     shipToName: ship.name || `${ship.first_name || ''} ${ship.last_name || ''}`.trim(),
     customerPhone: formatPhone(ship.phone || order.phone),
     shipAddr: uniqueAddressParts([
@@ -181,17 +186,21 @@ function slipSheetCss(d) {
     * { box-sizing: border-box; margin: 0; padding: 0; }
     .slip-frame {
       width: 100%;
-      height: 100%;
-      max-height: 100%;
+      height: ${d.innerHmm}mm;
+      max-height: ${d.innerHmm}mm;
       overflow: hidden;
+      page-break-inside: avoid;
+      break-inside: avoid;
     }
     .sheet {
       width: 100%;
-      height: 100%;
-      max-height: 100%;
+      height: ${d.innerHmm}mm;
+      max-height: ${d.innerHmm}mm;
       border: 1px solid #000;
       border-collapse: collapse;
       table-layout: fixed;
+      page-break-inside: avoid;
+      break-inside: avoid;
     }
     .sheet td {
       border: 1px solid #000;
@@ -202,46 +211,47 @@ function slipSheetCss(d) {
     .sec-h {
       background: #000;
       color: #fff;
-      font-size: 5pt;
+      font-size: 6.5pt;
       font-weight: 700;
       text-transform: uppercase;
-      padding: 1.5px 4px;
-      line-height: 1.15;
+      padding: 2px 4px;
+      line-height: 1.12;
     }
     .sec-body { padding: 2px 4px; overflow: hidden; }
-    .head-brand { padding: 5px 4px 3px; vertical-align: middle; }
-    .brand-name { font-size: 9pt; font-weight: 800; letter-spacing: 0.5px; color: #b8860b; line-height: 1; }
-    .brand-web { font-size: 5.5pt; color: #333; margin-top: 2px; border-top: 1px solid #ccc; padding-top: 2px; }
+    .head-brand { padding: 4px 4px 2px; vertical-align: middle; }
+    .brand-name { font-size: 11pt; font-weight: 800; letter-spacing: 0.5px; color: #b8860b; line-height: 1; }
+    .brand-web { font-size: 6.5pt; color: #333; margin-top: 2px; border-top: 1px solid #ccc; padding-top: 2px; }
     .head-carrier { padding: 3px 4px; text-align: right; vertical-align: middle; }
-    .carrier-partner { font-size: 4.5pt; font-weight: 600; }
-    .carrier-name { font-size: 8pt; font-weight: 800; color: #0054a6; line-height: 1.05; }
+    .carrier-partner { font-size: 5.5pt; font-weight: 600; }
+    .carrier-name { font-size: 9.5pt; font-weight: 800; color: #0054a6; line-height: 1.05; }
     .carrier-name span { color: #2e8b57; }
-    .carrier-sub { font-size: 5.5pt; font-weight: 700; margin-top: 1px; }
-    .txt { font-size: 5.5pt; line-height: 1.12; word-wrap: break-word; overflow-wrap: anywhere; }
-    .txt strong { font-size: 6pt; }
-    .txt.clamp { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .carrier-sub { font-size: 6.5pt; font-weight: 700; margin-top: 1px; }
+    .txt { font-size: 7pt; line-height: 1.1; word-wrap: break-word; overflow-wrap: anywhere; }
+    .txt strong { font-size: 7.5pt; }
+    .txt.clamp { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
     .awb-cell { text-align: center; vertical-align: top; }
-    .awb-num { font-size: 8pt; font-weight: 800; padding: 2px 4px 0; }
+    .awb-num { font-size: 9pt; font-weight: 800; padding: 1px 4px 0; line-height: 1.1; }
     .barcode-wrap {
-      padding: 2px 4px 0;
+      padding: 1px 2px 0;
       text-align: center;
       line-height: 0;
       overflow: hidden;
+      min-height: ${d.barcodeHeightPx + 2}px;
     }
     .barcode-wrap img,
     .barcode-wrap svg {
-      width: auto !important;
-      max-width: 94%;
+      width: 98% !important;
+      max-width: 98% !important;
       height: ${d.barcodeHeightPx}px !important;
       max-height: ${d.barcodeHeightPx}px !important;
-      object-fit: contain !important;
-      display: inline-block;
+      object-fit: fill !important;
+      display: block;
       margin: 0 auto;
     }
-    .route { font-size: 4.5pt; font-weight: 700; padding: 2px 4px 3px; text-transform: uppercase; }
-    .kv { font-size: 5.5pt; line-height: 1.18; }
-    .kv strong { font-size: 6pt; }
-    .kv-dim { font-size: 6pt; font-weight: 700; line-height: 1.2; margin-top: 2px !important; }
+    .route { font-size: 5.5pt; font-weight: 700; padding: 1px 4px 2px; text-transform: uppercase; line-height: 1.1; }
+    .kv { font-size: 7pt; line-height: 1.12; }
+    .kv strong { font-size: 7.5pt; }
+    .kv-dim { font-size: 7.5pt; font-weight: 700; line-height: 1.12; margin-top: 1px !important; }
     .kv div + div { margin-top: 1px; }
     .qr-cell { text-align: center; vertical-align: middle; padding: 2px 3px; }
     .qr-cell img {
@@ -252,19 +262,18 @@ function slipSheetCss(d) {
       image-rendering: pixelated;
       image-rendering: crisp-edges;
     }
-    .qr-hint { font-size: 3.8pt; line-height: 1.08; color: #222; }
+    .qr-hint { font-size: 5pt; line-height: 1.1; color: #222; font-weight: 600; }
     .pay-cell { padding: 0; vertical-align: top; }
-    .pay-body { text-align: center; padding: 3px 2px; }
-    .pay-big { font-size: 12pt; font-weight: 800; line-height: 1; margin: 3px 0; }
-    .pay-amt-lbl { background: #000; color: #fff; font-size: 4.5pt; font-weight: 700; padding: 1.5px 4px; text-transform: uppercase; }
-    .pay-amt { font-size: 8pt; font-weight: 800; padding: 2px 4px 3px; }
-    .icons-h { text-align: center; font-size: 4.5pt; font-weight: 700; text-transform: uppercase; padding: 2px 4px; border-bottom: 1px solid #000; }
-    .icons { display: flex; justify-content: space-around; align-items: flex-start; padding: 2px 2px 3px; font-size: 3.8pt; font-weight: 700; text-align: center; line-height: 1.05; }
+    .pay-body { text-align: center; padding: 2px 2px; }
+    .pay-big { font-size: 14pt; font-weight: 800; line-height: 1; margin: 2px 0; }
+    .pay-amt-lbl { background: #000; color: #fff; font-size: 5.5pt; font-weight: 700; padding: 2px 4px; text-transform: uppercase; }
+    .pay-amt { font-size: 10pt; font-weight: 800; padding: 2px 4px 2px; }
+    .icons-h { text-align: center; font-size: 5.5pt; font-weight: 700; text-transform: uppercase; padding: 2px 4px; border-bottom: 1px solid #000; }
+    .icons { display: flex; justify-content: space-around; align-items: flex-start; padding: 1px 2px 2px; font-size: 4.5pt; font-weight: 700; text-align: center; line-height: 1.05; }
     .icons span { max-width: 32%; }
-    .tear { border-top: 1px dashed #000; text-align: center; font-size: 3.8pt; font-weight: 700; padding: 0 3px; line-height: 1.1; }
-    .footer-bar { background: #000; color: #fff; text-align: center; font-weight: 800; font-size: 6pt; padding: 1.5px 4px; letter-spacing: 0.3px; }
-    .footer-thanks { text-align: center; font-size: 4.8pt; font-weight: 700; padding: 1px 4px; line-height: 1.1; }
-    .footer-contact { text-align: center; font-size: 3.8pt; padding: 1px 3px 2px; border-top: 1px solid #000; line-height: 1.15; }
+    .footer-wrap { padding: 0; overflow: hidden; line-height: 1.08; vertical-align: bottom !important; }
+    .footer-bar { background: #000; color: #fff; text-align: center; font-weight: 800; font-size: 6pt; padding: 1.5px 2px; letter-spacing: 0.15px; }
+    .footer-contact { text-align: center; font-size: 5pt; padding: 0 2px 1px; line-height: 1.1; white-space: nowrap; overflow: hidden; }
   `;
 }
 
@@ -272,7 +281,7 @@ function renderSlipTable(d) {
   const { packingSlip, bluedart, order, awb, isCod } = d;
   return `<div class="slip-frame"><table class="sheet" cellspacing="0" cellpadding="0">
     <colgroup><col style="width:50%" /><col style="width:50%" /></colgroup>
-    <tr style="height:8%">
+    <tr class="r-head" style="height:8%">
       <td class="head-brand">
         <div class="brand-name">${esc(packingSlip.logoText.toUpperCase())}</div>
         <div class="brand-web">${esc(packingSlip.websiteUrl)}</div>
@@ -283,7 +292,7 @@ function renderSlipTable(d) {
         <div class="carrier-sub">${esc(packingSlip.serviceLabel)}</div>
       </td>
     </tr>
-    <tr style="height:19%">
+    <tr class="r-ship" style="height:34%">
       <td>
         <div class="sec-h">Ship To</div>
         <div class="sec-body txt">
@@ -299,7 +308,7 @@ function renderSlipTable(d) {
         <div class="route">Routing Code: ${esc(d.route)}</div>
       </td>
     </tr>
-    <tr style="height:14.5%">
+    <tr class="r-order" style="height:16%">
       <td>
         <div class="sec-h">Order Details</div>
         <div class="sec-body kv">
@@ -313,7 +322,7 @@ function renderSlipTable(d) {
         <div class="qr-hint">Track your shipment<br>Scan QR code or visit<br>www.bluedart.com</div>
       </td>
     </tr>
-    <tr style="height:14%">
+    <tr class="r-product" style="height:15%">
       <td>
         <div class="sec-h">Product Details</div>
         <div class="sec-body kv">
@@ -331,7 +340,7 @@ function renderSlipTable(d) {
         </div>
       </td>
     </tr>
-    <tr style="height:16.5%">
+    <tr class="r-shipper" style="height:18%">
       <td>
         <div class="sec-h">Shipper / Return Address</div>
         <div class="sec-body txt">
@@ -349,22 +358,18 @@ function renderSlipTable(d) {
         </div>
       </td>
     </tr>
-    <tr style="height:11%">
-      <td colspan="2" style="padding:0;vertical-align:top;overflow:hidden">
-        <div class="tear">✂ — DO NOT ACCEPT IF SEAL IS BROKEN — ✂</div>
-        <div class="footer-bar">${esc(d.serviceFooter)}</div>
-        <div class="footer-thanks">THANK YOU FOR SHOPPING WITH ${esc(packingSlip.logoText.toUpperCase())}!</div>
-        <div class="footer-contact">
-          📞 ${esc(formatPhone(d.supportPh))} &nbsp;|&nbsp; ✉ ${esc(packingSlip.supportEmail)} &nbsp;|&nbsp; 🌐 ${esc(packingSlip.websiteUrl)}
-        </div>
+    <tr class="r-footer" style="height:9%">
+      <td colspan="2" class="footer-wrap">
+        <div class="footer-bar">${esc(d.serviceFooter)} · ✂ SEAL INTACT ✂</div>
+        <div class="footer-contact">THANK YOU — ${esc(packingSlip.logoText.toUpperCase())} · 📞 ${esc(formatPhone(d.supportPh))} · ${esc(packingSlip.websiteUrl)}</div>
       </td>
     </tr>
   </table></div>`;
 }
 
 function slipBarcodeScript(awb, autoPrint = false, barcodeOpts = {}) {
-  const barH = Number(barcodeOpts.height) || 34;
-  const barW = Number(barcodeOpts.width) || 1.35;
+  const barH = Number(barcodeOpts.height) || 48;
+  const barW = Number(barcodeOpts.width) || 1.65;
   const auto = autoPrint
     ? `function goPrint(){setTimeout(function(){window.focus();window.print();},400);}
        var imgs=document.querySelectorAll("img");
@@ -379,11 +384,11 @@ function slipBarcodeScript(awb, autoPrint = false, barcodeOpts = {}) {
     (function () {
       var el = document.getElementById("awb-barcode");
       if (!el) return;
-      el.style.width = "auto";
-      el.style.maxWidth = "94%";
+      el.style.width = "98%";
+      el.style.maxWidth = "98%";
       el.style.height = "${barH}px";
       el.style.maxHeight = "${barH}px";
-      el.style.objectFit = "contain";
+      el.style.objectFit = "fill";
     })();
     ${auto}
   <\/script>`;
@@ -405,13 +410,13 @@ export function buildPackingSlipPrintHtml(order, awb, waybillMeta = {}) {
       max-width: ${d.printWmm}mm;
       max-height: ${d.printHmm}mm;
       margin: 0;
-      padding: ${d.padTopMm}mm ${d.padSideMm}mm 1.5mm ${d.padSideMm}mm;
+      padding: ${d.padTopMm}mm ${d.padSideMm}mm ${d.padBottomMm}mm ${d.padSideMm}mm;
       overflow: hidden;
       box-sizing: border-box;
       background: #fff;
       font-family: Arial, Helvetica, sans-serif;
-      font-size: 5.5pt;
-      line-height: 1.12;
+      font-size: 7pt;
+      line-height: 1.1;
       color: #000;
       page-break-after: avoid;
       break-after: avoid;
@@ -424,12 +429,19 @@ export function buildPackingSlipPrintHtml(order, awb, waybillMeta = {}) {
         height: ${d.printHmm}mm !important;
         max-height: ${d.printHmm}mm !important;
         margin: 0 !important;
-        padding: ${d.padTopMm}mm ${d.padSideMm}mm 1.5mm ${d.padSideMm}mm !important;
+        padding: ${d.padTopMm}mm ${d.padSideMm}mm ${d.padBottomMm}mm ${d.padSideMm}mm !important;
         overflow: hidden !important;
         box-sizing: border-box !important;
         page-break-after: avoid !important;
       }
-      .slip-frame, .sheet { width: 100% !important; height: 100% !important; max-height: 100% !important; }
+      .slip-frame, .sheet {
+        width: 100% !important;
+        height: ${d.innerHmm}mm !important;
+        max-height: ${d.innerHmm}mm !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .r-footer { page-break-inside: avoid !important; break-inside: avoid !important; }
     }
   </style>
 </head>
@@ -454,8 +466,8 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
     html { background: #e8e8e8; }
     body {
       font-family: Arial, Helvetica, sans-serif;
-      font-size: 5pt;
-      line-height: 1.12;
+      font-size: 6.5pt;
+      line-height: 1.1;
       color: #000;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;

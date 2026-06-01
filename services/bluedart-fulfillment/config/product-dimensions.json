@@ -1,5 +1,5 @@
 {
-  "_comment": "Edit sizes/weight here. Restart server after changes. weightKg = product weight in kg (150g = 0.15).",
+  "_comment": "Edit sizes/weight here. Restart server after changes. weightKg = per unit (300g = 0.3).",
   "default": {
     "dimensions": "16 × 37 × 8.4 (cm)",
     "weightKg": 0.945
@@ -7,19 +7,27 @@
   "byProductId": {
     "15108637163565": {
       "dimensions": "16 × 37 × 8.4 (cm)",
-      "weightKg": 0.945
+      "weightKg": 0.85
     },
     "15108634411053": {
       "dimensions": "6 × 5 × 2 (cm)",
-      "weightKg": 0.2
+      "weightKg": 0.3
     },
     "15108602626093": {
       "dimensions": "6 × 5 × 2 (cm)",
-      "weightKg": 0.15
+      "weightKg": 0.3
     }
   },
   "bySku": {},
   "byTitleContains": {
+    "Glowlift": {
+      "dimensions": "16 × 37 × 8.4 (cm)",
+      "weightKg": 0.85
+    },
+    "Face Sculptor": {
+      "dimensions": "16 × 37 × 8.4 (cm)",
+      "weightKg": 0.85
+    },
     "Foldable Black Ice Face Bowl": {
       "dimensions": "6 × 5 × 2 (cm)",
       "weightKg": 0.2
@@ -30,35 +38,47 @@
     },
     "Mini Air Cooler": {
       "dimensions": "16 × 37 × 8.4 (cm)",
-      "weightKg": 0.945
+      "weightKg": 0.85
     },
     "Rechargeable Mini Air Cooler": {
       "dimensions": "16 × 37 × 8.4 (cm)",
-      "weightKg": 0.945
+      "weightKg": 0.85
     },
     "Air Cooler": {
       "dimensions": "16 × 37 × 8.4 (cm)",
-      "weightKg": 0.945
+      "weightKg": 0.85
     },
     "Water Purification Tablet": {
       "dimensions": "6 × 5 × 2 (cm)",
-      "weightKg": 0.15
+      "weightKg": 0.3
     },
     "Water Purification": {
       "dimensions": "6 × 5 × 2 (cm)",
-      "weightKg": 0.15
+      "weightKg": 0.3
     },
     "Purification Tablet": {
       "dimensions": "6 × 5 × 2 (cm)",
-      "weightKg": 0.15
+      "weightKg": 0.3
+    },
+    "Silicone Sealant": {
+      "dimensions": "27 × 13 × 9 (cm)",
+      "weightKg": 0.8
+    },
+    "Waterproof Silicone": {
+      "dimensions": "27 × 13 × 9 (cm)",
+      "weightKg": 0.8
+    },
+    "Sealant Adhesive": {
+      "dimensions": "27 × 13 × 9 (cm)",
+      "weightKg": 0.8
     },
     "sealent": {
-      "dimensions": "30 × 5 × 5 (cm)",
-      "weightKg": 0.003
+      "dimensions": "27 × 13 × 9 (cm)",
+      "weightKg": 0.8
     },
     "Sealant": {
-      "dimensions": "30 × 5 × 5 (cm)",
-      "weightKg": 0.003
+      "dimensions": "27 × 13 × 9 (cm)",
+      "weightKg": 0.8
     },
     "hair": {
       "dimensions": "6 × 5 × 2 (cm)",
@@ -74,7 +94,17 @@
     {
       "titleContains": "Water Purifier Tablets",
       "dimensions": "6 × 5 × 2 (cm)",
-      "weightKg": 0.15
+      "weightKg": 0.3
+    },
+    {
+      "titleContains": "Glowlift face sculptor",
+      "dimensions": "16 × 37 × 8.4 (cm)",
+      "weightKg": 0.85
+    },
+    {
+      "titleContains": "Silicone Sealant",
+      "dimensions": "27 × 13 × 9 (cm)",
+      "weightKg": 0.8
     }
   ]
 }
