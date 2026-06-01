@@ -148,8 +148,8 @@ function buildSlipData(order, awb, waybillMeta = {}) {
     dimensionsText: orderDimensions(order, packingSlip.dimensions),
     qrPx,
     qrDisplayPx: 56,
-    barcodeHeightPx: 48,
-    barcodeBarWidth: 1.65,
+    barcodeHeightPx: 54,
+    barcodeBarWidth: 1.75,
     shipToName: ship.name || `${ship.first_name || ''} ${ship.last_name || ''}`.trim(),
     customerPhone: formatPhone(ship.phone || order.phone),
     shipAddr: uniqueAddressParts([
@@ -228,11 +228,12 @@ function slipSheetCss(d) {
     .carrier-sub { font-size: 6.5pt; font-weight: 700; margin-top: 1px; }
     .txt { font-size: 7pt; line-height: 1.1; word-wrap: break-word; overflow-wrap: anywhere; }
     .txt strong { font-size: 7.5pt; }
-    .txt.clamp { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-    .awb-cell { text-align: center; vertical-align: top; }
+    .txt.clamp { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .row-full { vertical-align: top; }
+    .awb-cell, .awb-row { text-align: center; vertical-align: top; }
     .awb-num { font-size: 9pt; font-weight: 800; padding: 1px 4px 0; line-height: 1.1; }
     .barcode-wrap {
-      padding: 1px 2px 0;
+      padding: 2px 6px 0;
       text-align: center;
       line-height: 0;
       overflow: hidden;
@@ -240,8 +241,8 @@ function slipSheetCss(d) {
     }
     .barcode-wrap img,
     .barcode-wrap svg {
-      width: 98% !important;
-      max-width: 98% !important;
+      width: 100% !important;
+      max-width: 100% !important;
       height: ${d.barcodeHeightPx}px !important;
       max-height: ${d.barcodeHeightPx}px !important;
       object-fit: fill !important;
@@ -292,23 +293,24 @@ function renderSlipTable(d) {
         <div class="carrier-sub">${esc(packingSlip.serviceLabel)}</div>
       </td>
     </tr>
-    <tr class="r-ship" style="height:34%">
-      <td>
+    <tr class="r-address row-full" style="height:17%">
+      <td colspan="2">
         <div class="sec-h">Ship To</div>
         <div class="sec-body txt">
-          <strong>${esc(d.shipToName)}</strong><br>
-          ${esc(d.customerPhone)}<br>
+          <strong>${esc(d.shipToName)}</strong> · ${esc(d.customerPhone)}<br>
           <span class="clamp">${esc(d.shipAddr)}</span>
         </div>
       </td>
-      <td class="awb-cell">
+    </tr>
+    <tr class="r-barcode row-full" style="height:22%">
+      <td colspan="2" class="awb-row">
         <div class="sec-h">AWB No.</div>
         <div class="awb-num">${esc(awb)}</div>
         <div class="barcode-wrap"><img id="awb-barcode" alt="" /></div>
         <div class="route">Routing Code: ${esc(d.route)}</div>
       </td>
     </tr>
-    <tr class="r-order" style="height:16%">
+    <tr class="r-order" style="height:14%">
       <td>
         <div class="sec-h">Order Details</div>
         <div class="sec-body kv">
@@ -322,7 +324,7 @@ function renderSlipTable(d) {
         <div class="qr-hint">Track your shipment<br>Scan QR code or visit<br>www.bluedart.com</div>
       </td>
     </tr>
-    <tr class="r-product" style="height:15%">
+    <tr class="r-product" style="height:14%">
       <td>
         <div class="sec-h">Product Details</div>
         <div class="sec-body kv">
@@ -340,7 +342,7 @@ function renderSlipTable(d) {
         </div>
       </td>
     </tr>
-    <tr class="r-shipper" style="height:18%">
+    <tr class="r-shipper" style="height:17%">
       <td>
         <div class="sec-h">Shipper / Return Address</div>
         <div class="sec-body txt">
@@ -358,7 +360,7 @@ function renderSlipTable(d) {
         </div>
       </td>
     </tr>
-    <tr class="r-footer" style="height:9%">
+    <tr class="r-footer" style="height:8%">
       <td colspan="2" class="footer-wrap">
         <div class="footer-bar">${esc(d.serviceFooter)} · ✂ SEAL INTACT ✂</div>
         <div class="footer-contact">THANK YOU — ${esc(packingSlip.logoText.toUpperCase())} · 📞 ${esc(formatPhone(d.supportPh))} · ${esc(packingSlip.websiteUrl)}</div>
@@ -368,8 +370,8 @@ function renderSlipTable(d) {
 }
 
 function slipBarcodeScript(awb, autoPrint = false, barcodeOpts = {}) {
-  const barH = Number(barcodeOpts.height) || 48;
-  const barW = Number(barcodeOpts.width) || 1.65;
+  const barH = Number(barcodeOpts.height) || 54;
+  const barW = Number(barcodeOpts.width) || 1.75;
   const auto = autoPrint
     ? `function goPrint(){setTimeout(function(){window.focus();window.print();},400);}
        var imgs=document.querySelectorAll("img");
@@ -384,8 +386,8 @@ function slipBarcodeScript(awb, autoPrint = false, barcodeOpts = {}) {
     (function () {
       var el = document.getElementById("awb-barcode");
       if (!el) return;
-      el.style.width = "98%";
-      el.style.maxWidth = "98%";
+      el.style.width = "100%";
+      el.style.maxWidth = "100%";
       el.style.height = "${barH}px";
       el.style.maxHeight = "${barH}px";
       el.style.objectFit = "fill";
