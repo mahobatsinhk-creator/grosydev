@@ -165,8 +165,10 @@ export const config = {
     printHeightMm: optional('PACKING_SLIP_PRINT_HEIGHT_MM', '152.4'),
     /** Left + right inset on slip (mm each side) */
     printMarginHorizontalMm: optional('PACKING_SLIP_MARGIN_H_MM', '3'),
-    /** Extra top inset — avoids thermal printer clipping the header */
-    printMarginTopMm: optional('PACKING_SLIP_MARGIN_TOP_MM', '6'),
+    /** Equal padding on all four sides (mm). Defaults to PACKING_SLIP_MARGIN_H_MM */
+    printMarginUniformMm: optional('PACKING_SLIP_MARGIN_MM', ''),
+    /** Legacy — if PACKING_SLIP_MARGIN_MM unset, top uses horizontal margin only */
+    printMarginTopMm: optional('PACKING_SLIP_MARGIN_TOP_MM', '3'),
     /** QR image pixel size (displayed smaller via CSS for sharp print) */
     qrPixelSize: optional('PACKING_SLIP_QR_PIXEL_SIZE', '140'),
     websiteUrl: optional('PACKING_SLIP_WEBSITE', 'www.grosyhub.com'),

@@ -133,13 +133,26 @@ function buildSlipData(order, awb, waybillMeta = {}) {
     isCod: isCodOrder(order),
     pageW: packingSlip.pageWidth,
     pageH: packingSlip.pageHeight,
-    marginHIn: `${(Number(packingSlip.printMarginHorizontalMm) / 25.4).toFixed(3)}in`,
-    marginTopIn: `${(Number(packingSlip.printMarginTopMm) / 25.4).toFixed(3)}in`,
-    marginBottomIn: '0',
-    padTopMm: packingSlip.printMarginTopMm,
-    padSideMm: packingSlip.printMarginHorizontalMm,
+    padMm: Number(
+      packingSlip.printMarginUniformMm ||
+        packingSlip.printMarginHorizontalMm ||
+        3
+    ),
+    marginIn: `${(
+      Number(
+        packingSlip.printMarginUniformMm ||
+          packingSlip.printMarginHorizontalMm ||
+          3
+      ) / 25.4
+    ).toFixed(3)}in`,
     innerHmm:
-      Number(packingSlip.printHeightMm) - Number(packingSlip.printMarginTopMm),
+      Number(packingSlip.printHeightMm) -
+      2 *
+        Number(
+          packingSlip.printMarginUniformMm ||
+            packingSlip.printMarginHorizontalMm ||
+            3
+        ),
     printWmm: packingSlip.printWidthMm,
     printHmm: packingSlip.printHeightMm,
     dimensionsText: orderDimensions(order, packingSlip.dimensions),
@@ -409,7 +422,7 @@ export function buildPackingSlipPrintHtml(order, awb, waybillMeta = {}) {
       max-width: ${d.printWmm}mm;
       max-height: ${d.printHmm}mm;
       margin: 0;
-      padding: ${d.padTopMm}mm ${d.padSideMm}mm 0 ${d.padSideMm}mm;
+      padding: ${d.padMm}mm;
       overflow: hidden;
       box-sizing: border-box;
       background: #fff;
@@ -428,7 +441,7 @@ export function buildPackingSlipPrintHtml(order, awb, waybillMeta = {}) {
         height: ${d.printHmm}mm !important;
         max-height: ${d.printHmm}mm !important;
         margin: 0 !important;
-        padding: ${d.padTopMm}mm ${d.padSideMm}mm 0 ${d.padSideMm}mm !important;
+        padding: ${d.padMm}mm !important;
         overflow: hidden !important;
         box-sizing: border-box !important;
         page-break-after: avoid !important;
@@ -499,7 +512,7 @@ export function buildPackingSlipHtml(order, awb, waybillMeta = {}) {
       width: ${d.pageW};
       height: ${d.pageH};
       margin: 0 auto 12px;
-      padding: ${d.marginTopIn} ${d.marginHIn} 0 ${d.marginHIn};
+      padding: ${d.marginIn};
       overflow: hidden;
       background: #fff;
       box-shadow: 0 0 8px rgba(0,0,0,.18);
