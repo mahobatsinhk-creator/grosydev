@@ -156,10 +156,41 @@ async function shopifyGraphql(query, variables = {}) {
   return payload.data;
 }
 
-async function getVariantDimensionsGraphQL(variantId) {
-  const data = await shopifyGraphql(
-    `query VariantDims($id: ID!) {
-      productVariant(id: $id) {
+async function getVariantDimensionsGraphQL(variantId, productId = null) {
+  const vid = `gid://shopify/ProductVariant/${variantId}`;
+  let data;
+
+  if (productId) {
+    data = await shopifyGraphql(
+      `query VariantDims($vid: ID!, $pid: ID!) {
+        productVariant(id: $vid) {
+          inventoryItem {
+            measurement {
+              dimensions { length width height unit }
+            }
+          }
+        }
+        product(id: $pid) {
+          metafields(first: 20, namespace: "custom") {
+            nodes { key value type }
+          }
+        }
+      }`,
+      { vid, pid: `gid://shopify/Product/${productId}` }
+    );
+    const fromInv = formatMeasurementDimensions(
+      data?.productVariant?.inventoryItem?.measurement?.dimensions
+    );
+    if (fromInv) return fromInv;
+    const mfs = data?.product?.metafields?.nodes || [];
+    return pickDimensionsFromMetafields(
+      mfs.map((n) => ({ key: n.key, value: n.value, type: n.type, namespace: 'custom' }))
+    );
+  }
+
+  data = await shopifyGraphql(
+    `query VariantDims($vid: ID!) {
+      productVariant(id: $vid) {
         inventoryItem {
           measurement {
             dimensions { length width height unit }
@@ -167,7 +198,7 @@ async function getVariantDimensionsGraphQL(variantId) {
         }
       }
     }`,
-    { id: `gid://shopify/ProductVariant/${variantId}` }
+    { vid }
   );
   return formatMeasurementDimensions(
     data?.productVariant?.inventoryItem?.measurement?.dimensions
@@ -188,7 +219,7 @@ async function getVariantShippingDimensions(variantId) {
       const legacy = formatMeasurementDimensions(inv.dimensions);
       if (legacy) return legacy;
     }
-    return await getVariantDimensionsGraphQL(variantId);
+    return await getVariantDimensionsGraphQL(variantId, null);
   } catch (err) {
     if (isShopifyScopeError(err)) return null;
     throw err;
@@ -201,7 +232,10 @@ async function loadInventoryDimensions(order) {
     items.map(async (item) => {
       if (item.packing_slip_dimensions) return item;
       if (!item.variant_id) return item;
-      const dim = await getVariantShippingDimensions(item.variant_id);
+      let dim = await getVariantShippingDimensions(item.variant_id);
+      if (!dim && item.product_id) {
+        dim = await getVariantDimensionsGraphQL(item.variant_id, item.product_id);
+      }
       return dim ? { ...item, packing_slip_dimensions: dim } : item;
     })
   );
