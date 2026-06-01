@@ -1,8 +1,8 @@
 {
-  "_comment": "Edit sizes/weight here. Restart server after changes. weightKg = per unit (300g = 0.3).",
+  "_comment": "Edit sizes/weight here. Restart server after changes. weightKg = per unit (430g = 0.43).",
   "default": {
     "dimensions": "16 × 37 × 8.4 (cm)",
-    "weightKg": 0.945
+    "weightKg": 0.85
   },
   "byProductId": {
     "15108637163565": {
@@ -10,8 +10,8 @@
       "weightKg": 0.85
     },
     "15108634411053": {
-      "dimensions": "6 × 5 × 2 (cm)",
-      "weightKg": 0.3
+      "dimensions": "24.5 × 28.5 × 3 (cm)",
+      "weightKg": 0.43
     },
     "15108602626093": {
       "dimensions": "6 × 5 × 2 (cm)",
@@ -19,32 +19,54 @@
     }
   },
   "bySku": {},
-  "byTitleContains": {
-    "Glowlift": {
+  "byHandle": {
+    "grosyhub-foldable-black-ice-face-bowl-cold-therapy-facial-skincare-bowl-for-glowing-skin-copy": {
+      "dimensions": "24.5 × 28.5 × 3 (cm)",
+      "weightKg": 0.43
+    },
+    "rechargeable-mini-air-cooler-with-led-light": {
       "dimensions": "16 × 37 × 8.4 (cm)",
       "weightKg": 0.85
     },
-    "Face Sculptor": {
-      "dimensions": "16 × 37 × 8.4 (cm)",
-      "weightKg": 0.85
+    "glowlift-face-sculptor-brush-skin-tightening-face-lifting-instant-glow-massage-tool": {
+      "dimensions": "6 × 5 × 2 (cm)",
+      "weightKg": 0.3
+    },
+    "waterproof-silicone-sealant-adhesive-for-roof-leakage-repair-weather-resistant": {
+      "dimensions": "27 × 13 × 9 (cm)",
+      "weightKg": 0.8
+    }
+  },
+  "byTitleContains": {
+    "Grosyhub Foldable Black Ice Face Bowl": {
+      "dimensions": "24.5 × 28.5 × 3 (cm)",
+      "weightKg": 0.43
     },
     "Foldable Black Ice Face Bowl": {
-      "dimensions": "6 × 5 × 2 (cm)",
-      "weightKg": 0.2
+      "dimensions": "24.5 × 28.5 × 3 (cm)",
+      "weightKg": 0.43
     },
     "Ice Face Bowl": {
-      "dimensions": "6 × 5 × 2 (cm)",
-      "weightKg": 0.2
+      "dimensions": "24.5 × 28.5 × 3 (cm)",
+      "weightKg": 0.43
     },
-    "Mini Air Cooler": {
-      "dimensions": "16 × 37 × 8.4 (cm)",
-      "weightKg": 0.85
+    "GlowLift Face Sculptor": {
+      "dimensions": "6 × 5 × 2 (cm)",
+      "weightKg": 0.3
+    },
+    "Glowlift Face Sculptor": {
+      "dimensions": "6 × 5 × 2 (cm)",
+      "weightKg": 0.3
+    },
+    "Face Sculptor Brush": {
+      "dimensions": "6 × 5 × 2 (cm)",
+      "weightKg": 0.3
     },
     "Rechargeable Mini Air Cooler": {
       "dimensions": "16 × 37 × 8.4 (cm)",
       "weightKg": 0.85
     },
-    "Air Cooler": {
+    "Mini Air Cooler": {
       "dimensions": "16 × 37 × 8.4 (cm)",
       "weightKg": 0.85
     },
@@ -60,51 +82,48 @@
       "dimensions": "6 × 5 × 2 (cm)",
       "weightKg": 0.3
     },
+    "Waterproof Silicone Sealant": {
+      "dimensions": "27 × 13 × 9 (cm)",
+      "weightKg": 0.8
+    },
+    "Silicone Sealant Adhesive": {
+      "dimensions": "27 × 13 × 9 (cm)",
+      "weightKg": 0.8
+    },
     "Silicone Sealant": {
       "dimensions": "27 × 13 × 9 (cm)",
       "weightKg": 0.8
-    },
-    "Waterproof Silicone": {
-      "dimensions": "27 × 13 × 9 (cm)",
-      "weightKg": 0.8
-    },
-    "Sealant Adhesive": {
-      "dimensions": "27 × 13 × 9 (cm)",
-      "weightKg": 0.8
-    },
-    "sealent": {
-      "dimensions": "27 × 13 × 9 (cm)",
-      "weightKg": 0.8
-    },
-    "Sealant": {
-      "dimensions": "27 × 13 × 9 (cm)",
-      "weightKg": 0.8
-    },
-    "hair": {
-      "dimensions": "6 × 5 × 2 (cm)",
-      "weightKg": 0.2
     }
   },
   "products": [
     {
+      "handle": "grosyhub-foldable-black-ice-face-bowl-cold-therapy-facial-skincare-bowl-for-glowing-skin-copy",
       "titleContains": "Grosyhub Foldable Black Ice Face Bowl",
+      "dimensions": "24.5 × 28.5 × 3 (cm)",
+      "weightKg": 0.43
+    },
+    {
+      "handle": "rechargeable-mini-air-cooler-with-led-light",
+      "titleContains": "Rechargeable Mini Air Cooler",
+      "dimensions": "16 × 37 × 8.4 (cm)",
+      "weightKg": 0.85
+    },
+    {
+      "handle": "glowlift-face-sculptor-brush-skin-tightening-face-lifting-instant-glow-massage-tool",
+      "titleContains": "GlowLift Face Sculptor",
       "dimensions": "6 × 5 × 2 (cm)",
-      "weightKg": 0.2
+      "weightKg": 0.3
+    },
+    {
+      "handle": "waterproof-silicone-sealant-adhesive-for-roof-leakage-repair-weather-resistant",
+      "titleContains": "Waterproof Silicone Sealant",
+      "dimensions": "27 × 13 × 9 (cm)",
+      "weightKg": 0.8
     },
     {
       "titleContains": "Water Purifier Tablets",
       "dimensions": "6 × 5 × 2 (cm)",
       "weightKg": 0.3
-    },
-    {
-      "titleContains": "Glowlift face sculptor",
-      "dimensions": "16 × 37 × 8.4 (cm)",
-      "weightKg": 0.85
-    },
-    {
-      "titleContains": "Silicone Sealant",
-      "dimensions": "27 × 13 × 9 (cm)",
-      "weightKg": 0.8
     }
   ]
 }

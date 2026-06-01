@@ -55,6 +55,7 @@ function normalizeCatalog(raw) {
     default: defaultEntry,
     byProductId: normalizeMap(raw?.byProductId),
     bySku: normalizeMap(raw?.bySku),
+    byHandle: normalizeMap(raw?.byHandle),
     byTitleContains: normalizeMap(raw?.byTitleContains),
   };
 
@@ -64,6 +65,7 @@ function normalizeCatalog(raw) {
     if (!entry) continue;
     if (row.productId) base.byProductId[String(row.productId)] = entry;
     if (row.sku) base.bySku[String(row.sku).trim()] = entry;
+    if (row.handle) base.byHandle[String(row.handle).trim()] = entry;
     if (row.titleContains) base.byTitleContains[String(row.titleContains).trim()] = entry;
   }
 
@@ -105,6 +107,11 @@ export function resolveLocalProductSpec(item, catalog = loadProductDimensionsCat
   if (!spec) {
     const sku = String(item.sku || '').trim();
     spec = matchFromMap(catalog.bySku, sku);
+  }
+
+  if (!spec) {
+    const handle = String(item.handle || item.product_handle || '').trim();
+    spec = matchFromMap(catalog.byHandle, handle);
   }
 
   if (!spec) {
