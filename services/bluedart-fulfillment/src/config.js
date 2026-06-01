@@ -40,6 +40,37 @@ function optionalAny(names, fallback = '') {
   return value || fallback;
 }
 
+/** Parse `key:value;key2:value2` maps from .env */
+export function parseSemicolonMap(raw, fallback = {}) {
+  const map = { ...fallback };
+  for (const part of String(raw || '').split(';')) {
+    const piece = part.trim();
+    if (!piece) continue;
+    const colon = piece.indexOf(':');
+    if (colon === -1) continue;
+    const key = piece.slice(0, colon).trim();
+    const value = piece.slice(colon + 1).trim();
+    if (key && value) map[key] = value;
+  }
+  return map;
+}
+
+const DEFAULT_PACKAGE_DIMENSIONS = {
+  LED: '16 × 37 × 8.4 (cm)',
+  hair: '6 × 5 × 2 (cm)',
+  sealent: '30 × 5 × 5 (cm)',
+  'water purification': '6 × 5 × 2 (cm)',
+};
+
+const DEFAULT_TITLE_TO_PACKAGE = {
+  'Mini Air Cooler': 'LED',
+  'Air Cooler': 'LED',
+  'Water Purification': 'water purification',
+  Purification: 'water purification',
+  sealent: 'sealent',
+  hair: 'hair',
+};
+
 /** Blue Dart portal may show "PLN347970" = area PLN + numeric customer code 347970 */
 export function normalizeBlueDartAccount(rawCode, rawArea = 'PLN') {
   const input = String(rawCode || '').trim().toUpperCase();
@@ -109,7 +140,19 @@ export const config = {
   packingSlip: {
     logoText: optional('PACKING_SLIP_LOGO', optional('BLUEDART_SHIPPER_NAME', 'Grosyhub')),
     serviceLabel: optional('PACKING_SLIP_SERVICE_LABEL', 'DART APEX'),
-    dimensions: optional('PACKING_SLIP_DIMENSIONS', '10.00 * 10.00 * 10.00(cm)'),
+    dimensions: optional('PACKING_SLIP_DIMENSIONS', '16 × 37 × 8.4 (cm)'),
+    /** Saved packages (Settings → Shipping → Packages), matched by product title */
+    packageMap: parseSemicolonMap(
+      optional('PACKING_SLIP_PACKAGE_MAP'),
+      DEFAULT_PACKAGE_DIMENSIONS
+    ),
+    /** Product title contains left part → use package name from packageMap (right part) */
+    titleToPackage: parseSemicolonMap(
+      optional('PACKING_SLIP_TITLE_TO_PACKAGE'),
+      DEFAULT_TITLE_TO_PACKAGE
+    ),
+    /** Per Shopify product ID → dimensions text */
+    productDimensions: parseSemicolonMap(optional('PACKING_SLIP_PRODUCT_DIMENSIONS')),
     invoicePrefix: optional('PACKING_SLIP_INVOICE_PREFIX', 'GH'),
     /** Portrait print size — default 4×6 inch (101.6 × 152.4 mm) */
     pageWidth: optional('PACKING_SLIP_PAGE_WIDTH', '4in'),

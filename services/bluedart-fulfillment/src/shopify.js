@@ -1,5 +1,30 @@
 import { config } from './config.js';
 
+function resolveDimensionsFromConfig(item, product = null) {
+  const { packingSlip } = config;
+  const productId = String(item.product_id || '');
+  if (productId && packingSlip.productDimensions[productId]) {
+    return packingSlip.productDimensions[productId];
+  }
+
+  const title = (item.title || product?.title || '').trim();
+  if (!title) return null;
+
+  const titleLower = title.toLowerCase();
+  for (const [needle, packageName] of Object.entries(packingSlip.titleToPackage)) {
+    if (titleLower.includes(needle.toLowerCase())) {
+      const dim = packingSlip.packageMap[packageName];
+      if (dim) return dim;
+    }
+  }
+
+  for (const [packageName, dim] of Object.entries(packingSlip.packageMap)) {
+    if (titleLower.includes(packageName.toLowerCase())) return dim;
+  }
+
+  return null;
+}
+
 let cachedAccessToken = null;
 let tokenExpiresAt = 0;
 
@@ -343,6 +368,35 @@ async function listProductMetafields(productId) {
   return data.metafields || [];
 }
 
+async function loadConfigPackageDimensions(order) {
+  const items = order.line_items || [];
+  const productCache = {};
+
+  return Promise.all(
+    items.map(async (item) => {
+      if (item.packing_slip_dimensions) return item;
+
+      let product = null;
+      if (item.product_id) {
+        if (!Object.hasOwn(productCache, item.product_id)) {
+          try {
+            const data = await shopifyFetch(
+              `/products/${item.product_id}.json?fields=id,title,product_type`
+            );
+            productCache[item.product_id] = data.product || null;
+          } catch {
+            productCache[item.product_id] = null;
+          }
+        }
+        product = productCache[item.product_id];
+      }
+
+      const dim = resolveDimensionsFromConfig(item, product);
+      return dim ? { ...item, packing_slip_dimensions: dim } : item;
+    })
+  );
+}
+
 async function listVariantMetafields(variantId) {
   if (!variantId) return [];
   const data = await shopifyFetch(`/variants/${variantId}/metafields.json?limit=100`);
@@ -398,6 +452,10 @@ export async function enrichOrderForPackingSlip(order) {
     } catch (err) {
       if (!isShopifyScopeError(err) && !isShopifyGraphqlFieldError(err)) throw err;
     }
+  }
+
+  if (!line_items.every((i) => i.packing_slip_dimensions)) {
+    line_items = await loadConfigPackageDimensions({ ...order, line_items });
   }
 
   return { ...order, line_items };
