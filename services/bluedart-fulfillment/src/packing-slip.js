@@ -54,7 +54,7 @@ function formatOrderDate(iso) {
   return `${d.getDate()}-${months[d.getMonth()]}-${d.getFullYear()}`;
 }
 
-const SLIP_SUPPORT_PHONE = '9574965893';
+const SLIP_SUPPORT_PHONE = '8866559670';
 
 function resolveSupportPhone(packingSlip, bluedart) {
   const raw = String(packingSlip.supportPhone || bluedart.shipper.mobile || '').trim();
