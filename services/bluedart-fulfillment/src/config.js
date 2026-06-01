@@ -153,6 +153,10 @@ export const config = {
     ),
     /** Per Shopify product ID → dimensions text */
     productDimensions: parseSemicolonMap(optional('PACKING_SLIP_PRODUCT_DIMENSIONS')),
+    /** Local file for all product sizes (no Shopify) — see config/product-dimensions.json */
+    dimensionsFile: optional('PACKING_SLIP_DIMENSIONS_FILE', 'config/product-dimensions.json'),
+    /** true = only use local JSON + line item properties, skip Shopify dimension API */
+    localDimensionsOnly: optional('PACKING_SLIP_LOCAL_DIMENSIONS_ONLY', 'true') === 'true',
     invoicePrefix: optional('PACKING_SLIP_INVOICE_PREFIX', 'GH'),
     /** Portrait print size — default 4×6 inch (101.6 × 152.4 mm) */
     pageWidth: optional('PACKING_SLIP_PAGE_WIDTH', '4in'),

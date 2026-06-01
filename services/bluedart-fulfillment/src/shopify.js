@@ -1,4 +1,8 @@
 import { config } from './config.js';
+import {
+  applyLocalProductDimensions,
+  localDimensionsOnly,
+} from './product-dimensions.js';
 
 function resolveDimensionsFromConfig(item, product = null) {
   const { packingSlip } = config;
@@ -430,15 +434,22 @@ async function loadMetafieldDimensions(order) {
   );
 }
 
-/** Load dimensions: line properties → metafields → inventory package (Shipping tab) */
+/** Load dimensions: local JSON file first; optional Shopify fallback */
 export async function enrichOrderForPackingSlip(order) {
   const items = order.line_items || [];
   if (!items.length) return order;
 
-  let line_items = items.map((item) => {
-    const dim = dimensionsFromLineItem(item);
-    return dim ? { ...item, packing_slip_dimensions: dim } : item;
+  let enriched = applyLocalProductDimensions(order);
+
+  let line_items = enriched.line_items.map((item) => {
+    if (item.packing_slip_dimensions) return item;
+    const prop = dimensionsFromLineItem(item);
+    return prop ? { ...item, packing_slip_dimensions: prop } : item;
   });
+
+  if (localDimensionsOnly()) {
+    return { ...order, line_items };
+  }
 
   try {
     line_items = await loadMetafieldDimensions({ ...order, line_items });

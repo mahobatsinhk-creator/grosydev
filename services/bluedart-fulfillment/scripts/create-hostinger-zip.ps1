@@ -16,6 +16,7 @@ $include = @(
   "package.json",
   "public",
   "src",
+  "config",
   "labels"
 )
 
