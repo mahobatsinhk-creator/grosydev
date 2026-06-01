@@ -169,6 +169,7 @@ async function loadMetafieldDimensions(order) {
 
   return Promise.all(
     items.map(async (item) => {
+      if (item.packing_slip_dimensions) return item;
       let dim = dimensionsFromLineItem(item);
       if (!dim && item.product_id) dim = dimByProduct[item.product_id] || null;
       if (!dim && item.variant_id) {
