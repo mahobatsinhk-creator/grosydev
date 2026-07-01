@@ -212,6 +212,13 @@
 
   {% render 'grosyhub-product-features', brand_color: brand_color, settings: settings %}
 
+  {% render 'grosyhub-pdp-reels',
+    product: product,
+    section: section,
+    settings: settings,
+    brand_color: brand_color
+  %}
+
   {%- if settings.show_specs and has_specs -%}
     <details class="gh-pdp-info__accordion">
       <summary>Specifications</summary>

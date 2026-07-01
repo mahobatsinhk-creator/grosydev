@@ -1,0 +1,150 @@
+{%- liquid
+  assign reel_product = product
+  if block != blank and block.settings.product != blank
+    assign reel_product = block.settings.product
+  endif
+
+  assign reel_video = video
+  if reel_video == blank and block != blank
+    assign reel_video = block.settings.video
+  endif
+  if reel_video == blank and reel_product != blank
+    for media in reel_product.media
+      if media.media_type == 'video'
+        assign reel_video = media
+        break
+      endif
+    endfor
+  endif
+
+  assign poster = nil
+  if block != blank
+    assign poster = block.settings.poster
+  endif
+  if poster == blank and reel_product != blank and reel_product.featured_media != blank
+    if reel_product.featured_media.media_type == 'image'
+      assign poster = reel_product.featured_media
+    else
+      assign poster = reel_product.featured_media.preview_image
+    endif
+  endif
+
+  assign caption = ''
+  if block != blank
+    assign caption = block.settings.caption_top
+  endif
+
+  if reel_product != blank
+    assign variant = reel_product.selected_or_first_available_variant
+    assign price = variant.price
+    assign compare_at = variant.compare_at_price
+    assign on_sale = false
+    if compare_at > price
+      assign on_sale = true
+      assign discount_pct = compare_at | minus: price | times: 100.0 | divided_by: compare_at | round
+    endif
+    assign product_title = reel_product.title
+    assign product_url = reel_product.url
+  endif
+
+  if product_title == blank and block != blank
+    assign product_title = block.settings.title_override
+  endif
+  if product_url == blank and block != blank
+    assign product_url = block.settings.link_override
+  endif
+
+  assign thumb_media = poster
+  if reel_product != blank and reel_product.featured_media != blank
+    if reel_product.featured_media.media_type == 'image'
+      assign thumb_media = reel_product.featured_media
+    else
+      assign thumb_media = reel_product.featured_media.preview_image
+    endif
+  endif
+-%}
+
+<button
+  type="button"
+  class="gh-pdp-reel-card"
+  data-gh-pdp-reel-open="{{ reel_index }}"
+  aria-label="Open video for {{ product_title | escape }}"
+  {% if block %}{{ block.shopify_attributes }}{% endif %}
+>
+  <span class="gh-pdp-reel-card__media">
+    {%- if reel_video != blank -%}
+      <span class="gh-pdp-reel-card__video-wrap">
+        {{
+          reel_video
+          | video_tag:
+            class: 'gh-pdp-reel-card__video',
+            autoplay: true,
+            loop: true,
+            muted: true,
+            controls: false,
+            playsinline: true,
+            preload: 'metadata',
+            image_size: '400x'
+        }}
+        {%- if poster != blank -%}
+          {{
+            poster
+            | image_url: width: 400
+            | image_tag:
+              class: 'gh-pdp-reel-card__poster',
+              data-gh-pdp-reel-poster: '',
+              loading: 'lazy',
+              widths: '200, 300, 400',
+              sizes: '150px',
+              alt: ''
+          }}
+        {%- endif -%}
+      </span>
+    {%- elsif poster != blank -%}
+      {{
+        poster
+        | image_url: width: 400
+        | image_tag:
+          class: 'gh-pdp-reel-card__poster gh-pdp-reel-card__poster--only',
+          loading: 'lazy',
+          widths: '200, 300, 400',
+          sizes: '150px',
+          alt: ''
+      }}
+    {%- else -%}
+      <span class="gh-pdp-reel-card__placeholder">{{ 'product-1' | placeholder_svg_tag }}</span>
+    {%- endif -%}
+
+    <span class="gh-pdp-reel-card__play" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+    </span>
+
+    {%- if caption != blank -%}
+      <span class="gh-pdp-reel-card__caption">{{ caption }}</span>
+    {%- endif -%}
+
+    {%- if reel_product != blank or product_title != blank -%}
+      <span class="gh-pdp-reel-card__product">
+        {%- if thumb_media != blank -%}
+          <span class="gh-pdp-reel-card__thumb">
+            {{ thumb_media | image_url: width: 96 | image_tag: loading: 'lazy', widths: '48, 96', sizes: '40px', alt: '' }}
+          </span>
+        {%- endif -%}
+        <span class="gh-pdp-reel-card__info">
+          {%- if product_title != blank -%}
+            <span class="gh-pdp-reel-card__title">{{ product_title | truncate: 42 }}</span>
+          {%- endif -%}
+          {%- if reel_product != blank -%}
+            <span class="gh-pdp-reel-card__price-row">
+              <span class="gh-pdp-reel-card__price">{{ price | money }}</span>
+              {%- if on_sale -%}
+                <span class="gh-pdp-reel-card__compare">{{ compare_at | money }}</span>
+                <span class="gh-pdp-reel-card__off">{{ discount_pct }}% off</span>
+              {%- endif -%}
+            </span>
+          {%- endif -%}
+        </span>
+      </span>
+    {%- endif -%}
+  </span>
+</button>
