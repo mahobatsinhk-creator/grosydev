@@ -44,8 +44,7 @@
         "trust_shipping": "Free Shipping",
         "trust_returns": "7 Days Return",
         "show_specs": true,
-        "show_description": true,
-        "show_product_reels": true
+        "show_description": true
       }
     },
     "grosyhub_recommendations": {

@@ -38,9 +38,6 @@
       .section-grosyhub-product .pack-option-wrap{flex:none!important;width:auto!important;min-width:0!important}
       .section-grosyhub-product .pack-option{min-width:0!important;width:100%!important;min-height:44px!important;padding:12px 10px!important;font-size:14px!important}
     }
-    @media screen and (max-width:749px){
-      .gh-pdp-reels{display:none!important}
-    }
   </style>
   <div class="gh-pdp-page__container">
     <div class="gh-pdp-page__grid">
@@ -1160,18 +1157,6 @@
       "type": "variant-picker",
       "name": "Variant picker",
       "limit": 1
-    },
-    {
-      "type": "reel",
-      "name": "Product reel",
-      "settings": [
-        { "type": "product", "id": "product", "label": "Product", "info": "Leave empty to use the current product." },
-        { "type": "video", "id": "video", "label": "Reel video", "info": "Optional if the product already has a video in media." },
-        { "type": "image_picker", "id": "poster", "label": "Poster image" },
-        { "type": "text", "id": "caption_top", "label": "Video caption overlay" },
-        { "type": "text", "id": "title_override", "label": "Title override (no product)" },
-        { "type": "url", "id": "link_override", "label": "Link override (no product)" }
-      ]
     }
   ],
   "settings": [
@@ -1377,38 +1362,6 @@
       "id": "show_description",
       "label": "Show description",
       "default": true
-    },
-    {
-      "type": "header",
-      "content": "Product reels (video strip)"
-    },
-    {
-      "type": "checkbox",
-      "id": "show_product_reels",
-      "label": "Show product reels strip",
-      "default": true,
-      "info": "Shows product videos in a scrollable row. Click opens a popup with Add to cart."
-    },
-    {
-      "type": "text",
-      "id": "reels_heading",
-      "label": "Reels heading",
-      "info": "Leave empty for no heading."
-    },
-    {
-      "type": "collection",
-      "id": "reels_collection",
-      "label": "Fallback collection",
-      "info": "Used when the product has no videos and no reel blocks are added."
-    },
-    {
-      "type": "range",
-      "id": "reels_max",
-      "label": "Max reels from collection",
-      "min": 4,
-      "max": 12,
-      "step": 1,
-      "default": 8
     }
   ],
   "presets": [
