@@ -29,6 +29,7 @@ async function tryCode(code, area) {
         PickupDate: `/Date(${ms})/`,
         PickupTime: '1400',
         PickupType: 'O',
+        PackType: 'L',
         ProductCode: 'A',
         SubProductCode: 'P',
         ProductType: 2,

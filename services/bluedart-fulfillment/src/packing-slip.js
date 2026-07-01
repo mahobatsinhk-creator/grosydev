@@ -22,13 +22,15 @@ function orderWeightKg(order) {
         sum + Number(item.packing_slip_weight_kg || 0) * (item.quantity || 1),
       0
     );
-    return Math.max(0.2, kg).toFixed(2);
+    // Show catalog weight as-is (e.g. 0.12 kg tablet) — do not floor to 0.2
+    return (kg > 0 ? kg : 0.2).toFixed(2);
   }
   const grams = items.reduce(
     (sum, item) => sum + (item.grams || 200) * (item.quantity || 1),
     0
   );
-  return Math.max(0.2, grams / 1000).toFixed(2);
+  const kg = grams / 1000;
+  return (kg > 0 ? kg : 0.2).toFixed(2);
 }
 
 function invoiceNo(order) {

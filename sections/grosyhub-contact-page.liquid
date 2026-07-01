@@ -50,6 +50,23 @@
           {%- endif -%}
 
           <ul class="gh-contact__cards" role="list">
+            {%- if section.settings.legal_name != blank or section.settings.trade_name != blank -%}
+              <li class="gh-contact__card">
+                <span class="gh-contact__card-icon" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 7h16v12H4V7zm2 2v8h12V9H6zm3-4h6l2 2v2H7V7l2-2z" stroke="currentColor" stroke-width="1.4"/></svg>
+                </span>
+                <div>
+                  <strong>{{ section.settings.business_label | default: 'Business Details' }}</strong>
+                  {%- if section.settings.legal_name != blank -%}
+                    <span class="gh-contact__card-text">Legal Name: {{ section.settings.legal_name }}</span>
+                  {%- endif -%}
+                  {%- if section.settings.trade_name != blank -%}
+                    <span class="gh-contact__card-text">Trade Name: {{ section.settings.trade_name }}</span>
+                  {%- endif -%}
+                </div>
+              </li>
+            {%- endif -%}
+
             {%- if section.settings.phone != blank -%}
               <li class="gh-contact__card">
                 <span class="gh-contact__card-icon" aria-hidden="true">
@@ -371,13 +388,16 @@
     { "type": "text", "id": "heading_highlight", "label": "Heading highlight", "default": "hear from you" },
     { "type": "textarea", "id": "subheading", "label": "Subheading", "default": "Have questions about products, orders, or partnerships? Our team is here to help." },
     { "type": "header", "content": "Contact details" },
-    { "type": "text", "id": "phone", "label": "Phone", "default": "+91 97245 91484" },
+    { "type": "text", "id": "business_label", "label": "Business details label", "default": "Business Details" },
+    { "type": "text", "id": "legal_name", "label": "Legal name", "default": "NARESHKUMAR BECHARBHAI PATEL" },
+    { "type": "text", "id": "trade_name", "label": "Trade name", "default": "Grosyhub" },
+    { "type": "text", "id": "phone", "label": "Phone", "default": "+91 88665 59670" },
     { "type": "text", "id": "phone_label", "label": "Phone label", "default": "Phone Number" },
     { "type": "text", "id": "phone_note", "label": "Phone note", "default": "Mon–Sat, 9:00 AM – 7:00 PM" },
     { "type": "text", "id": "email", "label": "Email", "default": "support@grosyhub.com" },
     { "type": "text", "id": "email_label", "label": "Email label", "default": "Email Address" },
     { "type": "text", "id": "email_note", "label": "Email note", "default": "We reply within 2 hours" },
-    { "type": "textarea", "id": "address", "label": "Address" },
+    { "type": "textarea", "id": "address", "label": "Address", "default": "Ground Floor, Plot No 10-117, Opp Riddhi Siddhi Party Plot, Ahmedabad Highway, Industrial Area, Palanpur, Banaskantha, Gujarat, 385001" },
     { "type": "text", "id": "address_label", "label": "Address label", "default": "Store Location" },
     { "type": "text", "id": "hours", "label": "Hours", "default": "Mon – Sat: 9:00 AM – 7:00 PM (IST)" },
     { "type": "text", "id": "hours_label", "label": "Hours label", "default": "Support Timing" },
@@ -414,7 +434,7 @@
     { "type": "header", "content": "Map & newsletter" },
     { "type": "image_picker", "id": "map_image", "label": "Map image" },
     { "type": "text", "id": "map_heading", "label": "Map heading", "default": "Visit Our Store" },
-    { "type": "textarea", "id": "map_address", "label": "Map address" },
+    { "type": "textarea", "id": "map_address", "label": "Map address", "default": "Ground Floor, Plot No 10-117, Opp Riddhi Siddhi Party Plot, Ahmedabad Highway, Industrial Area, Palanpur, Banaskantha, Gujarat, 385001" },
     { "type": "url", "id": "map_directions_url", "label": "Directions URL (Google Maps)" },
     { "type": "text", "id": "map_button_label", "label": "Directions button", "default": "Get Directions" },
     { "type": "text", "id": "newsletter_heading", "label": "Newsletter heading", "default": "Stay Updated with Grosyhub" },

@@ -146,6 +146,7 @@ export function buildWaybillPayload({
     PickupDate: pickupDate,
     PickupTime: '1400',
     PickupType: 'O',
+    PackType: bluedart.packType,
     ProductCode: bluedart.productCode,
     SubProductCode: subProductCode,
     ProductType: 2,

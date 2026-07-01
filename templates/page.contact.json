@@ -51,8 +51,12 @@
       "block_order": ["faq_1", "faq_2", "faq_3", "faq_4", "why_1", "why_2", "why_3", "why_4"],
       "settings": {
         "brand_color": "#A56A2A",
-        "phone": "+91 97245 91484",
+        "legal_name": "NARESHKUMAR BECHARBHAI PATEL",
+        "trade_name": "Grosyhub",
+        "phone": "+91 88665 59670",
         "email": "support@grosyhub.com",
+        "address": "Ground Floor, Plot No 10-117, Opp Riddhi Siddhi Party Plot, Ahmedabad Highway, Industrial Area, Palanpur, Banaskantha, Gujarat, 385001",
+        "map_address": "Ground Floor, Plot No 10-117, Opp Riddhi Siddhi Party Plot, Ahmedabad Highway, Industrial Area, Palanpur, Banaskantha, Gujarat, 385001",
         "hours": "Mon – Sat: 9:00 AM – 7:00 PM (IST)",
         "highlight_text": "Within 2 Hours — Our support team is always ready to assist you quickly."
       }

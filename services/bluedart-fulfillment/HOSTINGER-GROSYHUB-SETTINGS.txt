@@ -1,0 +1,68 @@
+GROSYHUB — Hostinger live (floralwhite-grouse / grosyhub.com)
+================================================================
+
+PROBLEM: Live shows "Grozaro" = wrong zip or wrong .env (Grozaro store/keys).
+
+FIX: Upload GROSYHUB zip + GROSYHUB .env only. Do NOT use Grozaro deploy.
+
+--- Hostinger Node app settings ---
+
+  Framework preset:   Other
+  Node version:       20.x or 22.x
+  Root directory:     (empty)
+  Build command:      None
+  Output directory:   (empty)
+  Entry file:         server.js
+
+  Zip file: bluedart-fulfillment-deploy.zip (from grosyhub repo, NOT grozaro)
+
+--- Required .env (Grosyhub — do not mix with Grozaro) ---
+
+  PORT=3000
+  API_SECRET=your-grosyhub-secret
+  PUBLIC_URL=https://floralwhite-grouse-247694.hostingersite.com
+
+  SHOPIFY_SHOP=igh9a1-1h.myshopify.com
+  SHOPIFY_CLIENT_ID=...
+  SHOPIFY_CLIENT_SECRET=...
+  SHOPIFY_API_VERSION=2025-04
+
+  BLUEDART_LOGIN_ID=PLN15697
+  BLUEDART_PASSWORD=...
+  BLUEDART_SHIPPING_LICENCE_KEY=...
+  BLUEDART_TRACKING_LICENCE_KEY=...
+  BLUEDART_CUSTOMER_CODE=PLN347970
+  BLUEDART_ORIGIN_AREA=PLN
+  BLUEDART_PRODUCT_CODE=A
+  BLUEDART_SUB_PRODUCT_CODE=P
+  BLUEDART_PACK_TYPE=L
+
+  BLUEDART_SHIPPER_NAME=Grosyhub
+  BLUEDART_SHIPPER_PINCODE=385001
+  BLUEDART_SHIPPER_MOBILE=8866559670
+  BLUEDART_SHIPPER_EMAIL=support@grosyhub.com
+
+  PACKING_SLIP_LOGO=Grosyhub
+  PACKING_SLIP_WEBSITE=www.grosyhub.com
+  PACKING_SLIP_INVOICE_PREFIX=GH
+  PACKING_SLIP_DIMENSIONS_FILE=config/product-dimensions.json
+  PACKING_SLIP_LOCAL_DIMENSIONS_ONLY=true
+
+--- After deploy ---
+
+  Logs should say: "Grosyhub Blue Dart fulfillment" (NOT Grozaro)
+  Dashboard title: "Grosyhub — Blue Dart Fulfillment" or "Blue Dart Fulfillment"
+  Test: https://floralwhite-grouse-247694.hostingersite.com/health
+  Orders load from grosyhub.com store (igh9a1-1h), not grozaro.myshopify.com
+
+--- Grozaro vs Grosyhub ---
+
+  | Item              | Grosyhub              | Grozaro              |
+  |-------------------|-----------------------|----------------------|
+  | Shopify shop      | igh9a1-1h.myshopify.com | grozaro.myshopify.com |
+  | Blue Dart area    | PLN                   | AHD                  |
+  | Customer code     | PLN347970 / 347970    | AHD348806            |
+  | Packing slip logo | Grosyhub              | Grozaro              |
+  | Invoice prefix    | GH                    | GZ                   |
+
+  Grozaro live URL: bluedart.grozaro.com (separate server)

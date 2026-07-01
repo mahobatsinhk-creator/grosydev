@@ -332,7 +332,12 @@
     async function api(path, options = {}) {
       const res = await fetch(path, { ...options, headers: { ...headers(), ...options.headers } });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || res.statusText);
+      if (!res.ok) {
+      if (res.status === 401) {
+        throw new Error('Unauthorized — paste the API_SECRET from Hostinger env into the box above (must match exactly).');
+      }
+      throw new Error(data.error || res.statusText);
+    }
       return data;
     }
 
@@ -528,7 +533,11 @@
 
     // Auto-fill secret + load orders on open
     loadSecret();
-    if (!secretEl.value.trim()) {
+    // Only default dev secret on localhost — production must use Hostinger API_SECRET
+    if (
+      !secretEl.value.trim() &&
+      (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+    ) {
       secretEl.value = 'grosyhub-local-dev-secret';
       saveSecret();
     }

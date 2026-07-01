@@ -1,5 +1,6 @@
 node_modules/
 .env
+HOSTINGER-ENV-PASTE.txt
 labels/
 *.log
 .DS_Store

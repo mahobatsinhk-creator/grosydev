@@ -124,6 +124,7 @@ export const config = {
     originArea: bluedartAccount.area,
     productCode: optional('BLUEDART_PRODUCT_CODE', 'A'),
     subProductCode: optional('BLUEDART_SUB_PRODUCT_CODE', 'P'),
+    packType: optional('BLUEDART_PACK_TYPE', 'L'),
     shipper: {
       name: optional('BLUEDART_SHIPPER_NAME', 'Grosyhub'),
       address1: optional('BLUEDART_SHIPPER_ADDRESS1'),
