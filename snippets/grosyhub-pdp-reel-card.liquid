@@ -84,18 +84,18 @@
             controls: false,
             playsinline: true,
             preload: 'metadata',
-            image_size: '400x'
+            image_size: '600x'
         }}
         {%- if poster != blank -%}
           {{
             poster
-            | image_url: width: 400
+            | image_url: width: 600
             | image_tag:
               class: 'gh-pdp-reel-card__poster',
               data-gh-pdp-reel-poster: '',
               loading: 'lazy',
-              widths: '200, 300, 400',
-              sizes: '150px',
+              widths: '300, 400, 600',
+              sizes: '200px',
               alt: ''
           }}
         {%- endif -%}
@@ -103,12 +103,12 @@
     {%- elsif poster != blank -%}
       {{
         poster
-        | image_url: width: 400
+        | image_url: width: 600
         | image_tag:
           class: 'gh-pdp-reel-card__poster gh-pdp-reel-card__poster--only',
           loading: 'lazy',
-          widths: '200, 300, 400',
-          sizes: '150px',
+          widths: '300, 400, 600',
+          sizes: '200px',
           alt: ''
       }}
     {%- else -%}
@@ -116,35 +116,35 @@
     {%- endif -%}
 
     <span class="gh-pdp-reel-card__play" aria-hidden="true">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
     </span>
 
     {%- if caption != blank -%}
       <span class="gh-pdp-reel-card__caption">{{ caption }}</span>
     {%- endif -%}
+  </span>
 
-    {%- if reel_product != blank or product_title != blank -%}
-      <span class="gh-pdp-reel-card__product">
-        {%- if thumb_media != blank -%}
-          <span class="gh-pdp-reel-card__thumb">
-            {{ thumb_media | image_url: width: 96 | image_tag: loading: 'lazy', widths: '48, 96', sizes: '40px', alt: '' }}
+  {%- if reel_product != blank or product_title != blank -%}
+    <span class="gh-pdp-reel-card__product">
+      {%- if thumb_media != blank -%}
+        <span class="gh-pdp-reel-card__thumb">
+          {{ thumb_media | image_url: width: 120 | image_tag: loading: 'lazy', widths: '56, 120', sizes: '48px', alt: '' }}
+        </span>
+      {%- endif -%}
+      <span class="gh-pdp-reel-card__info">
+        {%- if product_title != blank -%}
+          <span class="gh-pdp-reel-card__title">{{ product_title | truncate: 38 }}</span>
+        {%- endif -%}
+        {%- if reel_product != blank -%}
+          <span class="gh-pdp-reel-card__price-row">
+            <span class="gh-pdp-reel-card__price">{{ price | money }}</span>
+            {%- if on_sale -%}
+              <span class="gh-pdp-reel-card__compare">{{ compare_at | money }}</span>
+              <span class="gh-pdp-reel-card__off">{{ discount_pct }}% off</span>
+            {%- endif -%}
           </span>
         {%- endif -%}
-        <span class="gh-pdp-reel-card__info">
-          {%- if product_title != blank -%}
-            <span class="gh-pdp-reel-card__title">{{ product_title | truncate: 42 }}</span>
-          {%- endif -%}
-          {%- if reel_product != blank -%}
-            <span class="gh-pdp-reel-card__price-row">
-              <span class="gh-pdp-reel-card__price">{{ price | money }}</span>
-              {%- if on_sale -%}
-                <span class="gh-pdp-reel-card__compare">{{ compare_at | money }}</span>
-                <span class="gh-pdp-reel-card__off">{{ discount_pct }}% off</span>
-              {%- endif -%}
-            </span>
-          {%- endif -%}
-        </span>
       </span>
-    {%- endif -%}
-  </span>
+    </span>
+  {%- endif -%}
 </button>
