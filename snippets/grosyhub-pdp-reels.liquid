@@ -40,6 +40,42 @@
 {%- if show_reels and reel_count > 0 -%}
   {{ 'grosyhub-pdp-reels.css' | asset_url | stylesheet_tag }}
   <script src="{{ 'grosyhub-pdp-reels.js' | asset_url }}" defer></script>
+  <style>
+    .gh-pdp-reels__carousel { display: block; }
+    .gh-pdp-reels__track-wrap { position: relative; overflow: hidden; min-width: 0; }
+    .gh-pdp-reels__arrow {
+      position: absolute;
+      top: 38%;
+      z-index: 5;
+      width: 34px;
+      height: 34px;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgb(255 255 255 / 0.85);
+      border-radius: 50%;
+      background: rgb(255 255 255 / 0.92);
+      color: #333;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgb(0 0 0 / 0.18);
+      transform: translateY(-50%);
+    }
+    .gh-pdp-reels__arrow--prev { left: 8px; }
+    .gh-pdp-reels__arrow--next { right: 8px; }
+    @media screen and (max-width: 749px) {
+      .gh-pdp-reels__track { gap: 12px; }
+      .gh-pdp-reels__slide {
+        flex: 0 0 calc((100% - 12px) / 2) !important;
+        min-width: 0 !important;
+        max-width: none !important;
+      }
+      .gh-pdp-reels__arrow { width: 30px; height: 30px; }
+      .gh-pdp-reels__arrow--prev { left: 6px; }
+      .gh-pdp-reels__arrow--next { right: 6px; }
+      .gh-pdp-reel-card__media { min-height: 200px; }
+    }
+  </style>
 
   <div
     class="gh-pdp-reels"
