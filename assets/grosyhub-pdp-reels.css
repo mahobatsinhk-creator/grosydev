@@ -535,6 +535,51 @@
 }
 
 @media screen and (max-width: 749px) {
+  .gh-pdp-reels__carousel {
+    display: block;
+    position: relative;
+  }
+
+  .gh-pdp-reels__track-wrap {
+    width: 100%;
+    overflow: visible;
+  }
+
+  .gh-pdp-reels__track {
+    gap: 12px;
+    padding-block: 4px 8px;
+  }
+
+  .gh-pdp-reels__slide {
+    flex: 0 0 calc((100% - 12px) / 2);
+    min-width: 0;
+    max-width: none;
+  }
+
+  .gh-pdp-reels__arrow {
+    position: absolute;
+    top: 38%;
+    z-index: 4;
+    width: 32px;
+    height: 32px;
+    margin: 0;
+    box-shadow: 0 2px 10px rgb(0 0 0 / 0.14);
+  }
+
+  .gh-pdp-reels__arrow--prev {
+    left: 4px;
+    transform: translateY(-50%);
+  }
+
+  .gh-pdp-reels__arrow--next {
+    right: 4px;
+    transform: translateY(-50%);
+  }
+
+  .gh-pdp-reels__arrow:hover:not(:disabled) {
+    transform: translateY(-50%) scale(1.04);
+  }
+
   .gh-pdp-reels-modal {
     padding: 0;
     align-items: stretch;
@@ -575,12 +620,7 @@
     right: 10px;
   }
 
-  .gh-pdp-reels__slide {
-    flex: 0 0 172px;
-    min-width: 160px;
-  }
-
   .gh-pdp-reel-card__media {
-    min-height: 240px;
+    min-height: 200px;
   }
 }
