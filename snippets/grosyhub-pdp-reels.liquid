@@ -40,6 +40,27 @@
 {%- if show_reels and reel_count > 0 -%}
   {{ 'grosyhub-pdp-reels.css' | asset_url | stylesheet_tag }}
   <script src="{{ 'grosyhub-pdp-reels.js' | asset_url }}" defer></script>
+  <style>
+    .gh-pdp-reels__carousel { display: block !important; }
+    .gh-pdp-reels__track-wrap { position: relative !important; overflow: hidden !important; }
+    .gh-pdp-reels__arrow {
+      position: absolute !important;
+      top: 38% !important;
+      z-index: 5 !important;
+      width: 30px !important;
+      height: 30px !important;
+      transform: translateY(-50%) !important;
+    }
+    .gh-pdp-reels__arrow--prev { left: 6px !important; }
+    .gh-pdp-reels__arrow--next { right: 6px !important; }
+    @media screen and (max-width: 749px) {
+      .gh-pdp-reels__slide {
+        flex: 0 0 calc((100% - 12px) / 2) !important;
+        min-width: 0 !important;
+        max-width: none !important;
+      }
+    }
+  </style>
 
   <div
     class="gh-pdp-reels"

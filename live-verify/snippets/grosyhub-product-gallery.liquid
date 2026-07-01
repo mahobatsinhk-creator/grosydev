@@ -22,33 +22,6 @@
 -%}
 
 <div class="gh-pdp-gallery" style="--gh-pdp-brand: {{ brand_color }};" data-gh-gallery>
-  <style>
-    .gh-pdp-gallery__thumbs-wrap {
-      display: block !important;
-      position: relative !important;
-      overflow: hidden !important;
-      min-width: 0 !important;
-    }
-    .gh-pdp-gallery__thumbs-arrow {
-      position: absolute !important;
-      top: 50% !important;
-      z-index: 3 !important;
-      width: 28px !important;
-      height: 28px !important;
-      margin: 0 !important;
-      transform: translateY(-50%) !important;
-      box-shadow: 0 2px 8px rgb(0 0 0 / 0.12) !important;
-    }
-    .gh-pdp-gallery__thumbs-arrow--prev { left: 4px !important; }
-    .gh-pdp-gallery__thumbs-arrow--next { right: 4px !important; }
-    @media screen and (max-width: 989px) {
-      .gh-pdp-gallery__thumb {
-        flex: 0 0 52px !important;
-        width: 52px !important;
-        height: 52px !important;
-      }
-    }
-  </style>
   <div class="gh-pdp-gallery__main">
     <div class="gh-pdp-gallery__stage" data-gh-gallery-stage>
       {%- if show_best_seller -%}
@@ -75,6 +48,7 @@
           class="gh-pdp-gallery__slide{% if gallery_index == 0 %} is-active{% endif %}"
           data-gh-slide
           data-index="{{ gallery_index }}"
+          data-media-id="{{ media.id }}"
           {% unless gallery_index == 0 %}hidden{% endunless %}
         >
           {%- if media.media_type == 'video' -%}
@@ -130,16 +104,6 @@
             <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
         </button>
-        <button
-          type="button"
-          class="gh-pdp-gallery__thumbs-arrow gh-pdp-gallery__thumbs-arrow--next"
-          data-gh-thumbs-next
-          aria-label="Scroll thumbnails right"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-        </button>
 
         <div class="gh-pdp-gallery__thumbs" data-gh-thumbs-track role="tablist" aria-label="Product thumbnails">
           {%- assign gallery_index = 0 -%}
@@ -152,6 +116,7 @@
               class="gh-pdp-gallery__thumb{% if gallery_index == 0 %} is-active{% endif %}"
               data-gh-thumb
               data-index="{{ gallery_index }}"
+              data-media-id="{{ media.id }}"
               aria-label="View image {{ gallery_index | plus: 1 }} of {{ gallery_media_count }}"
               aria-selected="{% if gallery_index == 0 %}true{% else %}false{% endif %}"
             >
@@ -167,6 +132,17 @@
             {%- assign gallery_index = gallery_index | plus: 1 -%}
           {%- endfor -%}
         </div>
+
+        <button
+          type="button"
+          class="gh-pdp-gallery__thumbs-arrow gh-pdp-gallery__thumbs-arrow--next"
+          data-gh-thumbs-next
+          aria-label="Scroll thumbnails right"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
       </div>
     {%- endif -%}
   </div>
