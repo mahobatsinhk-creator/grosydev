@@ -1,0 +1,46 @@
+---
+description: Shopify theme deploy — always push to LIVE (grosyhub/main), not dev/preview theme
+alwaysApply: true
+---
+
+# Grosyhub Shopify theme deployment
+
+## Critical: dev vs live are different themes
+
+| What | Theme | ID | URL |
+|------|-------|-----|-----|
+| **LIVE** (what customers see) | `grosyhub/main` | `#185016090669` | `grasyhub.com` |
+| **Dev/preview** (`theme dev`) | `Development (2d9412-...)` | `#186228867117` | `127.0.0.1:9292` or preview link |
+
+`shopify theme dev` syncs only to the **development** theme. Changes there do **not** appear on `grasyhub.com`.
+
+## When the user wants changes on the live store
+
+Always push to the live theme explicitly:
+
+```bash
+shopify theme push --live --theme 185016090669 --allow-live --store igh9a1-1h.myshopify.com
+```
+
+For specific files:
+
+```bash
+shopify theme push --live --theme 185016090669 --allow-live --store igh9a1-1h.myshopify.com --only "path/to/file.liquid,path/to/file.css"
+```
+
+Never assume `theme dev` or a push without `--live` updates the production site.
+
+## After every live push — verify
+
+Pull the same file from live and confirm it changed:
+
+```bash
+shopify theme pull --live --theme 185016090669 --store igh9a1-1h.myshopify.com --only "snippets/changed-file.liquid" --path ".live-check"
+```
+
+Compare pulled content to local before telling the user the live site is updated.
+
+## Tell the user clearly
+
+- **Preview/dev**: `http://127.0.0.1:9292` or the `preview_theme_id` URL from `theme dev`
+- **Live site**: `https://grasyhub.com` — only updates after `theme push --live`
