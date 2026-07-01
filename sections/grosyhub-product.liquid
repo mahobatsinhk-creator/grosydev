@@ -27,6 +27,26 @@
 </script>
 
 <section class="gh-pdp-page {{ page_width_class }} color-{{ section.settings.color_scheme }} section-{{ section.id }}" style="--gh-pdp-brand: {{ brand_color }};">
+  <style>
+    .gh-pdp-gallery__thumbs-wrap{display:block!important;position:relative!important;overflow:hidden!important;min-width:0!important}
+    .gh-pdp-gallery__thumbs-arrow{position:absolute!important;top:50%!important;z-index:3!important;width:28px!important;height:28px!important;margin:0!important;transform:translateY(-50%)!important}
+    .gh-pdp-gallery__thumbs-arrow--prev{left:4px!important}
+    .gh-pdp-gallery__thumbs-arrow--next{right:4px!important}
+    @media screen and (max-width:989px){.gh-pdp-gallery__thumb{flex:0 0 52px!important;width:52px!important;height:52px!important}}
+    @media screen and (max-width:768px){
+      .section-grosyhub-product .pack-options{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+      .section-grosyhub-product .pack-option-wrap{flex:none!important;width:auto!important;min-width:0!important}
+      .section-grosyhub-product .pack-option{min-width:0!important;width:100%!important;min-height:44px!important;padding:12px 10px!important;font-size:14px!important}
+    }
+    @media screen and (max-width:749px){
+      .gh-pdp-reels__carousel{display:block!important}
+      .gh-pdp-reels__track-wrap{position:relative!important;overflow:hidden!important}
+      .gh-pdp-reels__arrow{position:absolute!important;top:38%!important;z-index:5!important;width:30px!important;height:30px!important;transform:translateY(-50%)!important}
+      .gh-pdp-reels__arrow--prev{left:6px!important}
+      .gh-pdp-reels__arrow--next{right:6px!important}
+      .gh-pdp-reels__slide{flex:0 0 calc((100% - 12px) / 2)!important;min-width:0!important;max-width:none!important}
+    }
+  </style>
   <div class="gh-pdp-page__container">
     <div class="gh-pdp-page__grid">
       <div class="gh-pdp-page__media">
@@ -150,30 +170,43 @@
   }
 
   .gh-pdp-gallery__thumbs-wrap {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 8px;
+    position: relative;
+    overflow: hidden;
+    min-width: 0;
   }
 
   .gh-pdp-gallery__thumbs-arrow {
-    flex-shrink: 0;
-    width: 36px;
-    height: 36px;
+    position: absolute;
+    top: 50%;
+    z-index: 3;
+    width: 30px;
+    height: 30px;
+    margin: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     border: 1.5px solid #e5e5e5;
     border-radius: 50%;
-    background: #fff;
+    background: rgb(255 255 255 / 0.94);
     color: #555;
     cursor: pointer;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+    transform: translateY(-50%);
     transition: border-color 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+  }
+
+  .gh-pdp-gallery__thumbs-arrow--prev {
+    left: 4px;
+  }
+
+  .gh-pdp-gallery__thumbs-arrow--next {
+    right: 4px;
   }
 
   .gh-pdp-gallery__thumbs-arrow:hover:not(:disabled) {
     border-color: var(--gh-pdp-brand);
     color: var(--gh-pdp-brand);
+    transform: translateY(-50%);
   }
 
   .gh-pdp-gallery__thumbs-arrow:disabled {
@@ -340,7 +373,7 @@
     font-weight: 600;
   }
 
-  /* Mobile gallery — dots under main image, compact thumbnail scroller */
+  /* Mobile gallery — dots under main image, swipeable thumbnails */
   @media (max-width: 989px) {
     .gh-pdp-gallery {
       gap: 10px;
@@ -359,31 +392,28 @@
     }
 
     .gh-pdp-gallery__thumbs-wrap {
-      gap: 6px;
+      margin-top: 2px;
     }
 
     .gh-pdp-gallery__thumbs-arrow {
-      width: 32px;
-      height: 32px;
+      width: 28px;
+      height: 28px;
     }
 
     .gh-pdp-gallery__thumbs {
       gap: 8px;
+      padding-inline: 2px;
     }
 
     .gh-pdp-gallery__thumb {
-      flex: 0 0 56px;
-      width: 56px;
-      height: 56px;
+      flex: 0 0 52px;
+      width: 52px;
+      height: 52px;
       border-radius: 10px;
     }
 
     .gh-pdp-gallery__stage {
       border-radius: 12px;
-    }
-
-    .gh-pdp-gallery__main {
-      gap: 10px;
     }
 
     .gh-pdp-gallery__badge {
@@ -396,7 +426,6 @@
       width: 32px;
       height: 32px;
     }
-
   }
 
   /* Trust / service cards */
@@ -675,16 +704,25 @@
   }
 
   @media (max-width: 768px) {
+    .section-grosyhub-product .pack-options {
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 10px !important;
+    }
+
     .section-grosyhub-product .pack-option-wrap {
-      flex: 1 1 100%;
-      width: 100%;
-      min-width: 100%;
+      flex: none !important;
+      width: auto !important;
+      min-width: 0 !important;
     }
 
     .section-grosyhub-product .pack-option {
-      flex: 1 1 100%;
-      width: 100%;
-      min-width: 100%;
+      flex: none !important;
+      width: 100% !important;
+      min-width: 0 !important;
+      min-height: 44px !important;
+      padding: 12px 10px !important;
+      font-size: 14px !important;
     }
   }
 
