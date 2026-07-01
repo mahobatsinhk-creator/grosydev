@@ -24,27 +24,14 @@
       return first.offsetWidth + gap();
     };
 
-    const visibleCount = () => {
-      const sw = slideWidth();
-      if (!sw) return 1;
-      return Math.max(1, Math.floor(track.clientWidth / sw));
-    };
-
-    const maxIndex = () => Math.max(0, slides().length - visibleCount());
-
     let index = 0;
 
-    const updateArrows = () => {
-      const hasSlides = slides().length > visibleCount();
-      if (prev) prev.disabled = !hasSlides || index <= 0;
-      if (next) next.disabled = !hasSlides || index >= maxIndex();
-    };
-
     const scrollToIndex = (i) => {
-      if (!slides().length) return;
-      index = Math.max(0, Math.min(i, maxIndex()));
+      const max = Math.max(0, slides().length - 1);
+      index = Math.max(0, Math.min(i, max));
       track.scrollTo({ left: index * slideWidth(), behavior: 'smooth' });
-      updateArrows();
+      if (prev) prev.disabled = index <= 0;
+      if (next) next.disabled = index >= max;
     };
 
     prev?.addEventListener('click', () => scrollToIndex(index - 1));
@@ -58,15 +45,12 @@
         const i = Math.round(track.scrollLeft / sw);
         if (i !== index) {
           index = i;
-          updateArrows();
+          if (prev) prev.disabled = index <= 0;
+          if (next) next.disabled = index >= slides().length - 1;
         }
       },
       { passive: true }
     );
-
-    window.addEventListener('resize', () => {
-      scrollToIndex(Math.min(index, maxIndex()));
-    });
 
     scrollToIndex(0);
   };
