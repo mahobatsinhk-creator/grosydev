@@ -103,6 +103,16 @@
             <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
         </button>
+        <button
+          type="button"
+          class="gh-pdp-gallery__thumbs-arrow gh-pdp-gallery__thumbs-arrow--next"
+          data-gh-thumbs-next
+          aria-label="Scroll thumbnails right"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
 
         <div class="gh-pdp-gallery__thumbs" data-gh-thumbs-track role="tablist" aria-label="Product thumbnails">
           {%- assign gallery_index = 0 -%}
@@ -130,17 +140,6 @@
             {%- assign gallery_index = gallery_index | plus: 1 -%}
           {%- endfor -%}
         </div>
-
-        <button
-          type="button"
-          class="gh-pdp-gallery__thumbs-arrow gh-pdp-gallery__thumbs-arrow--next"
-          data-gh-thumbs-next
-          aria-label="Scroll thumbnails right"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-        </button>
       </div>
     {%- endif -%}
   </div>
