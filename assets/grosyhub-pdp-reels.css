@@ -535,6 +535,10 @@
 }
 
 @media screen and (max-width: 749px) {
+  .gh-pdp-reels {
+    display: none !important;
+  }
+
   .gh-pdp-reels-modal {
     padding: 0;
     align-items: stretch;
