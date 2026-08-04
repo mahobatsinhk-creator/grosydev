@@ -9,9 +9,11 @@
   assign compare_at = variant.compare_at_price
   assign price = variant.price
   assign on_sale = false
+  assign discount_pct = 0
   if compare_at > price
     assign on_sale = true
     assign savings = compare_at | minus: price
+    assign discount_pct = savings | times: 100.0 | divided_by: compare_at | round
   endif
 
   assign rating = product.metafields.reviews.rating.value.rating
@@ -39,6 +41,12 @@
   endif
 
   assign show_pack_ui = settings.show_pack_selector | default: true
+
+  assign now_ts = 'now' | date: '%s'
+  assign delivery_start_ts = now_ts | plus: 172800
+  assign delivery_end_ts = now_ts | plus: 345600
+  assign delivery_start = delivery_start_ts | date: '%a, %-d %b'
+  assign delivery_end = delivery_end_ts | date: '%a, %-d %b'
 -%}
 
 <div
@@ -49,19 +57,35 @@
   data-currency="{{ cart.currency.iso_code }}"
   {% if block %}{{ block.shopify_attributes }}{% endif %}
 >
-  <h1 class="gh-pdp-info__title">{{ product.title }}</h1>
-
   {%- if rating != blank or rating_count != blank -%}
     <div class="gh-pdp-info__rating-row">
       {%- if rating != blank -%}
         <span class="gh-pdp-info__rating-num">{{ rating }}</span>
       {%- endif -%}
       <span class="gh-pdp-info__stars" aria-hidden="true">
-        {%- assign star_rating = rating | default: 5 | round -%}
+        {%- assign star_rating = rating | default: 5 | times: 1.0 -%}
         {%- for i in (1..5) -%}
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="{% if i <= star_rating %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="1.2">
-            <path d="M12 2l2.9 6.1 6.8.6-5.1 4.4 1.6 6.6L12 16.9l-6.2 3.8 1.6-6.6-5.1-4.4 6.8-.6L12 2z"/>
-          </svg>
+          {%- assign full_at = i -%}
+          {%- assign half_at = i | minus: 0.5 -%}
+          {%- if star_rating >= full_at -%}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.2">
+              <path d="M12 2l2.9 6.1 6.8.6-5.1 4.4 1.6 6.6L12 16.9l-6.2 3.8 1.6-6.6-5.1-4.4 6.8-.6L12 2z"/>
+            </svg>
+          {%- elsif star_rating >= half_at -%}
+            <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+              <defs>
+                <linearGradient id="ghStarHalf-{{ section.id }}-{{ i }}">
+                  <stop offset="50%" stop-color="currentColor"/>
+                  <stop offset="50%" stop-color="transparent"/>
+                </linearGradient>
+              </defs>
+              <path d="M12 2l2.9 6.1 6.8.6-5.1 4.4 1.6 6.6L12 16.9l-6.2 3.8 1.6-6.6-5.1-4.4 6.8-.6L12 2z" fill="url(#ghStarHalf-{{ section.id }}-{{ i }})" stroke="currentColor" stroke-width="1.2"/>
+            </svg>
+          {%- else -%}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+              <path d="M12 2l2.9 6.1 6.8.6-5.1 4.4 1.6 6.6L12 16.9l-6.2 3.8 1.6-6.6-5.1-4.4 6.8-.6L12 2z"/>
+            </svg>
+          {%- endif -%}
         {%- endfor -%}
       </span>
       {%- if rating_count != blank -%}
@@ -70,32 +94,66 @@
     </div>
   {%- endif -%}
 
+  <h1 class="gh-pdp-info__title">{{ product.title }}</h1>
+
   <div class="gh-pdp-info__price-row" data-gh-pdp-price>
-    <div class="gh-pdp-info__price-block">
-      {%- if on_sale -%}
-        <span class="gh-pdp-info__price-compare" data-gh-compare>{{ compare_display }}</span>
-      {%- else -%}
-        <span class="gh-pdp-info__price-compare" data-gh-compare hidden></span>
-      {%- endif -%}
-      <span class="gh-pdp-info__price-current" data-gh-price>{{ price_display }}</span>
-    </div>
+    <span class="gh-pdp-info__price-current" data-gh-price>{{ price_display }}</span>
     {%- if on_sale -%}
+      <span class="gh-pdp-info__price-compare" data-gh-compare>{{ compare_display }}</span>
       <span class="gh-pdp-info__save-pill" data-gh-save>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M7 4h10l1 4H6l1-4zm-1 6h12l-1 10H7L6 10z" stroke="currentColor" stroke-width="1.4"/>
-        </svg>
-        {{ savings_display }} Save
+        <span data-gh-save-pct>{{ discount_pct }}% OFF</span>
+        <span aria-hidden="true">·</span>
+        <span data-gh-save-amt>Save {{ savings_display }}</span>
       </span>
     {%- else -%}
-      <span class="gh-pdp-info__save-pill" data-gh-save hidden></span>
+      <span class="gh-pdp-info__price-compare" data-gh-compare hidden></span>
+      <span class="gh-pdp-info__save-pill" data-gh-save hidden>
+        <span data-gh-save-pct></span>
+        <span aria-hidden="true">·</span>
+        <span data-gh-save-amt></span>
+      </span>
     {%- endif -%}
+  </div>
+  <p class="gh-pdp-info__tax-note">Incl. of all taxes</p>
+
+  <div class="gh-pdp-info__highlights" aria-label="Purchase benefits">
+    <div class="gh-pdp-info__highlight">
+      <span class="gh-pdp-info__highlight-icon gh-pdp-info__highlight-icon--delivery" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <path d="M1 7h13v9H6l-4 3V7zm14 2h4l3 4v5h-7V9z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          <circle cx="7.5" cy="18.5" r="1.5" fill="currentColor"/>
+          <circle cx="17.5" cy="18.5" r="1.5" fill="currentColor"/>
+        </svg>
+      </span>
+      <span>Free Delivery</span>
+    </div>
+    <div class="gh-pdp-info__highlight">
+      <span class="gh-pdp-info__highlight-icon gh-pdp-info__highlight-icon--cod" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M3 10h18" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M8 14h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <span>COD</span>
+    </div>
+    <div class="gh-pdp-info__highlight">
+      <span class="gh-pdp-info__highlight-icon gh-pdp-info__highlight-icon--returns" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <path d="M4 12a8 8 0 1 0 2.3-5.7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          <path d="M4 5v4h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <span>7-Day Returns</span>
+    </div>
   </div>
 
   <div class="gh-pdp-info__picker-area">
     {% render 'grosyhub-product-pack-picker',
       product: product,
       show_pack_selector: settings.show_pack_selector,
-      pack_discount_inr: settings.pack_bundle_discount
+      pack_discount_inr: settings.pack_bundle_discount,
+      bestseller_label: settings.pack_bestseller_label
     %}
     <div class="gh-pdp-info__variants-slot{% if show_pack_ui %} visually-hidden{% endif %}"{% if show_pack_ui %} aria-hidden="true"{% endif %}>
       {{ variants_markup }}
@@ -140,67 +198,44 @@
             </span>
           </span>
 
-          <div class="gh-pdp-info__qty-cart-row">
-            <div class="gh-pdp-info__qty-group">
-              <span class="gh-pdp-info__qty-label">{{ 'products.product.quantity' | t }}</span>
-              {% render 'quantity-selector', product: product, class: 'gh-pdp-info__quantity-selector' %}
-            </div>
-
-            <button
-              type="button"
-              class="gh-pdp-info__btn-cart"
-              {% unless can_add_to_cart %}disabled{% endunless %}
-              data-gh-pdp-add-cart
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M6 7h15l-1.5 9H8L6 7zm3-3h9l1 3H8l1-3z" stroke="currentColor" stroke-width="1.6"/>
-              </svg>
-              Add to Cart
-            </button>
-          </div>
-
-          <div class="gh-pdp-info__cta-stack">
-            {%- unless product.selected_or_first_available_variant.available -%}
-          <style>
-           .sr-headless-checkout{
-            opacity:0.5;
-            cursor: not-allowed;
-            pointer-events: none;
-           }
-          </style>
-         {%- endunless -%}
-<input type="hidden" value="true" id="fastrrCollectionPage" />
-<input type="hidden" value={{ product.url }} name="productUrl" />
-            <div class="gh-pdp-info__buy-now-shiprocket">
-              {%- if settings.prepaid_note != blank -%}
+          <div class="gh-pdp-info__buy-block">
+            {%- if settings.prepaid_note != blank -%}
+              <div class="gh-pdp-info__prepaid-bar">
                 <span class="gh-pdp-info__prepaid-badge">{{ settings.prepaid_note }}</span>
-              {%- endif -%}
-              <div class="shiprocket-headless" data-type="product"></div>
-            </div>
-            {% comment %} <button
-              type="button"
-              class="gh-pdp-info__btn-buy{% unless can_add_to_cart %} is-disabled{% endunless %}"
-              data-gh-buy-now
-              {% unless can_add_to_cart %}disabled aria-disabled="true"{% endunless %}
-            >
-              {%- if settings.prepaid_note != blank -%}
-                <span class="gh-pdp-info__prepaid-badge">{{ settings.prepaid_note }}</span>
-              {%- endif -%}
-              <span class="gh-pdp-info__btn-buy-start">
+              </div>
+            {%- endif -%}
+
+            <div class="gh-pdp-info__buy-row">
+              <div class="gh-pdp-info__qty-box">
+                {% render 'quantity-selector', product: product, class: 'gh-pdp-info__quantity-selector' %}
+              </div>
+
+              {% comment %}
+                GoKwik Buy It Now — keep this button so GoKwik can attach.
+                Do not replace with Shiprocket headless on product pages.
+              {% endcomment %}
+              <button
+                type="button"
+                class="gh-pdp-info__btn-buy{% unless can_add_to_cart %} is-disabled{% endunless %}"
+                data-gh-buy-now
+                {% unless can_add_to_cart %}disabled aria-disabled="true"{% endunless %}
+              >
                 <span class="gh-pdp-info__btn-buy-text">Buy It Now</span>
-                <span class="gh-pdp-info__btn-buy-payments" aria-hidden="true">
-                  <span class="gh-pdp-info__pay-icon">Pay</span>
-                  <span class="gh-pdp-info__pay-icon">UPI</span>
-                  <span class="gh-pdp-info__pay-icon">GPay</span>
-                </span>
-              </span>
-              <span class="gh-pdp-info__btn-buy-chevron" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-              </span>
-            </button> {% endcomment %}
+              </button>
+            </div>
           </div>
+
+          <button
+            type="button"
+            class="gh-pdp-info__btn-cart"
+            {% unless can_add_to_cart %}disabled{% endunless %}
+            data-gh-pdp-add-cart
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M6 7h15l-1.5 9H8L6 7zm3-3h9l1 3H8l1-3z" stroke="currentColor" stroke-width="1.6"/>
+            </svg>
+            Add to Cart
+          </button>
 
           <div class="gh-pdp-info__buy-now-wrap visually-hidden" ref="acceleratedCheckoutButtonContainer" aria-hidden="true">
             {{ form | payment_button }}
@@ -210,7 +245,29 @@
     </product-form-component>
   {%- endif -%}
 
+  <div class="gh-pdp-info__delivery" role="status">
+    <span class="gh-pdp-info__delivery-icon" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <path d="M1 7h13v9H6l-4 3V7zm14 2h4l3 4v5h-7V9z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+        <circle cx="7.5" cy="18.5" r="1.5" fill="currentColor"/>
+        <circle cx="17.5" cy="18.5" r="1.5" fill="currentColor"/>
+      </svg>
+    </span>
+    <div class="gh-pdp-info__delivery-text">
+      <strong>Free delivery by {{ delivery_start }} – {{ delivery_end }}</strong>
+      <span>Order now — ships first thing tomorrow</span>
+    </div>
+  </div>
+
   {% render 'grosyhub-product-features', brand_color: brand_color, settings: settings %}
+
+  {% comment %} PDP reels — swipe/drag scroll, no arrows {% endcomment %}
+  {% render 'grosyhub-pdp-reels',
+    product: product,
+    section: section,
+    settings: settings,
+    brand_color: brand_color
+  %}
 
   {%- if settings.show_specs and has_specs -%}
     <details class="gh-pdp-info__accordion">

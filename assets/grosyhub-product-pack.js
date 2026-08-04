@@ -45,15 +45,39 @@
     const label1 = packPicker.querySelector('[data-gh-pack-label="1"]');
     const label2 = packPicker.querySelector('[data-gh-pack-label="2"]');
     const unitPrice = variant.price;
+    const unitCompare = variant.compare_at_price;
 
-    if (label1) {
-      label1.textContent = `Buy 1 at ${formatMoney(unitPrice, format, currency)}`;
-    }
+    const setLabel = (label, title, priceCents, compareCents) => {
+      if (!label) return;
+      const titleEl = label.querySelector('[data-gh-pack-title]');
+      const priceEl = label.querySelector('[data-gh-pack-price]');
+      const compareEl = label.querySelector('[data-gh-pack-compare]');
+      if (titleEl) titleEl.textContent = title;
+      else label.textContent = title;
+      if (priceEl) priceEl.textContent = formatMoney(priceCents, format, currency);
+      if (compareEl) {
+        const showCompare = compareCents && compareCents > priceCents;
+        compareEl.textContent = showCompare ? formatMoney(compareCents, format, currency) : '';
+        compareEl.hidden = !showCompare;
+      }
+    };
 
-    if (label2) {
-      const bundleTotal = Math.max(0, unitPrice * 2 - discountCents);
-      label2.textContent = `Buy 2 at ${formatMoney(bundleTotal, format, currency)} (₹${discountInr} Off)`;
-    }
+    setLabel(
+      label1,
+      `Buy 1 at ${formatMoney(unitPrice, format, currency)}`,
+      unitPrice,
+      unitCompare
+    );
+
+    const bundleTotal = Math.max(0, unitPrice * 2 - discountCents);
+    const bundleCompare =
+      unitCompare && unitCompare > unitPrice ? unitCompare * 2 : unitPrice * 2;
+    setLabel(
+      label2,
+      `Buy 2 at ${formatMoney(bundleTotal, format, currency)}(₹${discountInr} Off)`,
+      bundleTotal,
+      bundleCompare
+    );
 
     packPicker.querySelectorAll('[data-gh-pack-input]').forEach((input) => {
       input.dataset.variantId = String(variant.id);

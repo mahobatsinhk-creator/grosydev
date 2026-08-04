@@ -37,14 +37,15 @@
         "show_pack_selector": true,
         "pack_option_name": "Pack",
         "pack_bundle_discount": 100,
-        "pack_bestseller_label": "Bestseller",
+        "pack_bestseller_label": "BEST VALUE",
         "pack_bestseller_value": "",
         "show_promo_banner": false,
-        "prepaid_note": "10% off on Prepaid Orders",
+        "prepaid_note": "Extra 15% off on Prepaid Orders",
         "trust_shipping": "Free Shipping",
         "trust_returns": "7 Days Return",
         "show_specs": true,
-        "show_description": true
+        "show_description": true,
+        "show_product_reels": true
       }
     },
     "grosyhub_recommendations": {
@@ -88,7 +89,7 @@
             "rating": 5,
             "title": "Absolute Life Saver",
             "body": "This product exceeded my expectations. Great quality and fast delivery. Would definitely recommend to anyone looking for a reliable solution.",
-            "date_label": "11 months ago",
+            "date_label": "2 days ago",
             "verified": true
           }
         },
@@ -99,7 +100,7 @@
             "rating": 5,
             "title": "Worth every rupee",
             "body": "Sturdy build and easy to assemble. Using it daily in the kitchen and it still looks brand new.",
-            "date_label": "9 months ago",
+            "date_label": "3 days ago",
             "verified": true
           }
         },
@@ -110,7 +111,7 @@
             "rating": 5,
             "title": "Perfect for small spaces",
             "body": "Fits perfectly in our bathroom. The anti-skid feature works really well.",
-            "date_label": "8 months ago",
+            "date_label": "4 days ago",
             "verified": true
           }
         },
@@ -121,7 +122,7 @@
             "rating": 4,
             "title": "Good quality",
             "body": "Happy with the purchase. Delivery was quick. Only wish it came in more color options.",
-            "date_label": "6 months ago",
+            "date_label": "5 days ago",
             "verified": true
           }
         },
@@ -132,7 +133,7 @@
             "rating": 5,
             "title": "Highly recommend",
             "body": "Bought two for my parents. They love how easy it is to move around when folded.",
-            "date_label": "5 months ago",
+            "date_label": "6 days ago",
             "verified": true
           }
         },
@@ -143,7 +144,7 @@
             "rating": 5,
             "title": "Great purchase",
             "body": "Exactly as shown in the pictures. Customer support was helpful when I had a sizing question.",
-            "date_label": "3 months ago",
+            "date_label": "7 days ago",
             "verified": true
           }
         },
@@ -154,7 +155,7 @@
             "rating": 4,
             "title": "Solid product",
             "body": "Does the job well. Assembly took about 10 minutes with the included instructions.",
-            "date_label": "2 months ago",
+            "date_label": "8 days ago",
             "verified": true
           }
         },
@@ -165,7 +166,139 @@
             "rating": 5,
             "title": "Love it!",
             "body": "Using it as extra storage in the bedroom. Looks neat and premium.",
-            "date_label": "1 month ago",
+            "date_label": "9 days ago",
+            "verified": true
+          }
+        },
+        "review_9": {
+          "type": "review",
+          "settings": {
+            "author": "Rohan M.",
+            "rating": 5,
+            "title": "Exactly what I needed",
+            "body": "Compact, sturdy and looks premium. Packing was neat and delivery was on time.",
+            "date_label": "10 days ago",
+            "verified": true
+          }
+        },
+        "review_10": {
+          "type": "review",
+          "settings": {
+            "author": "Meera S.",
+            "rating": 5,
+            "title": "Very useful",
+            "body": "Using it every day now. Quality feels better than expected for the price.",
+            "date_label": "11 days ago",
+            "verified": true
+          }
+        },
+        "review_11": {
+          "type": "review",
+          "settings": {
+            "author": "Aditya P.",
+            "rating": 4,
+            "title": "Nice build quality",
+            "body": "Feels durable and well finished. Would buy again for gifts.",
+            "date_label": "12 days ago",
+            "verified": true
+          }
+        },
+        "review_12": {
+          "type": "review",
+          "settings": {
+            "author": "Ishita K.",
+            "rating": 5,
+            "title": "Super handy",
+            "body": "Small enough to carry around and still works perfectly. Very happy with it.",
+            "date_label": "13 days ago",
+            "verified": true
+          }
+        },
+        "review_13": {
+          "type": "review",
+          "settings": {
+            "author": "Nikhil R.",
+            "rating": 5,
+            "title": "Value for money",
+            "body": "Looks classy and works as promised. Friends already asked where I bought it.",
+            "date_label": "14 days ago",
+            "verified": true
+          }
+        },
+        "review_14": {
+          "type": "review",
+          "settings": {
+            "author": "Pooja L.",
+            "rating": 5,
+            "title": "Impressed",
+            "body": "Came well packed. Product matches the photos and description completely.",
+            "date_label": "15 days ago",
+            "verified": true
+          }
+        },
+        "review_15": {
+          "type": "review",
+          "settings": {
+            "author": "Siddharth N.",
+            "rating": 4,
+            "title": "Good buy",
+            "body": "Solid product overall. Slight delay in delivery but the item itself is excellent.",
+            "date_label": "16 days ago",
+            "verified": true
+          }
+        },
+        "review_16": {
+          "type": "review",
+          "settings": {
+            "author": "Kavya B.",
+            "rating": 5,
+            "title": "Must have",
+            "body": "Really practical and stylish. Using it regularly and no issues so far.",
+            "date_label": "18 days ago",
+            "verified": true
+          }
+        },
+        "review_17": {
+          "type": "review",
+          "settings": {
+            "author": "Arjun V.",
+            "rating": 5,
+            "title": "Excellent quality",
+            "body": "Better than similar products I tried earlier. Feels premium in hand.",
+            "date_label": "20 days ago",
+            "verified": true
+          }
+        },
+        "review_18": {
+          "type": "review",
+          "settings": {
+            "author": "Divya C.",
+            "rating": 5,
+            "title": "Happy customer",
+            "body": "Ordered for my sister and she loved it. Will order another one soon.",
+            "date_label": "22 days ago",
+            "verified": true
+          }
+        },
+        "review_19": {
+          "type": "review",
+          "settings": {
+            "author": "Manish G.",
+            "rating": 4,
+            "title": "Works great",
+            "body": "Simple, effective and well made. Packaging was secure and clean.",
+            "date_label": "25 days ago",
+            "verified": true
+          }
+        },
+        "review_20": {
+          "type": "review",
+          "settings": {
+            "author": "Riya A.",
+            "rating": 5,
+            "title": "Totally worth it",
+            "body": "Looks neat and performs well. Glad I ordered from Grosyhub.",
+            "date_label": "28 days ago",
             "verified": true
           }
         }
@@ -178,7 +311,19 @@
         "review_5",
         "review_6",
         "review_7",
-        "review_8"
+        "review_8",
+        "review_9",
+        "review_10",
+        "review_11",
+        "review_12",
+        "review_13",
+        "review_14",
+        "review_15",
+        "review_16",
+        "review_17",
+        "review_18",
+        "review_19",
+        "review_20"
       ]
     }
   },

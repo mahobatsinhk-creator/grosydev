@@ -1,5 +1,23 @@
 ﻿{%- comment -%} Mobile: scrolling announcement + sticky nav bar only {%- endcomment -%}
 
+{%- liquid
+  assign show_prepaid_strip = section.settings.show_prepaid_strip
+  if show_prepaid_strip == nil
+    assign show_prepaid_strip = true
+  endif
+  assign prepaid_product_only = section.settings.prepaid_strip_product_only
+  if prepaid_product_only == nil
+    assign prepaid_product_only = true
+  endif
+  assign prepaid_strip_text = section.settings.prepaid_strip_text | default: 'Get 15% OFF on All Prepaid Orders'
+  assign show_this_prepaid = false
+  if show_prepaid_strip
+    if prepaid_product_only == false or request.page_type == 'product'
+      assign show_this_prepaid = true
+    endif
+  endif
+-%}
+
 {%- if section.settings.show_announcement_mobile -%}
   <div
     class="gh-mobile-announcement gh-announcement gh-announcement--mobile"
@@ -38,64 +56,78 @@
   </div>
 {%- endif -%}
 
-<div class="gh-header__mobile-shell">
-  <div class="gh-container gh-header__mobile-container">
-    <div class="gh-header__mobile-bar">
-      <div class="gh-header__mobile-start">
-        <button
-          type="button"
-          class="gh-header__mobile-menu-btn"
-          data-gh-nav-toggle
-          aria-expanded="false"
-          aria-controls="gh-nav-drawer"
-          aria-label="Open menu"
-        >
-          <span class="gh-header__burger" aria-hidden="true"><span></span><span></span><span></span></span>
-        </button>
+<div class="gh-header__mobile-sticky">
+  <div class="gh-header__mobile-shell">
+    <div class="gh-container gh-header__mobile-container">
+      <div class="gh-header__mobile-bar">
+        <div class="gh-header__mobile-start">
+          <button
+            type="button"
+            class="gh-header__mobile-menu-btn"
+            data-gh-nav-toggle
+            aria-expanded="false"
+            aria-controls="gh-nav-drawer"
+            aria-label="Open menu"
+          >
+            <span class="gh-header__burger" aria-hidden="true"><span></span><span></span><span></span></span>
+          </button>
 
-        <button
-          type="button"
-          class="gh-header__mobile-search-btn"
-          data-gh-search-open
-          aria-label="{{ 'content.search' | t }}"
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.6"/>
-            <path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-          </svg>
-        </button>
-      </div>
+          <button
+            type="button"
+            class="gh-header__mobile-search-btn"
+            data-gh-search-open
+            aria-label="{{ 'content.search' | t }}"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.6"/>
+              <path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
 
-      <a href="{{ routes.root_url }}" class="gh-header__mobile-logo" aria-label="{{ shop.name }}">
-        {% render 'grosyhub-logo', size: 'mobile', link: false %}
-      </a>
+        <a href="{{ routes.root_url }}" class="gh-header__mobile-logo" aria-label="{{ shop.name }}">
+          {% render 'grosyhub-logo', size: 'mobile', link: false %}
+        </a>
 
-      <div class="gh-header__mobile-icons">
-        <button
-          type="button"
-          class="gh-header__mobile-icon-btn"
-          data-gh-wishlist-open
-          aria-label="{{ section.settings.wishlist_label | default: 'Wishlist' }}"
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M12 21s-7.5-4.7-9.8-9.4C.4 8.2 2.6 4 6.4 4c2 0 3.2 1.2 3.6 1.8C10.4 5.2 11.6 4 13.6 4c3.8 0 6 4.2 4.2 7.6C19.5 16.3 12 21 12 21z" stroke="currentColor" stroke-width="1.6"/>
-          </svg>
-          <span class="gh-badge gh-badge--count" data-gh-wishlist-count-mobile hidden>0</span>
-        </button>
+        <div class="gh-header__mobile-icons">
+          <button
+            type="button"
+            class="gh-header__mobile-icon-btn"
+            data-gh-wishlist-open
+            aria-label="{{ section.settings.wishlist_label | default: 'Wishlist' }}"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 21s-7.5-4.7-9.8-9.4C.4 8.2 2.6 4 6.4 4c2 0 3.2 1.2 3.6 1.8C10.4 5.2 11.6 4 13.6 4c3.8 0 6 4.2 4.2 7.6C19.5 16.3 12 21 12 21z" stroke="currentColor" stroke-width="1.6"/>
+            </svg>
+            <span class="gh-badge gh-badge--count" data-gh-wishlist-count-mobile hidden>0</span>
+          </button>
 
-        <button
-          type="button"
-          class="gh-header__mobile-icon-btn"
-          data-gh-cart-open
-          aria-label="{{ section.settings.cart_label | default: 'Cart' }}"
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M8 7V6a4 4 0 118 0v1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-            <path d="M6 7h12l-1.2 12H7.2L6 7z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-          </svg>
-          <span class="gh-badge gh-badge--count" data-gh-cart-count>{{ cart.item_count }}</span>
-        </button>
+          <button
+            type="button"
+            class="gh-header__mobile-icon-btn"
+            data-gh-cart-open
+            aria-label="{{ section.settings.cart_label | default: 'Cart' }}"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M8 7V6a4 4 0 118 0v1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              <path d="M6 7h12l-1.2 12H7.2L6 7z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+            </svg>
+            <span class="gh-badge gh-badge--count" data-gh-cart-count>{{ cart.item_count }}</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
+
+  {%- if show_this_prepaid -%}
+    <div class="gh-prepaid-strip" role="status">
+      <span class="gh-prepaid-strip__icon" aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <path d="M3 11v2a2 2 0 002 2h1l3 4h2V7H9l-3 4H5a2 2 0 00-2 2z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          <path d="M15 9.5a3.5 3.5 0 010 5M17.5 7.5a6.5 6.5 0 010 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <p class="gh-prepaid-strip__text">{{ prepaid_strip_text }}</p>
+    </div>
+  {%- endif -%}
 </div>

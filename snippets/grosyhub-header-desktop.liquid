@@ -157,6 +157,35 @@
     </div>
   </div>
 
+  {%- liquid
+    assign show_prepaid_strip = section.settings.show_prepaid_strip
+    if show_prepaid_strip == nil
+      assign show_prepaid_strip = true
+    endif
+    assign prepaid_product_only = section.settings.prepaid_strip_product_only
+    if prepaid_product_only == nil
+      assign prepaid_product_only = true
+    endif
+    assign prepaid_strip_text = section.settings.prepaid_strip_text | default: 'Get 15% OFF on All Prepaid Orders'
+    assign show_this_prepaid = false
+    if show_prepaid_strip
+      if prepaid_product_only == false or request.page_type == 'product'
+        assign show_this_prepaid = true
+      endif
+    endif
+  -%}
+  {%- if show_this_prepaid -%}
+    <div class="gh-prepaid-strip gh-prepaid-strip--desktop" role="status">
+      <span class="gh-prepaid-strip__icon" aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <path d="M3 11v2a2 2 0 002 2h1l3 4h2V7H9l-3 4H5a2 2 0 00-2 2z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          <path d="M15 9.5a3.5 3.5 0 010 5M17.5 7.5a6.5 6.5 0 010 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <p class="gh-prepaid-strip__text">{{ prepaid_strip_text }}</p>
+    </div>
+  {%- endif -%}
+
   {%- if has_mega_menu or has_mega -%}
     <div class="gh-header__desktop-mega" data-gh-mega-zone>
       <div class="gh-mega-backdrop" data-gh-mega-backdrop aria-hidden="true"></div>

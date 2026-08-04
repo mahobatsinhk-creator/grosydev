@@ -69,6 +69,8 @@
     const thumbsPrev = root.querySelector('[data-gh-thumbs-prev]');
     const thumbsNext = root.querySelector('[data-gh-thumbs-next]');
     const stage = root.querySelector('[data-gh-gallery-stage]');
+    const galleryPrev = root.querySelector('[data-gh-gallery-prev]');
+    const galleryNext = root.querySelector('[data-gh-gallery-next]');
     const total = slides.length;
     let activeIndex = 0;
 
@@ -161,6 +163,20 @@
       thumbsTrack.addEventListener('scroll', () => requestAnimationFrame(updateThumbArrows), { passive: true });
       window.addEventListener('resize', updateThumbArrows, { passive: true });
       updateThumbArrows();
+    }
+
+    if (galleryPrev) {
+      galleryPrev.addEventListener('click', (e) => {
+        e.preventDefault();
+        showSlide(activeIndex > 0 ? activeIndex - 1 : total - 1);
+      });
+    }
+
+    if (galleryNext) {
+      galleryNext.addEventListener('click', (e) => {
+        e.preventDefault();
+        showSlide(activeIndex < total - 1 ? activeIndex + 1 : 0);
+      });
     }
 
     if (zoomBtn) {

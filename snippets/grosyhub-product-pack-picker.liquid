@@ -7,20 +7,29 @@
 
   assign pack_discount_inr = pack_discount_inr | default: 100
   assign pack_discount_cents = pack_discount_inr | times: 100
+  assign bestseller_label = bestseller_label | default: 'BEST VALUE'
 
   if show_pack
     assign base_variant = product.selected_or_first_available_variant
     assign unit_cents = base_variant.price
+    assign unit_compare = base_variant.compare_at_price
 
     assign price_1_display = unit_cents | money
+    assign compare_1_display = unit_compare | money
+
     assign total_2_cents = unit_cents | times: 2 | minus: pack_discount_cents
     if total_2_cents < 0
       assign total_2_cents = 0
     endif
     assign price_2_display = total_2_cents | money
 
-    assign label_1 = 'Buy 1 at ' | append: price_1_display
-    assign label_2 = 'Buy 2 at ' | append: price_2_display | append: ' (₹' | append: pack_discount_inr | append: ' Off)'
+    assign compare_2_cents = unit_compare
+    if compare_2_cents == blank or compare_2_cents <= unit_cents
+      assign compare_2_cents = unit_cents | times: 2
+    else
+      assign compare_2_cents = unit_compare | times: 2
+    endif
+    assign compare_2_display = compare_2_cents | money
 
     assign pack_input_prefix = 'gh-pack-' | append: product.id
   endif
@@ -32,7 +41,7 @@
     data-gh-pack-picker
     data-gh-pack-discount-cents="{{ pack_discount_cents }}"
   >
-    <span class="pack-label" id="{{ pack_input_prefix }}-label">Pack</span>
+    <span class="pack-label visually-hidden" id="{{ pack_input_prefix }}-label">Choose offer</span>
 
     <div
       class="pack-options"
@@ -58,7 +67,21 @@
           data-gh-pack-label="1"
           data-gh-pack-add
         >
-          {{ label_1 }}
+          <span class="pack-option__badge">{{ bestseller_label }}</span>
+          <span class="pack-option__check" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="pack-option__title" data-gh-pack-title>Buy 1 at {{ price_1_display }}</span>
+          <span class="pack-option__prices">
+            <span class="pack-option__price" data-gh-pack-price>{{ price_1_display }}</span>
+            {%- if unit_compare > unit_cents -%}
+              <span class="pack-option__compare" data-gh-pack-compare>{{ compare_1_display }}</span>
+            {%- else -%}
+              <span class="pack-option__compare" data-gh-pack-compare hidden></span>
+            {%- endif -%}
+          </span>
         </label>
       </div>
 
@@ -80,7 +103,16 @@
           data-gh-pack-label="2"
           data-gh-pack-add
         >
-          {{ label_2 }}
+          <span class="pack-option__check" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="pack-option__title" data-gh-pack-title>Buy 2 at {{ price_2_display }}(₹{{ pack_discount_inr }} Off)</span>
+          <span class="pack-option__prices">
+            <span class="pack-option__price" data-gh-pack-price>{{ price_2_display }}</span>
+            <span class="pack-option__compare" data-gh-pack-compare>{{ compare_2_display }}</span>
+          </span>
         </label>
       </div>
     </div>

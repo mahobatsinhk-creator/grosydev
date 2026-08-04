@@ -51,12 +51,8 @@
     {%- endif -%}
 
     <div class="gh-pdp-reels__carousel" data-gh-pdp-reels-carousel>
-      <button type="button" class="gh-pdp-reels__arrow gh-pdp-reels__arrow--prev" data-gh-pdp-reels-prev aria-label="Previous">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      </button>
-
       <div class="gh-pdp-reels__track-wrap">
-        <div class="gh-pdp-reels__track" data-gh-pdp-reels-track>
+        <div class="gh-pdp-reels__track" data-gh-pdp-reels-track tabindex="0" aria-label="Product reels — swipe or drag to scroll">
           {%- assign reel_index = 0 -%}
           {%- if has_reel_blocks -%}
             {%- for block in section.blocks -%}
@@ -104,10 +100,6 @@
           {%- endif -%}
         </div>
       </div>
-
-      <button type="button" class="gh-pdp-reels__arrow gh-pdp-reels__arrow--next" data-gh-pdp-reels-next aria-label="Next">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      </button>
     </div>
 
     <div class="gh-pdp-reels-modal" data-gh-pdp-reels-modal hidden aria-hidden="true">

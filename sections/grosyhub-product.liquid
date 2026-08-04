@@ -32,11 +32,22 @@
     .gh-pdp-gallery__thumbs-arrow{position:absolute!important;top:50%!important;z-index:3!important;width:28px!important;height:28px!important;margin:0!important;transform:translateY(-50%)!important}
     .gh-pdp-gallery__thumbs-arrow--prev{left:4px!important}
     .gh-pdp-gallery__thumbs-arrow--next{right:4px!important}
-    @media screen and (max-width:989px){.gh-pdp-gallery__thumb{flex:0 0 52px!important;width:52px!important;height:52px!important}}
+    .gh-pdp-gallery__zoom{left:12px!important;right:auto!important}
+    .gh-pdp-gallery__stage{aspect-ratio:1/1!important}
+    .gh-pdp-gallery__media{width:100%!important;height:100%!important;object-fit:contain!important}
+    @media screen and (max-width:989px){
+      .gh-pdp-gallery__thumb{flex:0 0 52px!important;width:52px!important;height:52px!important}
+      .gh-pdp-gallery__thumbs-wrap,.gh-pdp-gallery__dots{display:none!important}
+      .gh-pdp-gallery__stage{border-radius:0!important}
+    }
     @media screen and (max-width:768px){
-      .section-grosyhub-product .pack-options{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+      .section-grosyhub-product .pack-options{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
       .section-grosyhub-product .pack-option-wrap{flex:none!important;width:auto!important;min-width:0!important}
-      .section-grosyhub-product .pack-option{min-width:0!important;width:100%!important;min-height:44px!important;padding:12px 10px!important;font-size:14px!important}
+      .section-grosyhub-product .pack-option{min-width:0!important;width:100%!important;min-height:72px!important;padding:14px 10px 10px!important;font-size:inherit!important}
+      .section-grosyhub-product .gh-pdp-info__buy-row{gap:8px!important}
+      .section-grosyhub-product .gh-pdp-info__qty-box .quantity-selector,
+      .section-grosyhub-product .gh-pdp-info__quantity-selector{width:104px!important;max-width:104px!important}
+      .section-grosyhub-product .gh-pdp-info__prepaid-bar{padding-left:104px!important}
     }
   </style>
   <div class="gh-pdp-page__container">
@@ -144,7 +155,7 @@
     }
   }
 
-  /* Gallery — main image on top, horizontal thumbnail scroller below */
+  /* Gallery — Swiings-style main image */
   .gh-pdp-gallery {
     display: flex;
     flex-direction: column;
@@ -287,12 +298,14 @@
     padding: 0;
     border-radius: 12px;
     overflow: hidden;
-    background: #f8f8f8;
+    background: #f4f4f4;
     line-height: 0;
+    aspect-ratio: 1 / 1;
   }
 
   .gh-pdp-gallery__slide {
     width: 100%;
+    height: 100%;
     margin: 0;
     padding: 0;
     display: none;
@@ -302,6 +315,7 @@
   .gh-pdp-gallery__slide:not([hidden]) {
     display: block;
     width: 100%;
+    height: 100%;
   }
 
   .gh-pdp-gallery__slide[hidden] {
@@ -310,17 +324,19 @@
 
   .gh-pdp-gallery__media {
     width: 100%;
-    height: auto;
+    height: 100%;
+    object-fit: contain;
     display: block;
     margin: 0;
     padding: 0;
     vertical-align: top;
+    background: #f4f4f4;
   }
 
   .gh-pdp-gallery__badge {
     position: absolute;
     top: 14px;
-    left: 14px;
+    right: 14px;
     z-index: 2;
     display: inline-flex;
     align-items: center;
@@ -337,9 +353,9 @@
 
   .gh-pdp-gallery__zoom {
     position: absolute;
-    top: 14px;
-    right: 14px;
-    z-index: 2;
+    top: 12px;
+    left: 12px;
+    z-index: 3;
     width: 36px;
     height: 36px;
     border: none;
@@ -350,6 +366,41 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 1px 6px rgb(0 0 0 / 0.12);
+  }
+
+  .gh-pdp-gallery__nav {
+    position: absolute;
+    top: 50%;
+    z-index: 3;
+    width: 34px;
+    height: 34px;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 50%;
+    background: rgb(255 255 255 / 0.72);
+    color: #666;
+    cursor: pointer;
+    transform: translateY(-50%);
+    box-shadow: 0 1px 6px rgb(0 0 0 / 0.1);
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  .gh-pdp-gallery__nav:hover {
+    background: #fff;
+    color: #111;
+  }
+
+  .gh-pdp-gallery__nav--prev {
+    left: 8px;
+  }
+
+  .gh-pdp-gallery__nav--next {
+    right: 8px;
   }
 
   .gh-pdp-gallery__counter {
@@ -365,47 +416,67 @@
     font-weight: 600;
   }
 
-  /* Mobile gallery — dots under main image, swipeable thumbnails */
+  /* Mobile gallery — full-bleed square, arrows on image, no thumbs */
   @media (max-width: 989px) {
+    .section-grosyhub-product.shopify-section,
+    .section-grosyhub-product {
+      padding-inline: 0 !important;
+      margin-inline: 0 !important;
+    }
+
+    .gh-pdp-page {
+      padding-block-start: 0;
+      padding-inline: 0 !important;
+      max-width: none !important;
+      width: 100% !important;
+    }
+
+    .gh-pdp-page__container {
+      padding-inline: 0 !important;
+      max-width: none !important;
+      width: 100% !important;
+    }
+
+    .gh-pdp-page__grid {
+      gap: 0;
+    }
+
+    .gh-pdp-page__media {
+      margin-inline: 0 !important;
+      padding-inline: 0 !important;
+      width: 100% !important;
+    }
+
+    .gh-pdp-page__details {
+      padding-inline: 16px;
+      padding-block-start: 14px;
+    }
+
+    .gh-pdp-gallery,
+    .gh-pdp-gallery__main,
+    .gh-pdp-gallery__stage {
+      width: 100% !important;
+      max-width: none !important;
+      margin-inline: 0 !important;
+    }
+
     .gh-pdp-gallery {
-      gap: 10px;
+      gap: 0;
     }
 
     .gh-pdp-gallery__main {
-      gap: 10px;
-    }
-
-    .gh-pdp-gallery__dots {
-      display: flex;
-    }
-
-    .gh-pdp-gallery__counter {
-      display: none;
-    }
-
-    .gh-pdp-gallery__thumbs-wrap {
-      margin-top: 2px;
-    }
-
-    .gh-pdp-gallery__thumbs-arrow {
-      width: 28px;
-      height: 28px;
-    }
-
-    .gh-pdp-gallery__thumbs {
-      gap: 8px;
-      padding-inline: 2px;
-    }
-
-    .gh-pdp-gallery__thumb {
-      flex: 0 0 52px;
-      width: 52px;
-      height: 52px;
-      border-radius: 10px;
+      gap: 0;
     }
 
     .gh-pdp-gallery__stage {
-      border-radius: 12px;
+      border-radius: 0;
+      aspect-ratio: 1 / 1;
+    }
+
+    .gh-pdp-gallery__dots,
+    .gh-pdp-gallery__thumbs-wrap,
+    .gh-pdp-gallery__counter {
+      display: none !important;
     }
 
     .gh-pdp-gallery__badge {
@@ -413,10 +484,27 @@
     }
 
     .gh-pdp-gallery__zoom {
-      top: 10px;
-      right: 10px;
-      width: 32px;
-      height: 32px;
+      top: 12px;
+      left: 12px;
+      right: auto;
+      width: 34px;
+      height: 34px;
+    }
+
+    .gh-pdp-gallery__nav {
+      width: 30px;
+      height: 30px;
+      background: rgb(255 255 255 / 0.55);
+      color: #888;
+      box-shadow: none;
+    }
+
+    .gh-pdp-gallery__nav--prev {
+      left: 6px;
+    }
+
+    .gh-pdp-gallery__nav--next {
+      right: 6px;
     }
   }
 
@@ -506,21 +594,13 @@
     }
   }
 
-  /* Product info — SKIIP-style panel */
+  /* Product info — offer / buy layout */
   .gh-pdp-info {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
     font-family: var(--font-body--family), system-ui, sans-serif;
     color: #1a1a1a;
-  }
-
-  .gh-pdp-info__title {
-    margin: 0;
-    font-size: clamp(1.25rem, 2.5vw, 1.5rem);
-    font-weight: 800;
-    line-height: 1.35;
-    color: #111;
   }
 
   .gh-pdp-info__rating-row {
@@ -530,11 +610,12 @@
     gap: 6px 8px;
     font-size: 0.875rem;
     color: #666;
+    order: -1;
   }
 
   .gh-pdp-info__rating-num {
     font-weight: 700;
-    color: #333;
+    color: #222;
   }
 
   .gh-pdp-info__stars {
@@ -547,24 +628,19 @@
     color: #888;
   }
 
+  .gh-pdp-info__title {
+    margin: 0;
+    font-size: clamp(1.15rem, 2.4vw, 1.4rem);
+    font-weight: 800;
+    line-height: 1.35;
+    color: #111;
+  }
+
   .gh-pdp-info__price-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    gap: 10px;
     flex-wrap: wrap;
-  }
-
-  .gh-pdp-info__price-block {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .gh-pdp-info__price-compare {
-    font-size: 0.95rem;
-    color: #b0b0b0;
-    text-decoration: line-through;
   }
 
   .gh-pdp-info__price-compare[hidden],
@@ -573,58 +649,114 @@
   }
 
   .gh-pdp-info__price-current {
-    font-size: 1.35rem;
-    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
     color: #111;
+    font-size: 1.5rem;
+    font-weight: 800;
     line-height: 1.2;
+  }
+
+  .gh-pdp-info__price-compare {
+    font-size: 1rem;
+    color: #9a9a9a;
+    text-decoration: line-through;
+    font-weight: 500;
   }
 
   .gh-pdp-info__save-pill {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 8px 12px;
+    gap: 5px;
+    padding: 6px 12px;
     border-radius: 8px;
-    background: #fce8ef;
-    color: #ad1457;
-    font-size: 0.8rem;
-    font-weight: 700;
+    background: var(--gh-pdp-brand);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 800;
     white-space: nowrap;
+    letter-spacing: 0.01em;
   }
 
-  .gh-pdp-info__save-pill svg {
-    color: #e91e8c;
-    flex-shrink: 0;
+  .gh-pdp-info__tax-note {
+    margin: -6px 0 0;
+    font-size: 0.75rem;
+    color: #8a8a8a;
+    line-height: 1.3;
   }
 
-  /* Premium pack size selector */
-  .section-grosyhub-product .pack-selector {
-    margin: 24px 0;
-    width: 100%;
+  .gh-pdp-info__highlights {
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 4px;
+    padding: 10px 8px;
+    border: 1px solid color-mix(in srgb, var(--gh-pdp-brand) 18%, #e8e0d8);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--gh-pdp-brand) 4%, #fff);
   }
 
-  .section-grosyhub-product .pack-label {
-    display: block;
-    font-size: 14px;
-    font-weight: 600;
-    margin-bottom: 12px;
-    color: #3b3128;
+  .gh-pdp-info__highlight {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-width: 0;
+    text-align: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #333;
     line-height: 1.2;
   }
 
-  .section-grosyhub-product .pack-options {
+  .gh-pdp-info__highlight-icon {
     display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    gap: 12px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .gh-pdp-info__highlight-icon--delivery {
+    color: var(--gh-pdp-brand);
+  }
+
+  .gh-pdp-info__highlight-icon--cod {
+    color: #c47a3a;
+  }
+
+  .gh-pdp-info__highlight-icon--returns {
+    color: var(--gh-pdp-brand-dark, #8a6d4f);
+  }
+
+  @media (min-width: 480px) {
+    .gh-pdp-info__highlight {
+      flex-direction: row;
+      gap: 6px;
+      font-size: 0.8rem;
+    }
+  }
+
+  /* Offer pack cards */
+  .section-grosyhub-product .pack-selector {
+    margin: 4px 0 0;
+    width: 100%;
+  }
+
+  .section-grosyhub-product .pack-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
     width: 100%;
   }
 
   .section-grosyhub-product .pack-option-wrap {
     position: relative;
-    flex: 1 1 calc(50% - 6px);
-    min-width: 170px;
     display: flex;
+    min-width: 0;
   }
 
   .section-grosyhub-product .pack-option-wrap .pack-option {
@@ -646,46 +778,103 @@
   }
 
   .section-grosyhub-product .pack-option {
-    flex: 1 1 170px;
-    min-width: 170px;
-    min-height: 48px;
-    display: inline-flex;
-    align-items: center;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
     justify-content: center;
-    padding: 14px 22px;
-    border-radius: 14px;
-    border: 1px solid #d8c3aa;
+    gap: 4px;
+    min-height: 78px;
+    padding: 16px 12px 12px;
+    border-radius: 12px;
+    border: 1.5px solid #d8c3aa;
     background: #fff;
     color: #3b3128;
-    font-weight: 600;
-    font-size: 15px;
-    line-height: 1.25;
     cursor: pointer;
-    text-align: center;
+    text-align: left;
     box-sizing: border-box;
-    transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
     -webkit-tap-highlight-color: transparent;
   }
 
+  .section-grosyhub-product .pack-option__badge {
+    position: absolute;
+    top: -9px;
+    left: 10px;
+    z-index: 1;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: var(--gh-pdp-brand);
+    color: #fff;
+    font-size: 0.625rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+
+  .section-grosyhub-product .pack-option__check {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--gh-pdp-brand);
+    color: #fff;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .section-grosyhub-product .pack-option__title {
+    font-size: 0.9rem;
+    font-weight: 800;
+    line-height: 1.25;
+    color: #2b2218;
+    padding-right: 22px;
+  }
+
+  .section-grosyhub-product .pack-option__prices {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .section-grosyhub-product .pack-option__price {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--gh-pdp-brand-dark, #8a6d4f);
+  }
+
+  .section-grosyhub-product .pack-option__compare {
+    font-size: 0.8rem;
+    color: #9a9a9a;
+    text-decoration: line-through;
+  }
+
+  .section-grosyhub-product .pack-option__compare[hidden] {
+    display: none;
+  }
+
   .section-grosyhub-product .pack-option:hover {
-    background: #f4ebe2;
-    border-color: #b8946d;
+    border-color: var(--gh-pdp-brand);
+    background: color-mix(in srgb, var(--gh-pdp-brand) 6%, #fff);
   }
 
   .section-grosyhub-product .pack-options__input:checked + .pack-option {
-    background: #b8946d;
-    color: #fff;
-    border-color: #b8946d;
-    box-shadow: 0 8px 20px rgba(184, 148, 109, 0.25);
+    border-color: var(--gh-pdp-brand);
+    background: color-mix(in srgb, var(--gh-pdp-brand) 8%, #fff);
+    box-shadow: 0 0 0 1px var(--gh-pdp-brand);
   }
 
-  .section-grosyhub-product .pack-options__input:checked + .pack-option:hover {
-    background: #a8845d;
-    border-color: #a8845d;
+  .section-grosyhub-product .pack-options__input:checked + .pack-option .pack-option__check {
+    display: inline-flex;
   }
 
   .section-grosyhub-product .pack-options__input:focus-visible + .pack-option {
-    outline: 2px solid #b8946d;
+    outline: 2px solid var(--gh-pdp-brand);
     outline-offset: 2px;
   }
 
@@ -699,22 +888,16 @@
     .section-grosyhub-product .pack-options {
       display: grid !important;
       grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-      gap: 10px !important;
-    }
-
-    .section-grosyhub-product .pack-option-wrap {
-      flex: none !important;
-      width: auto !important;
-      min-width: 0 !important;
+      gap: 8px !important;
     }
 
     .section-grosyhub-product .pack-option {
-      flex: none !important;
-      width: 100% !important;
-      min-width: 0 !important;
-      min-height: 44px !important;
-      padding: 12px 10px !important;
-      font-size: 14px !important;
+      min-height: 72px !important;
+      padding: 14px 10px 10px !important;
+    }
+
+    .section-grosyhub-product .pack-option__title {
+      font-size: 0.8rem !important;
     }
   }
 
@@ -813,58 +996,115 @@
     gap: 12px;
   }
 
-  .gh-pdp-info__qty-cart-row {
+  .gh-pdp-info__buy-block {
     display: flex;
-    align-items: flex-end;
-    gap: 12px;
+    flex-direction: column;
+    gap: 0;
     width: 100%;
   }
 
-  .gh-pdp-info__qty-group {
+  .gh-pdp-info__prepaid-bar {
     display: flex;
-    flex-direction: column;
-    gap: 6px;
-    flex-shrink: 0;
+    justify-content: flex-start;
+    margin-bottom: -8px;
+    padding-left: 118px;
+    position: relative;
+    z-index: 2;
   }
 
-  .gh-pdp-info__qty-label {
-    font-size: 0.8rem;
-    color: #888;
-    font-weight: 500;
+  .gh-pdp-info__buy-row {
+    display: flex;
+    align-items: stretch;
+    gap: 10px;
+    width: 100%;
+    padding-top: 0;
+  }
+
+  .gh-pdp-info__qty-box {
+    flex-shrink: 0;
+    display: flex;
+    align-items: stretch;
   }
 
   .gh-pdp-info__quantity-selector,
-  .gh-pdp-info__qty-group .quantity-selector {
+  .gh-pdp-info__qty-box .quantity-selector {
     border-radius: 12px;
-    border: 1px solid #d8d8d8;
+    border: 1px solid #d0d0d0;
     overflow: hidden;
-    width: 140px;
-    max-width: 140px;
-  }
-
-  .gh-pdp-info__cta-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    width: 100%;
-    align-items: stretch;
+    width: 108px;
+    max-width: 108px;
+    height: 100%;
+    min-height: 52px;
   }
 
   .gh-pdp-info__buy-now-shiprocket {
     position: relative;
-    width: 100%;
-    margin-top: 6px;
-    padding-top: 4px;
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    padding-top: 0;
   }
 
   .gh-pdp-info__buy-now-shiprocket .shiprocket-headless {
     width: 100% !important;
     display: block;
+    height: 100%;
   }
 
-  .section-grosyhub-product .gh-pdp-info__qty-cart-row .gh-pdp-info__btn-cart {
+  .gh-pdp-info__buy-now-shiprocket .shiprocket-headless button,
+  .gh-pdp-info__buy-now-shiprocket .sr-headless-checkout,
+  .gh-pdp-info__buy-now-shiprocket [class*='buy'] {
+    min-height: 52px !important;
+    border-radius: 12px !important;
+    background: var(--gh-pdp-brand) !important;
+    color: #fff !important;
+  }
+
+  .section-grosyhub-product .gh-pdp-info__btn-buy {
+    position: relative;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
     flex: 1;
     min-width: 0;
+    min-height: 52px;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 12px;
+    background: var(--gh-pdp-brand) !important;
+    color: #fff !important;
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-decoration: none;
+    cursor: pointer;
+    overflow: visible;
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--gh-pdp-brand) 30%, transparent);
+  }
+
+  .section-grosyhub-product .gh-pdp-info__btn-buy:hover:not(:disabled):not(.is-disabled) {
+    background: var(--gh-pdp-brand-dark) !important;
+  }
+
+  .section-grosyhub-product .gh-pdp-info__btn-buy:disabled,
+  .section-grosyhub-product .gh-pdp-info__btn-buy.is-disabled,
+  .section-grosyhub-product .gh-pdp-info__btn-buy[aria-disabled='true'] {
+    opacity: 0.5;
+    pointer-events: none;
+    cursor: not-allowed;
+  }
+
+  .gh-pdp-info__btn-buy-text {
+    flex-shrink: 0;
+    font-weight: 700;
+  }
+
+  /* GoKwik attaches .gokwik-marge — keep full-width in buy row */
+  .gh-pdp-info__buy-row .gh-pdp-info__btn-buy.gokwik-marge,
+  .gh-pdp-info__buy-row button.gokwik-marge {
+    flex: 1 !important;
+    width: auto !important;
+    min-width: 0 !important;
+    min-height: 52px !important;
   }
 
   .section-grosyhub-product .gh-pdp-info__btn-cart {
@@ -873,17 +1113,55 @@
     justify-content: center;
     gap: 8px;
     width: 100% !important;
-    min-height: 52px;
-    padding: 14px 16px;
+    min-height: 48px;
+    padding: 12px 16px;
     border-radius: 12px;
-    border: 1px solid #d0d0d0 !important;
+    border: 1px solid #d8c3aa !important;
     background: #fff !important;
-    color: #222 !important;
+    color: #3b3128 !important;
     font-weight: 600;
     font-size: 0.95rem;
     cursor: pointer;
     appearance: none;
     box-shadow: none;
+  }
+
+  .gh-pdp-info__delivery {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 14px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--gh-pdp-brand) 12%, #fff);
+    color: #3b3128;
+    border: 1px solid color-mix(in srgb, var(--gh-pdp-brand) 22%, #e8e0d8);
+  }
+
+  .gh-pdp-info__delivery-icon {
+    flex-shrink: 0;
+    margin-top: 1px;
+    color: var(--gh-pdp-brand);
+  }
+
+  .gh-pdp-info__delivery-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .gh-pdp-info__delivery-text strong {
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1.35;
+    color: #2b2218;
+  }
+
+  .gh-pdp-info__delivery-text span {
+    font-size: 0.8rem;
+    font-weight: 500;
+    line-height: 1.35;
+    color: #6b5d52;
   }
 
   .section-grosyhub-product .gh-pdp-info__btn-cart:hover:not(:disabled) {
@@ -922,22 +1200,25 @@
   }
 
   .gh-pdp-info__prepaid-badge {
-    position: absolute;
-    top: -9px;
-    right: 10px;
+    display: inline-block;
+    position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
     z-index: 2;
-    max-width: calc(100% - 20px);
+    max-width: 100%;
     padding: 5px 10px;
     border-radius: 6px;
-    background: #c6f06a;
-    color: #1a1a1a;
+    background: color-mix(in srgb, var(--gh-pdp-brand) 28%, #fff8e8);
+    color: #3b3128;
+    border: 1px solid color-mix(in srgb, var(--gh-pdp-brand) 35%, #e8d9c8);
     font-size: 0.6875rem;
     font-weight: 800;
     line-height: 1.25;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    box-shadow: 0 2px 8px rgb(0 0 0 / 0.14);
+    box-shadow: 0 2px 8px rgb(42 32 24 / 0.1);
     pointer-events: none;
   }
 
@@ -1018,9 +1299,14 @@
       gap: 4px;
     }
 
+    .gh-pdp-info__prepaid-bar {
+      padding-left: 104px;
+      margin-bottom: -6px;
+    }
+
     .gh-pdp-info__prepaid-badge {
-      top: -8px;
-      right: 8px;
+      top: auto;
+      left: auto;
       font-size: 0.625rem;
       padding: 4px 8px;
     }
@@ -1157,6 +1443,18 @@
       "type": "variant-picker",
       "name": "Variant picker",
       "limit": 1
+    },
+    {
+      "type": "reel",
+      "name": "Product reel",
+      "settings": [
+        { "type": "product", "id": "product", "label": "Product", "info": "Leave empty to use the current product." },
+        { "type": "video", "id": "video", "label": "Reel video", "info": "Optional if the product already has a video in media." },
+        { "type": "image_picker", "id": "poster", "label": "Poster image" },
+        { "type": "text", "id": "caption_top", "label": "Video caption overlay" },
+        { "type": "text", "id": "title_override", "label": "Title override (no product)" },
+        { "type": "url", "id": "link_override", "label": "Link override (no product)" }
+      ]
     }
   ],
   "settings": [
@@ -1269,7 +1567,7 @@
       "type": "text",
       "id": "pack_bestseller_label",
       "label": "Bestseller badge text",
-      "default": "Bestseller"
+      "default": "BEST VALUE"
     },
     {
       "type": "text",
@@ -1305,7 +1603,7 @@
       "type": "text",
       "id": "prepaid_note",
       "label": "Prepaid badge above Buy button",
-      "default": "10% off on Prepaid Orders"
+      "default": "Extra 15% off on Prepaid Orders"
     },
     {
       "type": "text",
@@ -1362,6 +1660,38 @@
       "id": "show_description",
       "label": "Show description",
       "default": true
+    },
+    {
+      "type": "header",
+      "content": "Product reels (video strip)"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_product_reels",
+      "label": "Show product reels strip",
+      "default": true,
+      "info": "Swipe or drag to scroll. Click a reel to open the popup."
+    },
+    {
+      "type": "text",
+      "id": "reels_heading",
+      "label": "Reels heading",
+      "info": "Leave empty for no heading."
+    },
+    {
+      "type": "collection",
+      "id": "reels_collection",
+      "label": "Fallback collection",
+      "info": "Used when the product has no videos and no reel blocks are added."
+    },
+    {
+      "type": "range",
+      "id": "reels_max",
+      "label": "Max reels from collection",
+      "min": 4,
+      "max": 12,
+      "step": 1,
+      "default": 8
     }
   ],
   "presets": [

@@ -9,50 +9,38 @@
     document.body.style.overflow = '';
   };
 
+  const initDragScroll = (track) => {
+    let isDown = false;
+    let startX = 0;
+    let scrollLeft = 0;
+
+    const endDrag = () => {
+      isDown = false;
+      track.classList.remove('is-dragging');
+    };
+
+    track.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      isDown = true;
+      track.classList.add('is-dragging');
+      startX = e.pageX;
+      scrollLeft = track.scrollLeft;
+    });
+
+    track.addEventListener('mousemove', (e) => {
+      if (!isDown) return;
+      e.preventDefault();
+      track.scrollLeft = scrollLeft - (e.pageX - startX);
+    });
+
+    track.addEventListener('mouseup', endDrag);
+    track.addEventListener('mouseleave', endDrag);
+  };
+
   const initCarousel = (root) => {
     const track = root.querySelector('[data-gh-pdp-reels-track]');
-    const prev = root.querySelector('[data-gh-pdp-reels-prev]');
-    const next = root.querySelector('[data-gh-pdp-reels-next]');
     if (!track) return;
-
-    const slides = () => Array.from(track.querySelectorAll('[data-gh-pdp-reels-slide]'));
-    const gap = () => parseInt(getComputedStyle(track).gap, 10) || 12;
-
-    const slideWidth = () => {
-      const first = slides()[0];
-      if (!first) return track.clientWidth;
-      return first.offsetWidth + gap();
-    };
-
-    let index = 0;
-
-    const scrollToIndex = (i) => {
-      const max = Math.max(0, slides().length - 1);
-      index = Math.max(0, Math.min(i, max));
-      track.scrollTo({ left: index * slideWidth(), behavior: 'smooth' });
-      if (prev) prev.disabled = index <= 0;
-      if (next) next.disabled = index >= max;
-    };
-
-    prev?.addEventListener('click', () => scrollToIndex(index - 1));
-    next?.addEventListener('click', () => scrollToIndex(index + 1));
-
-    track.addEventListener(
-      'scroll',
-      () => {
-        const sw = slideWidth();
-        if (!sw) return;
-        const i = Math.round(track.scrollLeft / sw);
-        if (i !== index) {
-          index = i;
-          if (prev) prev.disabled = index <= 0;
-          if (next) next.disabled = index >= slides().length - 1;
-        }
-      },
-      { passive: true }
-    );
-
-    scrollToIndex(0);
+    initDragScroll(track);
   };
 
   const initStripVideos = (root) => {

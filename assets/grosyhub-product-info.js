@@ -25,6 +25,8 @@
     const priceEl = priceRoot.querySelector('[data-gh-price]');
     const compareEl = priceRoot.querySelector('[data-gh-compare]');
     const saveEl = priceRoot.querySelector('[data-gh-save]');
+    const savePctEl = priceRoot.querySelector('[data-gh-save-pct]');
+    const saveAmtEl = priceRoot.querySelector('[data-gh-save-amt]');
     const input = pdp.querySelector('[data-gh-variant-input]');
 
     if (input && variant.id) {
@@ -44,8 +46,9 @@
     if (saveEl) {
       if (onSale) {
         const saved = variant.compare_at_price - variant.price;
-        const savedText = formatMoney(saved, format, currency);
-        saveEl.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 4h10l1 4H6l1-4zm-1 6h12l-1 10H7L6 10z" stroke="currentColor" stroke-width="1.4"/></svg> ${savedText} Save`;
+        const pct = Math.round((saved / variant.compare_at_price) * 100);
+        if (savePctEl) savePctEl.textContent = `${pct}% OFF`;
+        if (saveAmtEl) saveAmtEl.textContent = `Save ${formatMoney(saved, format, currency)}`;
         saveEl.hidden = false;
       } else {
         saveEl.hidden = true;
@@ -184,35 +187,54 @@
     }
 
     if (packPicker) {
-      packPicker.querySelectorAll('[data-gh-pack-add]').forEach((label) => {
-        label.addEventListener('click', () => {
-          const inputId = label.getAttribute('for');
-          const input = inputId ? document.getElementById(inputId) : null;
-          if (!input || input.disabled) return;
-
-          window.setTimeout(() => {
-            pdpAddToCart(pdp, { openDrawer: true, trigger: label });
-          }, 0);
+      packPicker.querySelectorAll('[data-gh-pack-input]').forEach((input) => {
+        input.addEventListener('change', () => {
+          syncPackToForm(pdp);
         });
       });
     }
 
     if (buyNowBtn) {
       buyNowBtn.addEventListener('click', async (e) => {
+        // Sync pack/qty first so GoKwik and fallback checkout use the right line item.
+        syncPackToForm(pdp);
+
+        // If GoKwik already claimed this button, let GoKwik handle checkout.
+        if (
+          buyNowBtn.classList.contains('gokwik-marge') ||
+          buyNowBtn.dataset.gokwikProcessed === 'true' ||
+          buyNowBtn.dataset.gokwikFunction ||
+          buyNowBtn.dataset.function === 'buyNow'
+        ) {
+          return;
+        }
+
         e.preventDefault();
         if (buyNowBtn.disabled || buyNowBtn.classList.contains('is-disabled')) return;
 
         setButtonLoading(buyNowBtn, true);
         const ok = await pdpAddToCart(pdp, { openDrawer: false, trigger: buyNowBtn });
-        if (ok) {
-          const checkout =
-            typeof Theme !== 'undefined' && Theme.routes?.cart_url
-              ? `${Theme.routes.cart_url}/checkout`
-              : '/checkout';
-          window.location.href = checkout;
-        } else {
+        if (!ok) {
           setButtonLoading(buyNowBtn, false);
+          return;
         }
+
+        // Prefer GoKwik checkout when the app SDK is present on live.
+        const gk = window.gokwikSdk || window.__gkSdkCache;
+        if (gk && typeof gk.initCheckout === 'function' && window.merchantInfo) {
+          try {
+            gk.initCheckout(window.merchantInfo);
+            return;
+          } catch (err) {
+            console.warn('[Grosyhub PDP] GoKwik checkout failed, using Shopify checkout', err);
+          }
+        }
+
+        const checkout =
+          typeof Theme !== 'undefined' && Theme.routes?.cart_url
+            ? `${Theme.routes.cart_url}/checkout`
+            : '/checkout';
+        window.location.href = checkout;
       });
     }
 

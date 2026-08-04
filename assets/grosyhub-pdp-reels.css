@@ -12,10 +12,7 @@
 }
 
 .gh-pdp-reels__carousel {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 10px;
+  display: block;
 }
 
 .gh-pdp-reels__track-wrap {
@@ -25,13 +22,23 @@
 
 .gh-pdp-reels__track {
   display: flex;
-  gap: 14px;
+  gap: 12px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   padding-block: 6px 10px;
+  cursor: grab;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x;
+}
+
+.gh-pdp-reels__track.is-dragging {
+  cursor: grabbing;
+  scroll-snap-type: none;
+  scroll-behavior: auto;
+  user-select: none;
 }
 
 .gh-pdp-reels__track::-webkit-scrollbar {
@@ -39,57 +46,34 @@
 }
 
 .gh-pdp-reels__slide {
-  flex: 0 0 196px;
-  min-width: 180px;
-  max-width: 220px;
+  flex: 0 0 calc((100% - 12px) / 2);
+  min-width: 0;
+  max-width: none;
   scroll-snap-align: start;
 }
 
 .gh-pdp-reels__arrow {
-  flex-shrink: 0;
-  width: 38px;
-  height: 38px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #ddd;
-  border-radius: 50%;
-  background: #fff;
-  color: #333;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 0.06);
-  transition: border-color 0.2s ease, opacity 0.2s ease;
-}
-
-.gh-pdp-reels__arrow:hover:not(:disabled) {
-  border-color: var(--gh-pdp-reel-brand, #b89774);
-  color: var(--gh-pdp-reel-brand, #b89774);
-}
-
-.gh-pdp-reels__arrow:disabled {
-  opacity: 0.35;
-  cursor: default;
+  display: none !important;
 }
 
 /* Strip card — video on top, product info below (not overlapping) */
 .gh-pdp-reel-card {
-  display: flex;
-  flex-direction: column;
+  position: relative;
+  display: block;
   width: 100%;
   padding: 0;
-  border: 1px solid #e8e2dc;
-  border-radius: 14px;
-  background: #fff;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
   overflow: hidden;
   cursor: pointer;
   text-align: left;
-  box-shadow: 0 4px 16px rgb(0 0 0 / 0.08);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: none;
+  transition: transform 0.2s ease;
 }
 
 .gh-pdp-reel-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 24px rgb(0 0 0 / 0.12);
+  transform: translateY(-1px);
 }
 
 .gh-pdp-reel-card__media {
@@ -97,10 +81,10 @@
   display: block;
   width: 100%;
   aspect-ratio: 9 / 14;
-  min-height: 260px;
+  min-height: 0;
   overflow: hidden;
   background: #111;
-  flex-shrink: 0;
+  border-radius: 12px;
 }
 
 .gh-pdp-reel-card__media::after {
@@ -116,11 +100,15 @@
 .gh-pdp-reel-card__video-wrap {
   position: absolute;
   inset: 0;
+  overflow: hidden;
 }
 
 .gh-pdp-reel-card__video,
+.gh-pdp-reel-card__video-wrap video,
 .gh-pdp-reel-card__poster,
 .gh-pdp-reel-card__poster--only {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -128,8 +116,6 @@
 }
 
 .gh-pdp-reel-card__poster {
-  position: absolute;
-  inset: 0;
   z-index: 2;
   transition: opacity 0.25s ease;
 }
@@ -140,7 +126,6 @@
 }
 
 .gh-pdp-reel-card__video {
-  position: relative;
   z-index: 1;
 }
 
@@ -196,23 +181,30 @@
 }
 
 .gh-pdp-reel-card__product {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 6px;
+  z-index: 5;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px 10px;
+  gap: 6px;
+  padding: 6px 8px;
   background: #fff;
-  border-top: 1px solid #f0ebe6;
-  flex-shrink: 0;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.16);
+  pointer-events: none;
 }
 
 .gh-pdp-reel-card__thumb {
   flex-shrink: 0;
-  width: 44px;
-  height: 44px;
-  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
   overflow: hidden;
   background: #f5f5f5;
-  border: 1px solid #eee;
+  border: none;
 }
 
 .gh-pdp-reel-card__thumb img {
@@ -261,18 +253,6 @@
   font-size: 0.625rem;
   font-weight: 700;
   color: #2e9e5b;
-}
-
-@media screen and (min-width: 990px) {
-  .gh-pdp-reels__slide {
-    flex: 0 0 210px;
-    min-width: 196px;
-    max-width: 230px;
-  }
-
-  .gh-pdp-reel-card__media {
-    min-height: 300px;
-  }
 }
 
 /* Modal */
@@ -535,31 +515,91 @@
 }
 
 @media screen and (max-width: 749px) {
+  .gh-pdp-reels {
+    margin-block: 16px 8px;
+  }
+
+  .gh-pdp-reels__track {
+    gap: 10px;
+    padding-block: 2px 6px;
+  }
+
+  .gh-pdp-reels__slide {
+    flex: 0 0 calc((100% - 10px) / 2);
+  }
+
+  .gh-pdp-reel-card__play {
+    width: 34px;
+    height: 34px;
+    margin: -17px 0 0 -17px;
+  }
+
+  .gh-pdp-reel-card__caption {
+    font-size: 0.625rem;
+    top: 8px;
+    left: 6px;
+    right: 6px;
+  }
+
+  .gh-pdp-reel-card__compare,
+  .gh-pdp-reel-card__off {
+    display: none;
+  }
+
   .gh-pdp-reels-modal {
     padding: 0;
-    align-items: stretch;
+    align-items: flex-start;
   }
 
   .gh-pdp-reels-modal__dialog {
     width: 100%;
     max-height: 100vh;
+    min-height: 100vh;
     border-radius: 0;
     height: 100%;
+    display: flex;
+    flex-direction: column;
   }
 
   .gh-pdp-reels-modal__panel {
-    grid-template-columns: 1fr;
-    max-height: 100vh;
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    max-height: none;
     overflow-y: auto;
   }
 
+  .gh-pdp-reels-modal__panel.is-active {
+    display: flex;
+  }
+
   .gh-pdp-reels-modal__video-col {
-    min-height: 55vh;
+    position: relative;
+    flex: 0 0 auto;
+    width: 100%;
+    min-height: 0;
+    max-height: none;
+  }
+
+  .gh-pdp-reels-modal__video-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 9 / 16;
+    max-height: 72vh;
+    background: #000;
   }
 
   .gh-pdp-reels-modal__video,
+  .gh-pdp-reels-modal__video-wrap video,
   .gh-pdp-reels-modal__fallback-img {
-    min-height: 55vh;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    max-height: none;
+    object-fit: cover;
   }
 
   .gh-pdp-reels-modal__nav--prev {
@@ -573,14 +613,5 @@
   .gh-pdp-reels-modal__close {
     top: 10px;
     right: 10px;
-  }
-
-  .gh-pdp-reels__slide {
-    flex: 0 0 172px;
-    min-width: 160px;
-  }
-
-  .gh-pdp-reel-card__media {
-    min-height: 240px;
   }
 }
