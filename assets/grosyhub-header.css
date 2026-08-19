@@ -1,5 +1,12 @@
 ﻿/* Grosyhub header — desktop + mobile */
 
+/* Announcement ticker forced off sitewide */
+.gh-announcement--desktop,
+.gh-mobile-announcement,
+.gh-announcement--mobile {
+  display: none !important;
+}
+
 #header-group:has([data-grosyhub-header]) {
   position: relative;
   z-index: 800;
@@ -188,6 +195,21 @@ body:has([data-grosyhub-header]) [data-gh-banner-mount] .grosyhub-hero-slider-se
     padding-top: 0;
     line-height: normal;
     font-size: 1rem;
+  }
+
+  /* Kill any Horizon base-theme top spacing on the header group */
+  #header-group:has([data-grosyhub-header]) header-component,
+  #header-group:has([data-grosyhub-header]) .header-section:not(.grosyhub-header-section) {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  body:has([data-grosyhub-header]) {
+    --header-height: 0px !important;
+    --header-group-height: 0px !important;
+    --top-row-height: 0px !important;
   }
 
   .gh-header {
@@ -1879,8 +1901,8 @@ body:has([data-grosyhub-header]) [data-gh-banner-mount] .grosyhub-hero-slider-se
 
 .gh-header__mobile-shell {
   background: var(--gh-cream, #faf7f3);
-  border-radius: 0 0 16px 16px;
-  box-shadow: 0 4px 18px rgb(42 32 24 / 0.08);
+  border-radius: 0;
+  box-shadow: none;
 }
 
 /* Prepaid offer strip — full-bleed below logo header */
@@ -1894,7 +1916,7 @@ body:has([data-grosyhub-header]) [data-gh-banner-mount] .grosyhub-hero-slider-se
   min-height: 34px;
   margin: 0;
   padding: 7px 12px;
-  background: var(--gh-brand, #b89774);
+  background: #000;
   color: #fff;
   text-align: center;
   box-sizing: border-box;
@@ -1920,8 +1942,44 @@ body:has([data-grosyhub-header]) [data-gh-banner-mount] .grosyhub-hero-slider-se
 }
 
 .gh-prepaid-strip__text strong,
-.gh-prepaid-strip__text b {
+.gh-prepaid-strip__text b,
+.gh-prepaid-strip__line strong,
+.gh-prepaid-strip__line b {
   font-weight: 800;
+}
+
+.gh-prepaid-strip__rotate {
+  position: relative;
+  width: 100%;
+  min-height: 1.25rem;
+  overflow: hidden;
+}
+
+.gh-prepaid-strip__line {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0 4px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+  color: #fff;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  pointer-events: none;
+}
+
+.gh-prepaid-strip__line.is-active {
+  position: relative;
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
 }
 
 .gh-prepaid-strip--desktop {
@@ -1940,28 +1998,131 @@ body:has([data-grosyhub-header]) [data-gh-banner-mount] .grosyhub-hero-slider-se
   }
 
   .gh-header__mobile-shell {
-    background: var(--gh-cream, #faf7f3);
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    background: #fff;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: hidden;
+  }
+
+  .gh-header__mobile-shell:has(.gh-prepaid-strip) .gh-header__mobile-container {
+    margin: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  .gh-header__mobile-shell:has(.gh-prepaid-strip) .gh-header__mobile-bar {
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
   }
 
   .gh-prepaid-strip {
     display: flex !important;
     position: relative;
-    left: 50%;
+    left: auto;
     right: auto;
-    width: 100vw !important;
-    max-width: 100vw !important;
+    width: 100% !important;
+    max-width: none !important;
     min-height: 32px;
     margin: 0 !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
     padding: 6px 10px !important;
     border-radius: 0 !important;
     box-sizing: border-box !important;
-    transform: translateX(-50%);
+    transform: none;
+    flex-shrink: 0;
   }
 
   .gh-prepaid-strip__text {
     font-size: 0.75rem;
+  }
+
+  .gh-prepaid-strip__line {
+    font-size: 0.75rem;
+  }
+
+  /*
+   * Product PDP (mobile): kill top safe-area white gap + strip→image gap.
+   * Use :has() because body lacked template-* until theme.liquid fix.
+   */
+  body.template-product .gh-header__mobile:not(:has(.gh-mobile-announcement)) .gh-header__mobile-sticky,
+  body.template-index .gh-header__mobile:not(:has(.gh-mobile-announcement)) .gh-header__mobile-sticky,
+  body:has([data-grosyhub-header]) .gh-header__mobile:not(:has(.gh-mobile-announcement)) .gh-header__mobile-sticky,
+  body:has(.section-grosyhub-product) .gh-header__mobile:not(:has(.gh-mobile-announcement)) .gh-header__mobile-sticky {
+    padding-top: env(safe-area-inset-top, 0px);
+    background: #fff;
+  }
+
+  body.template-product .gh-header__mobile:not(:has(.gh-mobile-announcement)) .gh-header__mobile-shell,
+  body.template-index .gh-header__mobile:not(:has(.gh-mobile-announcement)) .gh-header__mobile-shell,
+  body:has([data-grosyhub-header]) .gh-header__mobile:not(:has(.gh-mobile-announcement)) .gh-header__mobile-shell,
+  body:has(.section-grosyhub-product) .gh-header__mobile:not(:has(.gh-mobile-announcement)) .gh-header__mobile-shell {
+    background: #fff;
+  }
+
+  body.template-product #header-group,
+  body.template-product .header-section.grosyhub-header-section,
+  body.template-product .gh-header,
+  body.template-product .gh-header__mobile,
+  body.template-product .gh-header__mobile-sticky,
+  body.template-product .gh-prepaid-strip,
+  body:has(.section-grosyhub-product) #header-group,
+  body:has(.section-grosyhub-product) .header-section.grosyhub-header-section,
+  body:has(.section-grosyhub-product) .gh-header,
+  body:has(.section-grosyhub-product) .gh-header__mobile,
+  body:has(.section-grosyhub-product) .gh-header__mobile-sticky,
+  body:has(.section-grosyhub-product) .gh-prepaid-strip {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  body.template-product #MainContent,
+  body.template-product #MainContent > .shopify-section:first-child,
+  body.template-product .section-grosyhub-product,
+  body:has(.section-grosyhub-product) #MainContent,
+  body:has(.section-grosyhub-product) #MainContent > .shopify-section:first-child,
+  body:has(.section-grosyhub-product) .section-grosyhub-product {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    --padding-block-start: 0px !important;
+    --section-top-offset: 0px !important;
+  }
+
+  body.template-product .gh-pdp-page,
+  body.template-product .gh-pdp-page__container,
+  body.template-product .gh-pdp-page__media,
+  body.template-product .gh-pdp-gallery,
+  body.template-product .gh-pdp-gallery__main,
+  body.template-product .gh-pdp-gallery__stage,
+  body:has(.section-grosyhub-product) .gh-pdp-page,
+  body:has(.section-grosyhub-product) .gh-pdp-page__container,
+  body:has(.section-grosyhub-product) .gh-pdp-page__media,
+  body:has(.section-grosyhub-product) .gh-pdp-gallery,
+  body:has(.section-grosyhub-product) .gh-pdp-gallery__main,
+  body:has(.section-grosyhub-product) .gh-pdp-gallery__stage {
+    margin-top: 0 !important;
+    margin-block-start: 0 !important;
+    padding-top: 0 !important;
+    padding-block-start: 0 !important;
+  }
+
+  body.template-product .gh-pdp-page,
+  body:has(.section-grosyhub-product) .gh-pdp-page {
+    --gh-pdp-section-gap: 0px;
+    padding-inline: 0 !important;
+  }
+
+  body.template-product .gh-pdp-page__grid,
+  body:has(.section-grosyhub-product) .gh-pdp-page__grid {
+    gap: 0;
+  }
+
+  body.template-product .gh-pdp-page__details,
+  body:has(.section-grosyhub-product) .gh-pdp-page__details {
+    padding-inline: 16px;
+    padding-block-start: 14px;
   }
 }
 
@@ -1971,7 +2132,7 @@ body:has([data-grosyhub-header]) [data-gh-banner-mount] .grosyhub-hero-slider-se
 
 .gh-header__mobile-bar {
   display: grid;
-  grid-template-columns: minmax(88px, auto) minmax(0, 1fr) minmax(80px, auto);
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
   align-items: center;
   gap: 0.375rem;
   min-height: 52px;
@@ -2036,9 +2197,9 @@ body:has([data-grosyhub-header]) [data-gh-banner-mount] .grosyhub-hero-slider-se
 }
 
 .gh-header__mobile-logo .gh-logo__img--mobile {
-  max-height: 40px;
+  max-height: 56px;
   width: auto;
-  max-width: min(160px, 42vw);
+  max-width: min(200px, 50vw);
   object-fit: contain;
 }
 
@@ -2048,6 +2209,13 @@ body:has([data-grosyhub-header]) [data-gh-banner-mount] .grosyhub-hero-slider-se
   justify-content: flex-end;
   gap: 0;
   flex-shrink: 0;
+}
+
+.gh-header__mobile-icons .gh-header__mobile-search-btn {
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  color: var(--gh-text, #2c241c);
 }
 
 .gh-header__mobile-icon-btn {

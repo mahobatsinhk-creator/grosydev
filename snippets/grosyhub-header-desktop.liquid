@@ -125,15 +125,6 @@
           </form>
 
           <div class="gh-actions gh-actions--desktop gh-actions--icons-only">
-            <button type="button" class="gh-actions__item" data-gh-wishlist-open aria-label="{{ section.settings.wishlist_label | default: 'Wishlist' }}">
-              <span class="gh-actions__icon-wrap">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M12 21s-7.5-4.7-9.8-9.4C.4 8.2 2.6 4 6.4 4c2 0 3.2 1.2 3.6 1.8C10.4 5.2 11.6 4 13.6 4c3.8 0 6 4.2 4.2 7.6C19.5 16.3 12 21 12 21z" stroke="currentColor" stroke-width="1.6"/>
-                </svg>
-                <span class="gh-badge gh-badge--count" data-gh-wishlist-count>0</span>
-              </span>
-            </button>
-
             <a href="{% if customer %}{{ routes.account_url }}{% else %}{{ routes.account_login_url }}{% endif %}" class="gh-actions__item" aria-label="{{ section.settings.account_label | default: 'Account' }}">
               <span class="gh-actions__icon-wrap">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -142,15 +133,6 @@
                 </svg>
               </span>
             </a>
-
-            <button type="button" class="gh-actions__item gh-actions__item--cart" data-gh-cart-open aria-label="{{ section.settings.cart_label | default: 'Cart' }}">
-              <span class="gh-actions__icon-wrap">
-                <svg class="gh-actions__svg" width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M8 8a4 4 0 118 0h2l1.5 9H6.5L5 6H3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <span class="gh-badge gh-badge--count" data-gh-cart-count>{{ cart.item_count }}</span>
-              </span>
-            </button>
           </div>
         </div>
       </div>
@@ -175,15 +157,7 @@
     endif
   -%}
   {%- if show_this_prepaid -%}
-    <div class="gh-prepaid-strip gh-prepaid-strip--desktop" role="status">
-      <span class="gh-prepaid-strip__icon" aria-hidden="true">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-          <path d="M3 11v2a2 2 0 002 2h1l3 4h2V7H9l-3 4H5a2 2 0 00-2 2z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-          <path d="M15 9.5a3.5 3.5 0 010 5M17.5 7.5a6.5 6.5 0 010 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-        </svg>
-      </span>
-      <p class="gh-prepaid-strip__text">{{ prepaid_strip_text }}</p>
-    </div>
+    {% render 'grosyhub-prepaid-strip', section: section, modifier: 'gh-prepaid-strip--desktop' %}
   {%- endif -%}
 
   {%- if has_mega_menu or has_mega -%}

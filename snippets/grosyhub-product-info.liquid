@@ -18,6 +18,9 @@
 
   assign rating = product.metafields.reviews.rating.value.rating
   assign rating_count = product.metafields.reviews.rating_count
+  if rating == blank
+    assign rating = 4.8
+  endif
   if rating_count == blank
     assign rating_count = settings.reviews_count_fallback
   endif
@@ -27,9 +30,9 @@
     assign can_add_to_cart = true
   endif
 
-  assign price_display = price | money
-  assign compare_display = compare_at | money
-  assign savings_display = savings | money
+  assign price_display = price | money_without_trailing_zeros
+  assign compare_display = compare_at | money_without_trailing_zeros
+  assign savings_display = savings | money_without_trailing_zeros
 
   assign spec_material = product.metafields.custom.materials | default: product.metafields.custom.material
   assign spec_weight = product.metafields.custom.item_weight
@@ -199,43 +202,29 @@
           </span>
 
           <div class="gh-pdp-info__buy-block">
-            {%- if settings.prepaid_note != blank -%}
-              <div class="gh-pdp-info__prepaid-bar">
-                <span class="gh-pdp-info__prepaid-badge">{{ settings.prepaid_note }}</span>
-              </div>
-            {%- endif -%}
-
             <div class="gh-pdp-info__buy-row">
               <div class="gh-pdp-info__qty-box">
                 {% render 'quantity-selector', product: product, class: 'gh-pdp-info__quantity-selector' %}
               </div>
 
-              {% comment %}
-                GoKwik Buy It Now — keep this button so GoKwik can attach.
-                Do not replace with Shiprocket headless on product pages.
-              {% endcomment %}
-              <button
-                type="button"
-                class="gh-pdp-info__btn-buy{% unless can_add_to_cart %} is-disabled{% endunless %}"
-                data-gh-buy-now
-                {% unless can_add_to_cart %}disabled aria-disabled="true"{% endunless %}
-              >
-                <span class="gh-pdp-info__btn-buy-text">Buy It Now</span>
-              </button>
+              <div class="gh-pdp-info__buy-cta">
+                {%- if settings.prepaid_note != blank -%}
+                  <span class="gh-pdp-info__prepaid-badge">{{ settings.prepaid_note }}</span>
+                {%- endif -%}
+                {% comment %}
+                  GoKwik Buy It Now — keep this button so GoKwik can attach.
+                {% endcomment %}
+                <button
+                  type="button"
+                  class="gh-pdp-info__btn-buy{% unless can_add_to_cart %} is-disabled{% endunless %}"
+                  data-gh-buy-now
+                  {% unless can_add_to_cart %}disabled aria-disabled="true"{% endunless %}
+                >
+                  <span class="gh-pdp-info__btn-buy-text">Buy It Now</span>
+                </button>
+              </div>
             </div>
           </div>
-
-          <button
-            type="button"
-            class="gh-pdp-info__btn-cart"
-            {% unless can_add_to_cart %}disabled{% endunless %}
-            data-gh-pdp-add-cart
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M6 7h15l-1.5 9H8L6 7zm3-3h9l1 3H8l1-3z" stroke="currentColor" stroke-width="1.6"/>
-            </svg>
-            Add to Cart
-          </button>
 
           <div class="gh-pdp-info__buy-now-wrap visually-hidden" ref="acceleratedCheckoutButtonContainer" aria-hidden="true">
             {{ form | payment_button }}
@@ -243,23 +232,31 @@
         </div>
       {%- endform -%}
     </product-form-component>
+
+    {%- comment -%} ── Sticky bottom bar (mobile only) ── {%- endcomment -%}
+    <div class="gh-pdp-sticky-bar" data-gh-sticky-bar aria-hidden="true">
+      <div class="gh-pdp-sticky-bar__inner">
+        <div class="gh-pdp-sticky-bar__qty" data-gh-sticky-qty>
+          <button type="button" class="gh-pdp-sticky-bar__qty-btn" data-gh-sticky-minus aria-label="Decrease quantity">−</button>
+          <span class="gh-pdp-sticky-bar__qty-num" data-gh-sticky-num>1</span>
+          <button type="button" class="gh-pdp-sticky-bar__qty-btn" data-gh-sticky-plus aria-label="Increase quantity">+</button>
+        </div>
+        <div class="gh-pdp-sticky-bar__buy-wrap">
+          {%- if settings.prepaid_note != blank -%}
+            <span class="gh-pdp-info__prepaid-badge gh-pdp-sticky-bar__badge">{{ settings.prepaid_note }}</span>
+          {%- endif -%}
+          <button type="button" class="gh-pdp-info__btn-buy gh-pdp-sticky-bar__buy-btn{% unless can_add_to_cart %} is-disabled{% endunless %}" data-gh-sticky-buy {% unless can_add_to_cart %}disabled aria-disabled="true"{% endunless %}>
+            <span class="gh-pdp-info__btn-buy-text">Buy It Now</span>
+          </button>
+        </div>
+      </div>
+    </div>
   {%- endif -%}
 
-  <div class="gh-pdp-info__delivery" role="status">
-    <span class="gh-pdp-info__delivery-icon" aria-hidden="true">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-        <path d="M1 7h13v9H6l-4 3V7zm14 2h4l3 4v5h-7V9z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-        <circle cx="7.5" cy="18.5" r="1.5" fill="currentColor"/>
-        <circle cx="17.5" cy="18.5" r="1.5" fill="currentColor"/>
-      </svg>
-    </span>
-    <div class="gh-pdp-info__delivery-text">
-      <strong>Free delivery by {{ delivery_start }} – {{ delivery_end }}</strong>
-      <span>Order now — ships first thing tomorrow</span>
-    </div>
+  {% comment %} Trust grid hidden on mobile — highlights bar covers the same job {% endcomment %}
+  <div class="gh-pdp-info__trust-wrap">
+    {% render 'grosyhub-product-features', brand_color: brand_color, settings: settings %}
   </div>
-
-  {% render 'grosyhub-product-features', brand_color: brand_color, settings: settings %}
 
   {% comment %} PDP reels — swipe/drag scroll, no arrows {% endcomment %}
   {% render 'grosyhub-pdp-reels',
@@ -302,3 +299,75 @@
 
 <script src="{{ 'grosyhub-product-info.js' | asset_url }}" defer></script>
 <script src="{{ 'grosyhub-product-pack.js' | asset_url }}" defer></script>
+<script>
+(function () {
+  function initStickyBar(pdp) {
+    var bar = pdp.querySelector('[data-gh-sticky-bar]');
+    if (!bar || bar._ghStickyInit) return;
+    bar._ghStickyInit = true;
+
+    var mainPurchase = pdp.querySelector('.gh-pdp-info__purchase');
+    var mainQtyInput = pdp.querySelector('.gh-pdp-info__quantity-selector input[type="number"]');
+    var mainBuyBtn   = pdp.querySelector('[data-gh-buy-now]');
+
+    var stickyNum   = bar.querySelector('[data-gh-sticky-num]');
+    var stickyMinus = bar.querySelector('[data-gh-sticky-minus]');
+    var stickyPlus  = bar.querySelector('[data-gh-sticky-plus]');
+    var stickyBuy   = bar.querySelector('[data-gh-sticky-buy]');
+
+    var qty = 1;
+
+    function readQty() { if (mainQtyInput) qty = parseInt(mainQtyInput.value, 10) || 1; }
+    function syncNum() { if (stickyNum) stickyNum.textContent = qty; }
+
+    function writeQty(val) {
+      qty = Math.max(1, val);
+      syncNum();
+      if (mainQtyInput) {
+        mainQtyInput.value = qty;
+        mainQtyInput.dispatchEvent(new Event('change', { bubbles: true }));
+        mainQtyInput.dispatchEvent(new Event('input',  { bubbles: true }));
+      }
+      var qtyComp = pdp.querySelector('quantity-selector-component');
+      if (qtyComp && qtyComp.setValue) qtyComp.setValue(qty);
+    }
+
+    if (mainQtyInput) {
+      mainQtyInput.addEventListener('change', function () { readQty(); syncNum(); });
+      mainQtyInput.addEventListener('input',  function () { readQty(); syncNum(); });
+    }
+
+    if (stickyMinus) stickyMinus.addEventListener('click', function () { writeQty(qty - 1); });
+    if (stickyPlus)  stickyPlus.addEventListener('click',  function () { writeQty(qty + 1); });
+
+    if (stickyBuy) {
+      stickyBuy.addEventListener('click', function () {
+        writeQty(qty);
+        if (mainBuyBtn && !mainBuyBtn.disabled) mainBuyBtn.click();
+      });
+    }
+
+    if (mainPurchase && window.IntersectionObserver) {
+      var io = new IntersectionObserver(function (entries) {
+        var vis = entries[0].isIntersecting;
+        bar.classList.toggle('is-visible', !vis);
+        bar.setAttribute('aria-hidden', vis ? 'true' : 'false');
+      }, { threshold: 0, rootMargin: '0px 0px -20px 0px' });
+      io.observe(mainPurchase);
+    }
+
+    readQty();
+    syncNum();
+  }
+
+  function initAll() {
+    document.querySelectorAll('.gh-pdp-info').forEach(initStickyBar);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAll);
+  } else {
+    initAll();
+  }
+})();
+</script>
